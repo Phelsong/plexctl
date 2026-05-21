@@ -1,0 +1,44 @@
+# pixi environments
+.pixi/*
+!.pixi/config.toml
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+.venv/
+venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# MyPy
+.mypy_cache/
+
+# Environment
+.env
+.env.local
+bin/*
+
+# Scanner bundle (external dependency)
+ShokoRelay.bundle/
+
+# Lock file (auto-generated)
+pixi.lock
+
+# OS
+.DS_Store
+Thumbs.db
