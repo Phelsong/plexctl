@@ -36,8 +36,9 @@ pixi install
 pixi run plexctl
 ```
 ### Packaged (linux only atm)
-```
-make install
+
+```bash
+pixi run install
 ```
 
 ## Configuration
