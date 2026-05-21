@@ -20,11 +20,7 @@ from rich.table import Table
 
 from plexctl.client import PlexClient
 from plexctl.config import load_config
-from plexctl.converters import (
-    playlist_item_to_csv,
-    playlist_to_csv,
-    smart_playlist_to_csv,
-)
+from plexctl.converters import playlist_item_to_csv, playlist_to_csv, smart_playlist_to_csv
 from plexctl.csv_utils import write_csv_to_output
 from plexctl.models import PlaylistType, SmartPlaylistFilter
 from plexctl.options import CsvFlag, OutputFile
@@ -35,15 +31,11 @@ from plexctl.services.playlists import PlaylistService, SmartPlaylistService
 # ---------------------------------------------------------------------------
 
 playlists_app = typer.Typer(
-    name="playlists",
-    help="Manage Plex playlists (regular and smart).",
-    no_args_is_help=True,
+    name="playlists", help="Manage Plex playlists (regular and smart).", no_args_is_help=True
 )
 
 smart_app = typer.Typer(
-    name="smart",
-    help="Manage smart playlists with dynamic filters.",
-    no_args_is_help=True,
+    name="smart", help="Manage smart playlists with dynamic filters.", no_args_is_help=True
 )
 
 playlists_app.add_typer(smart_app, name="smart")
@@ -55,10 +47,7 @@ console = Console()
 # ---------------------------------------------------------------------------
 
 CREATE_ITEMS_OPTION = typer.Option(
-    [],
-    "--item",
-    "-i",
-    help="Rating key(s) of items to add to the playlist",
+    [], "--item", "-i", help="Rating key(s) of items to add to the playlist"
 )
 
 ADD_ITEMS_ARGUMENT = typer.Argument(..., help="Rating keys of items to add")
@@ -107,10 +96,7 @@ def _get_smart_service() -> SmartPlaylistService:
 @playlists_app.command("list")
 def list_playlists(
     section: str | None = typer.Option(
-        None,
-        "--section",
-        "-s",
-        help="Section key to filter playlists",
+        None, "--section", "-s", help="Section key to filter playlists"
     ),
     csv_output: CsvFlag = False,
     output: OutputFile = None,
@@ -195,10 +181,7 @@ def get_playlist(
 def create_playlist(
     name: str = typer.Argument(help="Playlist title"),
     type: str = typer.Option(
-        "video",
-        "--type",
-        "-t",
-        help="Playlist content type (video, audio, photo)",
+        "video", "--type", "-t", help="Playlist content type (video, audio, photo)"
     ),
     items: list[str] = CREATE_ITEMS_OPTION,
 ) -> None:
@@ -222,9 +205,7 @@ def create_playlist(
     item_keys = items if items else None
     try:
         result = service.create_playlist(
-            title=name,
-            playlist_type=playlist_type,
-            item_keys=item_keys,
+            title=name, playlist_type=playlist_type, item_keys=item_keys
         )
     except ValueError as exc:
         console.print(f"[red]{exc}[/red]")
@@ -232,8 +213,7 @@ def create_playlist(
 
     item_msg = f" with {len(items)} item(s)" if items else ""
     console.print(
-        f"[green]✓ Created playlist '{result.title}' "
-        f"(key={result.key}){item_msg}[/green]"
+        f"[green]✓ Created playlist '{result.title}' " f"(key={result.key}){item_msg}[/green]"
     )
 
 
@@ -243,9 +223,7 @@ def create_playlist(
 @playlists_app.command("update")
 def update_playlist(
     key: str = typer.Argument(help="Playlist rating key"),
-    title: str | None = typer.Option(
-        None, "--title", "-t", help="New title for the playlist"
-    ),
+    title: str | None = typer.Option(None, "--title", "-t", help="New title for the playlist"),
 ) -> None:
     """Update a playlist's title.
 
@@ -272,12 +250,7 @@ def update_playlist(
 @playlists_app.command("delete")
 def delete_playlist(
     key: str = typer.Argument(help="Playlist rating key"),
-    confirm: bool = typer.Option(
-        False,
-        "--yes",
-        "-y",
-        help="Skip confirmation prompt.",
-    ),
+    confirm: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation prompt."),
 ) -> None:
     """Delete a playlist permanently.
 
@@ -287,9 +260,7 @@ def delete_playlist(
         plexctl playlists delete 12345 --yes
     """
     if not confirm:
-        console.print(
-            f"[yellow]Will delete playlist {key}. Use --yes to confirm.[/yellow]"
-        )
+        console.print(f"[yellow]Will delete playlist {key}. Use --yes to confirm.[/yellow]")
         raise typer.Exit(code=1)
 
     service = _get_service()
@@ -303,12 +274,7 @@ def delete_playlist(
 @playlists_app.command("items")
 def list_playlist_items(
     key: str = typer.Argument(help="Playlist rating key"),
-    limit: int = typer.Option(
-        100,
-        "--limit",
-        "-l",
-        help="Maximum number of items to display",
-    ),
+    limit: int = typer.Option(100, "--limit", "-l", help="Maximum number of items to display"),
     csv_output: CsvFlag = False,
     output: OutputFile = None,
 ) -> None:
@@ -386,12 +352,7 @@ def add_to_playlist(
 def remove_from_playlist(
     key: str = typer.Argument(help="Rating key of the playlist"),
     items: list[str] = REMOVE_ITEMS_ARGUMENT,
-    confirm: bool = typer.Option(
-        False,
-        "--yes",
-        "-y",
-        help="Skip confirmation prompt.",
-    ),
+    confirm: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation prompt."),
 ) -> None:
     """Remove items from a playlist.
 
@@ -430,28 +391,17 @@ def remove_from_playlist(
 def create_smart_playlist(
     name: str = typer.Argument(help="Smart playlist title"),
     type: str = typer.Option(
-        "video",
-        "--type",
-        "-t",
-        help="Playlist content type (video, audio, photo)",
+        "video", "--type", "-t", help="Playlist content type (video, audio, photo)"
     ),
     section: str | None = typer.Option(
-        None,
-        "--section",
-        "-s",
-        help="Library section key to scope the query",
+        None, "--section", "-s", help="Library section key to scope the query"
     ),
     filter: FilterList = None,  # type: ignore[assignment]
     sort: str | None = typer.Option(
-        None,
-        "--sort",
-        help="Sort order (e.g. 'year:desc', 'titleSort:asc')",
+        None, "--sort", help="Sort order (e.g. 'year:desc', 'titleSort:asc')"
     ),
     limit: int = typer.Option(
-        100,
-        "--limit",
-        "-l",
-        help="Maximum number of items in the playlist",
+        100, "--limit", "-l", help="Maximum number of items in the playlist"
     ),
 ) -> None:
     """Create a new smart playlist with dynamic query filters.
@@ -492,9 +442,7 @@ def create_smart_playlist(
         console.print(f"[red]{exc}[/red]")
         raise typer.Exit(code=1) from exc
 
-    filter_summary = ", ".join(
-        f"{f.field}{f.operator}{f.value}" for f in parsed_filters
-    )
+    filter_summary = ", ".join(f"{f.field}{f.operator}{f.value}" for f in parsed_filters)
     console.print(
         f"[green]✓ Created smart playlist '{result.title}' "
         f"(key={result.key}, filters: {filter_summary})[/green]"
@@ -546,10 +494,7 @@ def get_smart_playlist(
 @smart_app.command("list")
 def list_smart_playlists(
     section: str | None = typer.Option(
-        None,
-        "--section",
-        "-s",
-        help="Section key to filter smart playlists",
+        None, "--section", "-s", help="Section key to filter smart playlists"
     ),
     csv_output: CsvFlag = False,
     output: OutputFile = None,
@@ -606,20 +551,14 @@ def list_smart_playlists(
 @smart_app.command("update")
 def update_smart_playlist(
     key: str = typer.Argument(help="Smart playlist rating key"),
-    name: str | None = typer.Option(
-        None, "--name", "-n", help="New title for the playlist"
-    ),
+    name: str | None = typer.Option(None, "--name", "-n", help="New title for the playlist"),
     filter: list[str] = typer.Option(
         [],
         "--filter",
         "-f",
         help="New filter in FIELD=VALUE format. Replaces all existing filters.",
     ),
-    sort: str | None = typer.Option(
-        None,
-        "--sort",
-        help="New sort order",
-    ),
+    sort: str | None = typer.Option(None, "--sort", help="New sort order"),
 ) -> None:
     """Update a smart playlist's title, filters, or sort order.
 
@@ -631,9 +570,7 @@ def update_smart_playlist(
         plexctl playlists smart update 12345 --filter "year>=2020" --filter "genre=Sci-Fi"
     """
     if name is None and not filter and sort is None:
-        console.print(
-            "[yellow]Specify at least --name, --filter, or --sort to update.[/yellow]"
-        )
+        console.print("[yellow]Specify at least --name, --filter, or --sort to update.[/yellow]")
         raise typer.Exit(code=1)
 
     service = _get_smart_service()
@@ -645,12 +582,7 @@ def update_smart_playlist(
             console.print("[red]Could not parse any valid filters.[/red]")
             raise typer.Exit(code=1)
 
-    result = service.update_smart_playlist(
-        key,
-        name=name,
-        filters=parsed_filters,
-        sort=sort,
-    )
+    result = service.update_smart_playlist(key, name=name, filters=parsed_filters, sort=sort)
 
     if result is None:
         console.print(f"[red]Failed to update smart playlist {key}[/red]")
@@ -665,12 +597,7 @@ def update_smart_playlist(
 @smart_app.command("delete")
 def delete_smart_playlist(
     key: str = typer.Argument(help="Smart playlist rating key"),
-    confirm: bool = typer.Option(
-        False,
-        "--yes",
-        "-y",
-        help="Skip confirmation prompt.",
-    ),
+    confirm: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation prompt."),
 ) -> None:
     """Delete a smart playlist permanently.
 
@@ -680,9 +607,7 @@ def delete_smart_playlist(
         plexctl playlists smart delete 12345 --yes
     """
     if not confirm:
-        console.print(
-            f"[yellow]Will delete smart playlist {key}. Use --yes to confirm.[/yellow]"
-        )
+        console.print(f"[yellow]Will delete smart playlist {key}. Use --yes to confirm.[/yellow]")
         raise typer.Exit(code=1)
 
     service = _get_smart_service()
@@ -696,12 +621,7 @@ def delete_smart_playlist(
 @smart_app.command("items")
 def list_smart_playlist_items(
     key: str = typer.Argument(help="Smart playlist rating key"),
-    limit: int = typer.Option(
-        100,
-        "--limit",
-        "-l",
-        help="Maximum number of items to display",
-    ),
+    limit: int = typer.Option(100, "--limit", "-l", help="Maximum number of items to display"),
     csv_output: CsvFlag = False,
     output: OutputFile = None,
 ) -> None:
@@ -774,9 +694,7 @@ def _parse_filter_strings(filter_strings: list[str]) -> list[SmartPlaylistFilter
                 if len(parts) == 2 and parts[0] and parts[1]:
                     filters.append(
                         SmartPlaylistFilter(
-                            field=parts[0].strip(),
-                            operator=op,
-                            value=parts[1].strip(),
+                            field=parts[0].strip(), operator=op, value=parts[1].strip()
                         )
                     )
                     break

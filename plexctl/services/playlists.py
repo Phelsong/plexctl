@@ -271,29 +271,15 @@ def _parse_filters_from_url(url: str) -> list[SmartPlaylistFilter]:
                         if field_part and value_part:
                             filters.append(
                                 SmartPlaylistFilter(
-                                    field=field_part,
-                                    operator=op,
-                                    value=value_part,
+                                    field=field_part, operator=op, value=value_part
                                 )
                             )
                             break
                 else:
                     # No operator found inside brackets, treat as simple
-                    filters.append(
-                        SmartPlaylistFilter(
-                            field=key,
-                            operator="=",
-                            value=inner,
-                        )
-                    )
+                    filters.append(SmartPlaylistFilter(field=key, operator="=", value=inner))
             else:
-                filters.append(
-                    SmartPlaylistFilter(
-                        field=key,
-                        operator="=",
-                        value=raw_value,
-                    )
-                )
+                filters.append(SmartPlaylistFilter(field=key, operator="=", value=raw_value))
 
     return filters
 
@@ -348,11 +334,7 @@ class PlaylistService:
         http = PlexHTTPClient(self._client)
         type_code = PLAYLIST_TYPE_MAP.get(str(playlist_type), "1")
 
-        params: dict[str, Any] = {
-            "title": title,
-            "type": type_code,
-            "smart": "0",
-        }
+        params: dict[str, Any] = {"title": title, "type": type_code, "smart": "0"}
 
         data = http.post("/playlists", params=params)
 
@@ -366,16 +348,9 @@ class PlaylistService:
 
         if playlist is None:
             effective_type = (
-                PlaylistType(playlist_type)
-                if isinstance(playlist_type, str)
-                else playlist_type
+                PlaylistType(playlist_type) if isinstance(playlist_type, str) else playlist_type
             )
-            playlist = Playlist(
-                key="",
-                title=title,
-                playlist_type=effective_type,
-                smart=False,
-            )
+            playlist = Playlist(key="", title=title, playlist_type=effective_type, smart=False)
 
         # Add items if requested
         if item_keys and playlist.key:
@@ -420,10 +395,7 @@ class PlaylistService:
 
         return _parse_playlist(raw)
 
-    def list_playlists(
-        self,
-        section_id: str | int | None = None,
-    ) -> list[Playlist]:
+    def list_playlists(self, section_id: str | int | None = None) -> list[Playlist]:
         """List all regular (non-smart) playlists.
 
         Filters out smart playlists, returning only manual playlists.
@@ -461,11 +433,7 @@ class PlaylistService:
 
         return playlists
 
-    def update_playlist(
-        self,
-        key: str | int,
-        title: str | None = None,
-    ) -> Playlist | None:
+    def update_playlist(self, key: str | int, title: str | None = None) -> Playlist | None:
         """Update a playlist's title.
 
         Uses the same PUT pattern as collection updates:
@@ -486,10 +454,7 @@ class PlaylistService:
         http = PlexHTTPClient(self._client)
         key_str = str(key)
 
-        params: dict[str, Any] = {
-            "title.value": title,
-            "title.locked": "1",
-        }
+        params: dict[str, Any] = {"title.value": title, "title.locked": "1"}
 
         try:
             http.put(f"/playlists/{key_str}", params=params)
@@ -549,7 +514,7 @@ class PlaylistService:
             "uri": [
                 f"server://{machine_id}/com.plexapp.plugins.library/library/metadata/{item_key}"
                 for item_key in item_keys
-            ],
+            ]
         }
         http.put(f"/playlists/{key_str}/items", params=params)
 
@@ -583,11 +548,7 @@ class PlaylistService:
 
         return len(item_keys)
 
-    def get_playlist_items(
-        self,
-        key: str | int,
-        limit: int = 100,
-    ) -> list[PlaylistItem]:
+    def get_playlist_items(self, key: str | int, limit: int = 100) -> list[PlaylistItem]:
         """Get the items contained in a playlist.
 
         Args:
@@ -692,9 +653,9 @@ class SmartPlaylistService:
         return SmartPlaylist(
             key="",
             title=name,
-            playlist_type=PlaylistType(playlist_type)
-            if isinstance(playlist_type, str)
-            else playlist_type,
+            playlist_type=(
+                PlaylistType(playlist_type) if isinstance(playlist_type, str) else playlist_type
+            ),
             smart=True,
             filters=filters,
         )
@@ -732,10 +693,7 @@ class SmartPlaylistService:
 
         return _parse_smart_playlist(raw)
 
-    def list_smart_playlists(
-        self,
-        section_id: str | int | None = None,
-    ) -> list[SmartPlaylist]:
+    def list_smart_playlists(self, section_id: str | int | None = None) -> list[SmartPlaylist]:
         """List all smart playlists, optionally filtered by section.
 
         Args:
@@ -850,11 +808,7 @@ class SmartPlaylistService:
         key_str = str(key)
         http.delete(f"/playlists/{key_str}")
 
-    def get_playlist_items(
-        self,
-        key: str | int,
-        limit: int = 100,
-    ) -> list[PlaylistItem]:
+    def get_playlist_items(self, key: str | int, limit: int = 100) -> list[PlaylistItem]:
         """Get the items contained in a smart playlist.
 
         Args:

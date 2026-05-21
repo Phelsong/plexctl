@@ -1,4 +1,5 @@
 """Tests for LibraryService — section CRUD, locations, and collection operations."""
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
@@ -92,10 +93,7 @@ class TestCreateSection:
             service = LibraryService(mock_client)
             with pytest.raises(ValueError, match="Metadata agent is required"):
                 service.create_section(
-                    name="Movies",
-                    section_type="movie",
-                    agent="",
-                    location_path="/data/movies",
+                    name="Movies", section_type="movie", agent="", location_path="/data/movies"
                 )
 
     def test_create_section_requires_location(self) -> None:
@@ -390,9 +388,7 @@ class TestGetSection:
         mock_client = MagicMock()
         mock_http = MagicMock()
         mock_http.get.return_value = {
-            "MediaContainer": {
-                "Directory": [{"key": "1", "title": "Movies", "type": "movie"}]
-            }
+            "MediaContainer": {"Directory": [{"key": "1", "title": "Movies", "type": "movie"}]}
         }
 
         with patch("plexctl.client.PlexHTTPClient", return_value=mock_http):
@@ -446,10 +442,7 @@ class TestSectionLocations:
         mock_http = MagicMock()
         mock_http.get.return_value = {
             "MediaContainer": {
-                "Location": [
-                    {"id": 1, "path": "/data/anime"},
-                    {"id": 2, "path": "/data/anime2"},
-                ]
+                "Location": [{"id": 1, "path": "/data/anime"}, {"id": 2, "path": "/data/anime2"}]
             }
         }
 
@@ -525,12 +518,7 @@ class TestListCollections:
         collections_data = {
             "MediaContainer": {
                 "Metadata": [
-                    {
-                        "ratingKey": "100",
-                        "title": "Best Movies",
-                        "smart": 0,
-                        "childCount": 15,
-                    },
+                    {"ratingKey": "100", "title": "Best Movies", "smart": 0, "childCount": 15},
                     {
                         "ratingKey": "101",
                         "title": "Smart Collection",
@@ -552,10 +540,7 @@ class TestListCollections:
         ):
             service = LibraryService(mock_client)
             # http.get is called per-section: first returns collections, second empty
-            mock_http.get.side_effect = [
-                collections_data,
-                {"MediaContainer": {"Metadata": []}},
-            ]
+            mock_http.get.side_effect = [collections_data, {"MediaContainer": {"Metadata": []}}]
             collections = service.list_collections()
 
         assert len(collections) == 2
@@ -745,9 +730,7 @@ class TestCreateCollection:
         mock_client = MagicMock()
         mock_http = MagicMock()
         mock_http.post.return_value = {
-            "MediaContainer": {
-                "Metadata": {"ratingKey": "200", "title": "New Collection"}
-            }
+            "MediaContainer": {"Metadata": {"ratingKey": "200", "title": "New Collection"}}
         }
 
         with patch("plexctl.client.PlexHTTPClient", return_value=mock_http):
@@ -767,9 +750,7 @@ class TestCreateCollection:
 
         with patch("plexctl.client.PlexHTTPClient", return_value=mock_http):
             service = LibraryService(mock_client)
-            result = service.create_collection(
-                title="Fallback Collection", section_key=3
-            )
+            result = service.create_collection(title="Fallback Collection", section_key=3)
 
         assert result.title == "Fallback Collection"
         assert result.key == ""
@@ -783,9 +764,7 @@ class TestCreateCollection:
 
         with patch("plexctl.client.PlexHTTPClient", return_value=mock_http):
             service = LibraryService(mock_client)
-            result = service.create_collection(
-                title="Smart Coll", section_key=1, smart=True
-            )
+            result = service.create_collection(title="Smart Coll", section_key=1, smart=True)
 
         assert result.smart is True
         mock_http.post.assert_called_once()
@@ -848,12 +827,7 @@ class TestUpdateCollection:
         mock_http = MagicMock()
         mock_http.get.return_value = {
             "MediaContainer": {
-                "Metadata": {
-                    "ratingKey": "100",
-                    "title": "Existing",
-                    "smart": 0,
-                    "childCount": 5,
-                }
+                "Metadata": {"ratingKey": "100", "title": "Existing", "smart": 0, "childCount": 5}
             }
         }
 
@@ -994,9 +968,7 @@ class TestMediaTreeItemModel:
     def test_media_tree_item_full(self) -> None:
         from plexctl.models import MediaTreeItem, MediaType
 
-        child = MediaTreeItem(
-            key="200", title="Episode 1", media_type=MediaType.EPISODE
-        )
+        child = MediaTreeItem(key="200", title="Episode 1", media_type=MediaType.EPISODE)
         item = MediaTreeItem(
             key="100",
             title="Test Show",
@@ -1046,11 +1018,7 @@ class TestCollectionMetadataModel:
 
     def test_collection_info_model(self) -> None:
         info = CollectionInfo(
-            key="100",
-            title="My Coll",
-            smart=False,
-            content_count=10,
-            section_title="Movies",
+            key="100", title="My Coll", smart=False, content_count=10, section_title="Movies"
         )
         assert info.key == "100"
         assert info.section_title == "Movies"

@@ -11,12 +11,7 @@ import re
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from plexctl.models import (
-    PlexMatch,
-    PlexMatchBatchResult,
-    PlexMatchEntry,
-    PlexMatchResult,
-)
+from plexctl.models import PlexMatch, PlexMatchBatchResult, PlexMatchEntry, PlexMatchResult
 
 if TYPE_CHECKING:
     from plexctl.client import PlexClient
@@ -132,23 +127,29 @@ class PlexMatchService:
                     append=append,
                     append_dir=show_dir,
                 )
-                result.results.append(PlexMatchResult(
-                    show_key=str(show.ratingKey),
-                    show_name=show.title,
-                    folder_name=Path(show.locations[0]).name if show.locations else show.title,
-                    folder_path=show.locations[0] if show.locations else "",
-                    success=True,
-                    entry_count=len(plexmatch.entries),
-                ))
+                result.results.append(
+                    PlexMatchResult(
+                        show_key=str(show.ratingKey),
+                        show_name=show.title,
+                        folder_name=(
+                            Path(show.locations[0]).name if show.locations else show.title
+                        ),
+                        folder_path=show.locations[0] if show.locations else "",
+                        success=True,
+                        entry_count=len(plexmatch.entries),
+                    )
+                )
                 result.matched += 1
                 result.generated += 1
             except Exception as e:
-                result.results.append(PlexMatchResult(
-                    show_key=str(show.ratingKey),
-                    show_name=show.title,
-                    success=False,
-                    error=str(e),
-                ))
+                result.results.append(
+                    PlexMatchResult(
+                        show_key=str(show.ratingKey),
+                        show_name=show.title,
+                        success=False,
+                        error=str(e),
+                    )
+                )
                 result.failed += 1
                 logger.warning("Failed to generate plexmatch for %s: %s", show.title, e)
 
@@ -171,7 +172,9 @@ class PlexMatchService:
         all_guids = list(guids) + [main_guid] if main_guid else list(guids)
 
         for guid_obj in all_guids:
-            guid_str = str(getattr(guid_obj, "id", guid_obj) if not isinstance(guid_obj, str) else guid_obj)
+            guid_str = str(
+                getattr(guid_obj, "id", guid_obj) if not isinstance(guid_obj, str) else guid_obj
+            )
             for key, pattern in _GUID_PATTERNS.items():
                 match = pattern.search(guid_str)
                 if match:
@@ -210,11 +213,13 @@ class PlexMatchService:
                                 # File is not under plexmatch_dir, use as-is
                                 pass
 
-                        entries.append(PlexMatchEntry(
-                            season_number=season_num,
-                            episode_number=ep_num,
-                            filename=Path(file_path).name if file_path else "",
-                        ))
+                        entries.append(
+                            PlexMatchEntry(
+                                season_number=season_num,
+                                episode_number=ep_num,
+                                filename=Path(file_path).name if file_path else "",
+                            )
+                        )
 
         return entries
 

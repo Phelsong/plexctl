@@ -19,6 +19,7 @@ venv/
 .vscode/
 *.swp
 *.swo
+AGENT.MD
 
 # Testing
 .pytest_cache/
@@ -31,7 +32,7 @@ htmlcov/
 # Environment
 .env
 .env.local
-bin/*
+bin
 
 # Scanner bundle (external dependency)
 ShokoRelay.bundle/

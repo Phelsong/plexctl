@@ -202,8 +202,7 @@ class PhotoService:
             tag_list = getattr(photo, "moods", [])
             if tag_list:
                 tags = "|".join(
-                    getattr(t, "tag", str(t)) if hasattr(t, "tag") else str(t)
-                    for t in tag_list
+                    getattr(t, "tag", str(t)) if hasattr(t, "tag") else str(t) for t in tag_list
                 )
 
         return PhotoInfo(

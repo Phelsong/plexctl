@@ -34,11 +34,7 @@ class ShokoConfig(BaseSettings):
     )
 
     url: str = Field(default="http://localhost:8111", description="Shoko server URL")
-    apikey: str = Field(
-        default="",
-        alias="SHOKO_KEY",
-        description="Shoko API key",
-    )
+    apikey: str = Field(default="", alias="SHOKO_KEY", description="Shoko API key")
     timeout: int = Field(default=30, description="Request timeout in seconds")
     media_root: str = Field(
         default="/mnt/nfs/media",
@@ -95,10 +91,7 @@ def load_shoko_config(env_path=None):
             with open(conf_file, "rb") as fh:
                 toml_data = tomllib.load(fh)
         except (tomllib.TOMLDecodeError, OSError) as exc:
-            warnings.warn(
-                f"Could not read config file {conf_file}: {exc}",
-                stacklevel=3,
-            )
+            warnings.warn(f"Could not read config file {conf_file}: {exc}", stacklevel=3)
 
     # Shoko env var names don't follow the standard pattern:
     #   apikey -> SHOKO_KEY (not SHOKO_APIKEY)

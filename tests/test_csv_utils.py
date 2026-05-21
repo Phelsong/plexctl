@@ -1,4 +1,5 @@
 """Tests for CSV serialization and deserialization."""
+
 from pathlib import Path
 
 from plexctl.csv_utils import from_csv, get_model_class, list_model_names, to_csv
@@ -93,9 +94,7 @@ class TestFromCsv:
         """Data survives a to_csv -> from_csv roundtrip."""
         original = [
             CsvLibrarySection(key="1", title="Movies", section_type="movie", count="5"),
-            CsvLibrarySection(
-                key="2", title="TV Shows", section_type="show", count="50"
-            ),
+            CsvLibrarySection(key="2", title="TV Shows", section_type="show", count="50"),
         ]
         csv_content = to_csv(original)
         restored = from_csv(CsvLibrarySection, csv_content)

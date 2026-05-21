@@ -1,4 +1,5 @@
 """Tests for triage service and models."""
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock
@@ -96,9 +97,7 @@ class TestTriageIssue:
         assert "/data/anime/Overlord" in issue.paths
 
     def test_issue_defaults(self) -> None:
-        issue = TriageIssue(
-            issue_type=TriageIssueType.MULTI_MEDIA, detail="Multi-media episodes"
-        )
+        issue = TriageIssue(issue_type=TriageIssueType.MULTI_MEDIA, detail="Multi-media episodes")
         assert issue.severity == TriageSeverity.WARNING
         assert issue.action == TriageAction.REVIEW
         assert issue.plex_key is None
@@ -138,10 +137,7 @@ class TestTriageReport:
             ),
         ]
         report = TriageReport(
-            section_title="Anime",
-            total_shows=51,
-            issues=issues,
-            summary="2 issues found",
+            section_title="Anime", total_shows=51, issues=issues, summary="2 issues found"
         )
         assert report.section_title == "Anime"
         assert report.total_shows == 51
@@ -233,15 +229,10 @@ class TestSeasonGap:
                     shoko_id=104, name="Spy x Family", anidb_id=16947, episode_count=22
                 ),
                 ShokoSeasonEntry(
-                    shoko_id=102,
-                    name="Spy x Family (2022)",
-                    anidb_id=17061,
-                    episode_count=18,
+                    shoko_id=102, name="Spy x Family (2022)", anidb_id=17061, episode_count=18
                 ),
             ],
-            plex_seasons=[
-                PlexSeasonEntry(season_number=1, title="Season 1", episode_count=13)
-            ],
+            plex_seasons=[PlexSeasonEntry(season_number=1, title="Season 1", episode_count=13)],
             expected_episode_count=40,
             actual_episode_count=13,
             is_missing=True,
@@ -269,9 +260,7 @@ class TestSeasonGap:
             plex_title="New Show (not in Plex)",
             plex_key=None,
             tmdb_show_id=55555,
-            shoko_series=[
-                ShokoSeasonEntry(shoko_id=50, name="New Show", episode_count=12)
-            ],
+            shoko_series=[ShokoSeasonEntry(shoko_id=50, name="New Show", episode_count=12)],
             expected_episode_count=12,
             actual_episode_count=0,
             is_missing=True,
@@ -309,11 +298,7 @@ class TestSeasonGapReport:
             ),
         ]
         report = SeasonGapReport(
-            section_title="Anime",
-            total_shows=50,
-            gap_count=1,
-            gaps=gaps,
-            summary="1 gap found",
+            section_title="Anime", total_shows=50, gap_count=1, gaps=gaps, summary="1 gap found"
         )
         assert report.section_title == "Anime"
         assert report.total_shows == 50

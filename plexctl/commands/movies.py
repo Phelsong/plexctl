@@ -25,9 +25,7 @@ from plexctl.services.metadata import MetadataService
 from plexctl.services.tree import TreeService
 
 movies_app = typer.Typer(
-    name="movies",
-    help="Browse movies in your library.",
-    invoke_without_command=True,
+    name="movies", help="Browse movies in your library.", invoke_without_command=True
 )
 console = Console()
 
@@ -59,24 +57,11 @@ def _render_movie_tree(items: list[MediaTreeItem]) -> Tree:
 @movies_app.callback(invoke_without_command=True)
 def movies_default(
     ctx: typer.Context,
-    section: str = typer.Option(
-        "Movies",
-        "--section",
-        "-s",
-        help="Library section name",
-    ),
+    section: str = typer.Option("Movies", "--section", "-s", help="Library section name"),
     limit: int = typer.Option(
-        25,
-        "--limit",
-        "-l",
-        help="Maximum number of results (list view only)",
+        25, "--limit", "-l", help="Maximum number of results (list view only)"
     ),
-    tree: bool = typer.Option(
-        False,
-        "--tree",
-        "-t",
-        help="Display as a tree with rating keys",
-    ),
+    tree: bool = typer.Option(False, "--tree", "-t", help="Display as a tree with rating keys"),
     csv_output: CsvFlag = False,
     output: OutputFile = None,
 ) -> None:
@@ -103,9 +88,7 @@ def movies_default(
         section_key = tree_service.resolve_section_key(section)
         if section_key is None:
             console.print(f"[red]Section not found: {section}[/red]")
-            console.print(
-                "[dim]Use 'plexctl library list' to see available sections.[/dim]"
-            )
+            console.print("[dim]Use 'plexctl library list' to see available sections.[/dim]")
             raise typer.Exit(code=1)
 
         items = tree_service.get_section_tree(section_key, media_type="movie")

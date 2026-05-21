@@ -12,7 +12,6 @@ import os
 import sys
 from pathlib import Path
 
-
 DEFAULT_PREFIX = Path(os.environ.get("HOME", "~")) / ".local"
 PROJECT_DIR = Path(__file__).resolve().parent.parent
 SOURCE = PROJECT_DIR / "bin" / "plexctl"

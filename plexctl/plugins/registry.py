@@ -104,11 +104,7 @@ def discover_plugins() -> list[type[Plugin]]:
 
         for attr_name in dir(module):
             attr = getattr(module, attr_name)
-            if (
-                isinstance(attr, type)
-                and issubclass(attr, Plugin)
-                and attr is not Plugin
-            ):
+            if isinstance(attr, type) and issubclass(attr, Plugin) and attr is not Plugin:
                 plugin_classes.append(attr)
                 logger.debug("Found plugin class: %s in %s", attr.__name__, module_name)
 

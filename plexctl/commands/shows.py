@@ -35,9 +35,7 @@ from plexctl.services.metadata import MetadataService
 from plexctl.services.tree import TreeService
 
 shows_app = typer.Typer(
-    name="shows",
-    help="Browse TV shows in your library.",
-    invoke_without_command=True,
+    name="shows", help="Browse TV shows in your library.", invoke_without_command=True
 )
 console = Console()
 
@@ -90,10 +88,7 @@ def _add_children(parent_node: Tree, children: list[MediaTreeItem]) -> None:
 
 
 def _render_nav_tree(
-    parent: Tree,
-    items: list[MediaTreeItem],
-    depth: int = 0,
-    max_depth: int | None = None,
+    parent: Tree, items: list[MediaTreeItem], depth: int = 0, max_depth: int | None = None
 ) -> None:
     """Render media tree items as rich Tree nodes with depth control.
 
@@ -111,14 +106,10 @@ def _render_nav_tree(
 
     for item in items:
         type_label = f"[dim]{item.media_type.value}[/dim]" if item.media_type else ""
-        count_label = (
-            f" [dim]({item.leaf_count} items)[/dim]" if item.leaf_count else ""
-        )
+        count_label = f" [dim]({item.leaf_count} items)[/dim]" if item.leaf_count else ""
         year_label = f" [dim]({item.year})[/dim]" if item.year else ""
         key_label = f" [dim](key={item.key})[/dim]"
-        label = (
-            f"{item.title or item.key} {type_label}{year_label}{count_label}{key_label}"
-        )
+        label = f"{item.title or item.key} {type_label}{year_label}{count_label}{key_label}"
 
         node = parent.add(label)
         if item.children:
@@ -133,8 +124,7 @@ def _render_show_seasons_tree(show: MediaTreeItem) -> Tree:
 
 
 def _flatten_tree(
-    items: list[MediaTreeItem],
-    result: list[MediaTreeItem] | None = None,
+    items: list[MediaTreeItem], result: list[MediaTreeItem] | None = None
 ) -> list[MediaTreeItem]:
     """Flatten a nested tree into a flat list for CSV export."""
     if result is None:
@@ -150,27 +140,13 @@ def _flatten_tree(
 def shows_default(
     ctx: typer.Context,
     rating_key: str | None = typer.Argument(
-        default=None,
-        help="Rating key of a show to list its seasons",
+        default=None, help="Rating key of a show to list its seasons"
     ),
-    section: str = typer.Option(
-        "TV Shows",
-        "--section",
-        "-s",
-        help="Library section name",
-    ),
+    section: str = typer.Option("TV Shows", "--section", "-s", help="Library section name"),
     limit: int = typer.Option(
-        25,
-        "--limit",
-        "-l",
-        help="Maximum number of results (list view only)",
+        25, "--limit", "-l", help="Maximum number of results (list view only)"
     ),
-    tree: bool = typer.Option(
-        False,
-        "--tree",
-        "-t",
-        help="Display as a tree with rating keys",
-    ),
+    tree: bool = typer.Option(False, "--tree", "-t", help="Display as a tree with rating keys"),
     csv_output: CsvFlag = False,
     output: OutputFile = None,
 ) -> None:
@@ -194,21 +170,11 @@ def shows_default(
         _show_seasons(rating_key, tree=tree, csv_output=csv_output, output=output)
         return
 
-    _list_shows(
-        section=section,
-        limit=limit,
-        tree=tree,
-        csv_output=csv_output,
-        output=output,
-    )
+    _list_shows(section=section, limit=limit, tree=tree, csv_output=csv_output, output=output)
 
 
 def _list_shows(
-    section: str,
-    limit: int,
-    tree: bool,
-    csv_output: bool,
-    output: str | None,
+    section: str, limit: int, tree: bool, csv_output: bool, output: str | None
 ) -> None:
     """List shows in a library section."""
     service = _get_metadata_service()
@@ -223,9 +189,7 @@ def _list_shows(
         section_key = tree_service.resolve_section_key(section)
         if section_key is None:
             console.print(f"[red]Section not found: {section}[/red]")
-            console.print(
-                "[dim]Use 'plexctl library list' to see available sections.[/dim]"
-            )
+            console.print("[dim]Use 'plexctl library list' to see available sections.[/dim]")
             raise typer.Exit(code=1)
 
         items = tree_service.get_section_tree(section_key, media_type="show")
@@ -264,17 +228,11 @@ def _list_shows(
     console.print(table)
     if len(all_shows) > limit:
         console.print(
-            f"[dim]Showing {limit} of {len(all_shows)} shows. "
-            f"Use --limit to see more.[/dim]"
+            f"[dim]Showing {limit} of {len(all_shows)} shows. " f"Use --limit to see more.[/dim]"
         )
 
 
-def _show_seasons(
-    rating_key: str,
-    tree: bool,
-    csv_output: bool,
-    output: str | None,
-) -> None:
+def _show_seasons(rating_key: str, tree: bool, csv_output: bool, output: str | None) -> None:
     """List seasons for a specific show."""
     tree_service = _get_tree_service()
     show = tree_service.get_show_tree(rating_key)
@@ -311,11 +269,7 @@ def _show_seasons(
 
     for season in show.children:
         episodes_label = str(season.leaf_count) if season.leaf_count else "-"
-        table.add_row(
-            season.key,
-            season.title or "Unknown",
-            episodes_label,
-        )
+        table.add_row(season.key, season.title or "Unknown", episodes_label)
 
     console.print(table)
 
@@ -332,10 +286,7 @@ def shows_tree(
         help="Section name or key to browse (e.g. 'shows', 'TV Shows', '2')",
     ),
     media_type: str | None = typer.Option(
-        None,
-        "--type",
-        "-t",
-        help="Filter by type: show, movie, artist, photo",
+        None, "--type", "-t", help="Filter by type: show, movie, artist, photo"
     ),
     csv_output: CsvFlag = False,
     output: OutputFile = None,
@@ -351,9 +302,7 @@ def shows_tree(
 
     if section_key is None:
         console.print(f"[red]Section not found: {section}[/red]")
-        console.print(
-            "[dim]Use 'plexctl library list' to see available sections.[/dim]"
-        )
+        console.print("[dim]Use 'plexctl library list' to see available sections.[/dim]")
         raise typer.Exit(code=1)
 
     items = service.get_section_tree(section_key, media_type=media_type)
@@ -400,9 +349,7 @@ def shows_show_tree(
         write_csv_to_output(rows, output)
         return
 
-    rich_tree = Tree(
-        f"[bold]{show.title or show.key}[/bold] [dim](key={show.key})[/dim]"
-    )
+    rich_tree = Tree(f"[bold]{show.title or show.key}[/bold] [dim](key={show.key})[/dim]")
     _render_nav_tree(rich_tree, show.children, max_depth=depth)
     console.print(rich_tree)
 

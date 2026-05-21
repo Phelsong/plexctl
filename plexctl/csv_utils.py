@@ -82,9 +82,7 @@ def _get_headers(models: Sequence[BaseModel]) -> list[str]:
 
 
 def to_csv(
-    models: Sequence[BaseModel],
-    output: Path | None = None,
-    include_headers: bool = True,
+    models: Sequence[BaseModel], output: Path | None = None, include_headers: bool = True
 ) -> str:
     """Convert a list of Pydantic models to CSV.
 
@@ -119,10 +117,7 @@ def to_csv(
     return csv_content
 
 
-def from_csv[T: BaseModel](
-    model_class: type[T],
-    csv_data: str | Path,
-) -> list[T]:
+def from_csv[T: BaseModel](model_class: type[T], csv_data: str | Path) -> list[T]:
     """Parse CSV data into a list of Pydantic model instances.
 
     Args:
@@ -188,10 +183,7 @@ def list_model_names() -> list[str]:
     return sorted(_MODEL_REGISTRY.keys())
 
 
-def write_csv_to_output(
-    models: Sequence[BaseModel],
-    output: str | None = None,
-) -> None:
+def write_csv_to_output(models: Sequence[BaseModel], output: str | None = None) -> None:
     """Write models as CSV to either a file or stdout.
 
     A convenience wrapper around to_csv() that handles the common

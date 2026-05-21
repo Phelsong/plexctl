@@ -14,18 +14,13 @@ from plexctl.client import PlexClient
 from plexctl.commands.collections import collections_app
 from plexctl.commands.playlists import playlists_app
 from plexctl.config import load_config
-from plexctl.converters import (
-    library_location_to_csv,
-    library_section_to_csv,
-)
+from plexctl.converters import library_location_to_csv, library_section_to_csv
 from plexctl.csv_utils import write_csv_to_output
 from plexctl.options import CsvFlag, OutputFile
 from plexctl.services.library import LibraryService
 
 library_app = typer.Typer(
-    name="library",
-    help="Manage Plex library sections and collections.",
-    no_args_is_help=True,
+    name="library", help="Manage Plex library sections and collections.", no_args_is_help=True
 )
 console = Console()
 
@@ -41,10 +36,7 @@ def _get_service() -> LibraryService:
 
 
 @library_app.command("list")
-def list_sections(
-    csv_output: CsvFlag = False,
-    output: OutputFile = None,
-) -> None:
+def list_sections(csv_output: CsvFlag = False, output: OutputFile = None) -> None:
     """List all library sections on the server."""
     service = _get_service()
     sections = service.list_sections()
@@ -126,12 +118,8 @@ def create_section(
     agent: str = typer.Option(
         ..., "--agent", help="Metadata agent (e.g. com.plexapp.agents.imdb)"
     ),
-    location: str = typer.Option(
-        ..., "--location", help="Filesystem path for media content"
-    ),
-    language: str = typer.Option(
-        "en", "--language", help="Language code (default: en)"
-    ),
+    location: str = typer.Option(..., "--location", help="Filesystem path for media content"),
+    language: str = typer.Option("en", "--language", help="Language code (default: en)"),
     scanner: str | None = typer.Option(
         None, "--scanner", help="Scanner name (auto-detected by type if omitted)"
     ),
@@ -163,12 +151,7 @@ def create_section(
 @library_app.command("delete")
 def delete_section(
     section_key: str = typer.Argument(help="Section key to delete"),
-    confirm: bool = typer.Option(
-        False,
-        "--yes",
-        "-y",
-        help="Skip confirmation prompt.",
-    ),
+    confirm: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation prompt."),
 ) -> None:
     """Delete a library section permanently.
 
@@ -221,17 +204,13 @@ def update_section(
         console.print(f"[red]Failed to update section {section_key}[/red]")
         raise typer.Exit(code=1)
 
-    console.print(
-        f"[green]✓ Updated section '{section.title}' (key={section.key})[/green]"
-    )
+    console.print(f"[green]✓ Updated section '{section.title}' (key={section.key})[/green]")
     sect_type = section.section_type.value if section.section_type else "unknown"
     console.print(f"  Type:         {sect_type}")
     console.print(f"  Agent:        {section.agent or 'unknown'}")
     console.print(f"  Scanner:      {section.scanner or 'unknown'}")
     console.print(f"  Language:     {section.language or 'unknown'}")
     console.print(f"  Item Count:   {section.count}")
-
-
 
 
 # --- Collections (sub-group) --------------------------------------------------

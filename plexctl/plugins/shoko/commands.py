@@ -14,11 +14,7 @@ from rich.live import Live
 from rich.table import Table
 
 from plexctl.csv_utils import write_csv_to_output
-from plexctl.models import (
-    PlexMatchBatchResult,
-    PlexMatchResult,
-    ShokoSeries,
-)
+from plexctl.models import PlexMatchBatchResult, PlexMatchResult, ShokoSeries
 from plexctl.options import CsvFlag, OutputFile
 from plexctl.plugins.shoko.converters import (
     crc_audit_to_csv,
@@ -64,10 +60,7 @@ def _format_episode_type(ep_type: str) -> str:
 
 @shoko_app.command()
 def series(
-    search: Annotated[
-        str | None,
-        typer.Option(help="Search series by name"),
-    ] = None,
+    search: Annotated[str | None, typer.Option(help="Search series by name")] = None,
     csv_output: CsvFlag = False,
     output: OutputFile = None,
 ) -> None:
@@ -152,18 +145,9 @@ def _add_series_row(table: Table, s: ShokoSeries) -> None:
 
 @shoko_app.command()
 def episodes(
-    series_id: Annotated[
-        int,
-        typer.Argument(help="Shoko series ID"),
-    ],
-    page: Annotated[
-        int,
-        typer.Option(help="Page number (1-indexed)"),
-    ] = 1,
-    limit: Annotated[
-        int,
-        typer.Option(help="Results per page"),
-    ] = 50,
+    series_id: Annotated[int, typer.Argument(help="Shoko series ID")],
+    page: Annotated[int, typer.Option(help="Page number (1-indexed)")] = 1,
+    limit: Annotated[int, typer.Option(help="Results per page")] = 50,
     csv_output: CsvFlag = False,
     output: OutputFile = None,
 ) -> None:
@@ -204,18 +188,9 @@ def episodes(
 
 @shoko_app.command()
 def files(
-    search: Annotated[
-        str | None,
-        typer.Option(help="Search files by path suffix"),
-    ] = None,
-    page: Annotated[
-        int,
-        typer.Option(help="Page number (1-indexed)"),
-    ] = 1,
-    limit: Annotated[
-        int,
-        typer.Option(help="Results per page"),
-    ] = 25,
+    search: Annotated[str | None, typer.Option(help="Search files by path suffix")] = None,
+    page: Annotated[int, typer.Option(help="Page number (1-indexed)")] = 1,
+    limit: Annotated[int, typer.Option(help="Results per page")] = 25,
     csv_output: CsvFlag = False,
     output: OutputFile = None,
 ) -> None:
@@ -258,16 +233,11 @@ def files(
     console.print(table)
 
     if not search and total > limit:
-        console.print(
-            f"[dim]Showing page {page}. Use --page to see more results.[/dim]"
-        )
+        console.print(f"[dim]Showing page {page}. Use --page to see more results.[/dim]")
 
 
 @shoko_app.command()
-def unlinked(
-    csv_output: CsvFlag = False,
-    output: OutputFile = None,
-) -> None:
+def unlinked(csv_output: CsvFlag = False, output: OutputFile = None) -> None:
     """Find files that are not linked to any series in Shoko."""
     service = _get_service()
 
@@ -301,10 +271,7 @@ def unlinked(
 
 
 @shoko_app.command()
-def problems(
-    csv_output: CsvFlag = False,
-    output: OutputFile = None,
-) -> None:
+def problems(csv_output: CsvFlag = False, output: OutputFile = None) -> None:
     """Find series with potential problems in Shoko data."""
     service = _get_service()
 
@@ -344,17 +311,10 @@ def problems(
 
 @shoko_app.command("search-tmdb")
 def search_tmdb(
-    query: Annotated[
-        str,
-        typer.Argument(help="Search query for TMDB shows"),
-    ],
-    year: Annotated[
-        int | None,
-        typer.Option(help="Filter by first aired year"),
-    ] = None,
+    query: Annotated[str, typer.Argument(help="Search query for TMDB shows")],
+    year: Annotated[int | None, typer.Option(help="Filter by first aired year")] = None,
     movies: Annotated[
-        bool,
-        typer.Option("--movies", help="Search TMDB movies instead of shows"),
+        bool, typer.Option("--movies", help="Search TMDB movies instead of shows")
     ] = False,
     csv_output: CsvFlag = False,
     output: OutputFile = None,
@@ -389,9 +349,11 @@ def search_tmdb(
             str(r.id),
             r.name,
             str(r.year or "-"),
-            (r.overview or "")[:60] + "..."
-            if r.overview and len(r.overview) > 60
-            else r.overview or "",
+            (
+                (r.overview or "")[:60] + "..."
+                if r.overview and len(r.overview) > 60
+                else r.overview or ""
+            ),
         )
 
     console.print(table)
@@ -400,29 +362,17 @@ def search_tmdb(
 
 @shoko_app.command("link-tmdb")
 def link_tmdb(
-    series_id: Annotated[
-        int,
-        typer.Argument(help="Shoko series ID to link"),
-    ],
-    tmdb_id: Annotated[
-        int,
-        typer.Argument(help="TMDB show/movie ID to link"),
-    ],
+    series_id: Annotated[int, typer.Argument(help="Shoko series ID to link")],
+    tmdb_id: Annotated[int, typer.Argument(help="TMDB show/movie ID to link")],
     replace: Annotated[
-        bool,
-        typer.Option(help="Replace all existing TMDB links with this one"),
+        bool, typer.Option(help="Replace all existing TMDB links with this one")
     ] = False,
-    refresh: Annotated[
-        bool,
-        typer.Option(help="Force refresh metadata after linking"),
-    ] = True,
+    refresh: Annotated[bool, typer.Option(help="Force refresh metadata after linking")] = True,
     movie: Annotated[
-        bool,
-        typer.Option("--movie", help="Link TMDB movie instead of show"),
+        bool, typer.Option("--movie", help="Link TMDB movie instead of show")
     ] = False,
     episode_id: Annotated[
-        int | None,
-        typer.Option(help="AniDB episode ID (required for movie links)"),
+        int | None, typer.Option(help="AniDB episode ID (required for movie links)")
     ] = None,
 ) -> None:
     """Link a TMDB show/movie to a Shoko series."""
@@ -441,9 +391,7 @@ def link_tmdb(
             episodes, total = service.list_episodes(series_id, page_size=1)
             if total == 1 and episodes and episodes[0].anidb_id:
                 episode_id = episodes[0].anidb_id
-                console.print(
-                    f"[dim]Auto-detected AniDB episode ID: {episode_id}[/dim]"
-                )
+                console.print(f"[dim]Auto-detected AniDB episode ID: {episode_id}[/dim]")
             else:
                 console.print(
                     "[red]Movie links require --episode-id (AniDB episode ID). "
@@ -457,23 +405,14 @@ def link_tmdb(
             f"AniDB episode: {episode_id})[/bold]"
         )
         result = service.link_tmdb_movie(
-            series_id,
-            tmdb_id,
-            episode_id,
-            replace=replace,
-            refresh=refresh,
+            series_id, tmdb_id, episode_id, replace=replace, refresh=refresh
         )
     else:
         console.print(
             f"[bold]Linking TMDB show {tmdb_id} to "
             f"'{series_data.name}' (ID: {series_id})[/bold]"
         )
-        result = service.link_tmdb_show(
-            series_id,
-            tmdb_id,
-            replace=replace,
-            refresh=refresh,
-        )
+        result = service.link_tmdb_show(series_id, tmdb_id, replace=replace, refresh=refresh)
 
     if result.success:
         link_type = "movie" if movie else "show"
@@ -490,18 +429,9 @@ def link_tmdb(
 
 @shoko_app.command("unlink-tmdb")
 def unlink_tmdb(
-    series_id: Annotated[
-        int,
-        typer.Argument(help="Shoko series ID to unlink"),
-    ],
-    tmdb_id: Annotated[
-        int,
-        typer.Argument(help="TMDB show ID to remove"),
-    ],
-    purge: Annotated[
-        bool,
-        typer.Option(help="Purge cached metadata for the link"),
-    ] = False,
+    series_id: Annotated[int, typer.Argument(help="Shoko series ID to unlink")],
+    tmdb_id: Annotated[int, typer.Argument(help="TMDB show ID to remove")],
+    purge: Annotated[bool, typer.Option(help="Purge cached metadata for the link")] = False,
 ) -> None:
     """Remove a TMDB show link from a Shoko series."""
     service = _get_service()
@@ -534,8 +464,7 @@ def unlink_tmdb(
 @shoko_app.command("refresh-tmdb")
 def refresh_tmdb(
     series_id: Annotated[
-        int,
-        typer.Argument(help="Shoko series ID to refresh TMDB metadata for"),
+        int, typer.Argument(help="Shoko series ID to refresh TMDB metadata for")
     ],
 ) -> None:
     """Refresh TMDB show metadata for a Shoko series."""
@@ -575,10 +504,7 @@ def refresh_tmdb(
 
 
 @shoko_app.command("crc-audit")
-def crc_audit(
-    csv_output: CsvFlag = False,
-    output: OutputFile = None,
-) -> None:
+def crc_audit(csv_output: CsvFlag = False, output: OutputFile = None) -> None:
     """Audit all Shoko files for CRC hash completeness.
 
     Checks each file's filename for real CRC32 hashes vs %CRC placeholders.
@@ -650,12 +576,7 @@ def crc_audit(
 
 
 @shoko_app.command("rehash")
-def rehash_file(
-    file_id: Annotated[
-        int,
-        typer.Argument(help="Shoko file ID to rehash"),
-    ],
-) -> None:
+def rehash_file(file_id: Annotated[int, typer.Argument(help="Shoko file ID to rehash")]) -> None:
     """Trigger a CRC rehash for a single file in Shoko."""
     service = _get_service()
 
@@ -671,10 +592,7 @@ def rehash_file(
 
 @shoko_app.command("rescan")
 def rescan_file(
-    file_id: Annotated[
-        int,
-        typer.Argument(help="Shoko file ID to rescan on AniDB"),
-    ],
+    file_id: Annotated[int, typer.Argument(help="Shoko file ID to rescan on AniDB")],
 ) -> None:
     """Trigger an AniDB rescan for a single file in Shoko."""
     service = _get_service()
@@ -750,15 +668,10 @@ def batch_rehash() -> None:
 @shoko_app.command("season-gaps")
 def season_gaps(
     section: Annotated[
-        str,
-        typer.Option("--section", "-s", help="Library section name"),
+        str, typer.Option("--section", "-s", help="Library section name")
     ] = "Anime",
     show_missing_only: Annotated[
-        bool,
-        typer.Option(
-            "--missing-only",
-            help="Only show shows with missing seasons.",
-        ),
+        bool, typer.Option("--missing-only", help="Only show shows with missing seasons.")
     ] = False,
     csv_output: CsvFlag = False,
     output: OutputFile = None,
@@ -816,9 +729,7 @@ def season_gaps(
     for gap in gaps:
         status = "[red]MISSING[/red]" if gap.is_missing else "[green]OK[/green]"
         deficit = gap.expected_episode_count - gap.actual_episode_count
-        shoko_names = ", ".join(
-            f"{s.name} ({s.episode_count}ep)" for s in gap.shoko_series
-        )
+        shoko_names = ", ".join(f"{s.name} ({s.episode_count}ep)" for s in gap.shoko_series)
 
         gap_table.add_row(
             gap.plex_title,
@@ -837,9 +748,7 @@ def season_gaps(
     if missing_gaps:
         console.print("\n[bold]Missing Season Details:[/bold]")
         for gap in missing_gaps[:15]:
-            console.print(
-                f"\n  [green]{gap.plex_title}[/green] (TMDB: {gap.tmdb_show_id})"
-            )
+            console.print(f"\n  [green]{gap.plex_title}[/green] (TMDB: {gap.tmdb_show_id})")
             console.print(
                 f"    Plex: {gap.actual_episode_count} eps "
                 f"across {len(gap.plex_seasons)} season(s)"
@@ -856,8 +765,7 @@ def season_gaps(
             for s in gap.shoko_series:
                 in_plex = "[green]✓[/green]" if gap.plex_key else "[dim]?[/dim]"
                 console.print(
-                    f"      {in_plex} {s.name} "
-                    f"(AniDB: {s.anidb_id}, {s.episode_count} eps)"
+                    f"      {in_plex} {s.name} " f"(AniDB: {s.anidb_id}, {s.episode_count} eps)"
                 )
             deficit = gap.expected_episode_count - gap.actual_episode_count
             console.print(f"    [red]Missing: {deficit} episodes[/red]")
@@ -880,17 +788,9 @@ def update_media_info() -> None:
 
 @shoko_app.command("plexmatch")
 def plexmatch(
-    series_id: Annotated[
-        int,
-        typer.Argument(help="Shoko series ID to generate .plexmatch for"),
-    ],
+    series_id: Annotated[int, typer.Argument(help="Shoko series ID to generate .plexmatch for")],
     output: Annotated[
-        Path | None,
-        typer.Option(
-            "--output",
-            "-o",
-            help="Output file path. Defaults to stdout.",
-        ),
+        Path | None, typer.Option("--output", "-o", help="Output file path. Defaults to stdout.")
     ] = None,
     write_to_dir: Annotated[
         str | None,
@@ -996,10 +896,7 @@ def plexmatch(
 
 @shoko_app.command("orderings", no_args_is_help=True)
 def plexmatch_orderings(
-    series_id: Annotated[
-        int,
-        typer.Argument(help="Shoko series ID to list orderings for"),
-    ],
+    series_id: Annotated[int, typer.Argument(help="Shoko series ID to list orderings for")],
 ) -> None:
     """List available TMDB episode orderings for a series.
 
@@ -1067,16 +964,14 @@ def plexmatch_orderings(
 
     console.print(table)
     console.print(
-        "\n[dim]Use the Ordering ID with "
-        "--ordering flag on plexmatch/plexmatch-all.[/dim]"
+        "\n[dim]Use the Ordering ID with " "--ordering flag on plexmatch/plexmatch-all.[/dim]"
     )
 
 
 @shoko_app.command("plexmatch-prefer", no_args_is_help=True)
 def plexmatch_prefer(
     series_id: Annotated[
-        int,
-        typer.Argument(help="Shoko series ID to set ordering preference for"),
+        int, typer.Argument(help="Shoko series ID to set ordering preference for")
     ],
     ordering: Annotated[
         str,
@@ -1162,9 +1057,7 @@ def plexmatch_prefer(
         raise typer.Exit(code=1)
 
     path = save_ordering_preference(tmdb_id, ordering)
-    ordering_name = next(
-        (o.name for o in orderings if o.ordering_id == ordering), ordering
-    )
+    ordering_name = next((o.name for o in orderings if o.ordering_id == ordering), ordering)
     console.print(
         f"[green]Saved ordering preference for "
         f"'{series_data.name}' (TMDB show {tmdb_id}):[/green]\n"
@@ -1176,16 +1069,11 @@ def plexmatch_prefer(
 @shoko_app.command("plexmatch-all", no_args_is_help=True)
 def plexmatch_all(
     library: Annotated[
-        str,
-        typer.Option(
-            help="Library subdirectory within media root (e.g. 'anime', 'tv').",
-        ),
+        str, typer.Option(help="Library subdirectory within media root (e.g. 'anime', 'tv').")
     ] = "anime",
     media_root: Annotated[
         str | None,
-        typer.Option(
-            help="Root path for media files. Defaults to SHOKO_MEDIA_ROOT env var.",
-        ),
+        typer.Option(help="Root path for media files. Defaults to SHOKO_MEDIA_ROOT env var."),
     ] = None,
     ordering: Annotated[
         str | None,
@@ -1200,11 +1088,7 @@ def plexmatch_all(
         ),
     ] = None,
     dry_run: Annotated[
-        bool,
-        typer.Option(
-            "--dry-run",
-            help="Show what would be done without writing any files.",
-        ),
+        bool, typer.Option("--dry-run", help="Show what would be done without writing any files.")
     ] = False,
     append: Annotated[
         bool,
@@ -1258,8 +1142,7 @@ def plexmatch_all(
         )
     else:
         console.print(
-            f"[bold]Generating .plexmatch files for "
-            f"[cyan]{root}/{library}[/cyan][/bold]\n"
+            f"[bold]Generating .plexmatch files for " f"[cyan]{root}/{library}[/cyan][/bold]\n"
         )
 
     if not dry_run:
@@ -1320,9 +1203,7 @@ def plexmatch_all(
 
 
 def _dry_run_plexmatch_all(
-    service: ShokoService,
-    media_root: str,
-    library: str,
+    service: ShokoService, media_root: str, library: str
 ) -> PlexMatchBatchResult:
     """Perform a dry-run match of library dirs to Shoko series.
 
@@ -1334,16 +1215,10 @@ def _dry_run_plexmatch_all(
     scan_dir = Path(media_root) / library if library else Path(media_root)
 
     if not scan_dir.is_dir():
-        return PlexMatchBatchResult(
-            total_dirs=0,
-            results=[],
-            failed=1,
-        )
+        return PlexMatchBatchResult(total_dirs=0, results=[], failed=1)
 
     series_dirs = sorted(
-        entry
-        for entry in scan_dir.iterdir()
-        if entry.is_dir() and not entry.name.startswith(".")
+        entry for entry in scan_dir.iterdir() if entry.is_dir() and not entry.name.startswith(".")
     )
 
     if not series_dirs:
@@ -1354,10 +1229,7 @@ def _dry_run_plexmatch_all(
     page = 1
     total = None
     while total is None or len(all_shoko_series) < total:
-        series_page, total = service.list_series(
-            page=page,
-            page_size=100,
-        )
+        series_page, total = service.list_series(page=page, page_size=100)
         if not series_page:
             break
         all_shoko_series.extend(series_page)

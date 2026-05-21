@@ -1,4 +1,5 @@
 """Test ordering preference cache."""
+
 import tempfile
 from pathlib import Path
 from unittest.mock import patch

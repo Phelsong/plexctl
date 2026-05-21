@@ -1,4 +1,5 @@
 """Tests for CLI commands — library and item command validation."""
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
@@ -22,9 +23,7 @@ class TestLibraryListCommand:
         from plexctl.config import PlexConfig
         from plexctl.services.library import LibraryService
 
-        mock_config.return_value = PlexConfig(
-            url="http://localhost:32400", token="test-token"
-        )
+        mock_config.return_value = PlexConfig(url="http://localhost:32400", token="test-token")
         mock_client = MagicMock()
         mock_client_cls.return_value = mock_client
 
@@ -43,9 +42,7 @@ class TestLibraryListCommand:
         from plexctl.models import LibrarySection, MediaType
         from plexctl.services.library import LibraryService
 
-        mock_config.return_value = PlexConfig(
-            url="http://localhost:32400", token="test-token"
-        )
+        mock_config.return_value = PlexConfig(url="http://localhost:32400", token="test-token")
         mock_client = MagicMock()
         mock_client_cls.return_value = mock_client
 
@@ -75,9 +72,7 @@ class TestLibraryListCommand:
         from plexctl.models import LibrarySection, MediaType
         from plexctl.services.library import LibraryService
 
-        mock_config.return_value = PlexConfig(
-            url="http://localhost:32400", token="test-token"
-        )
+        mock_config.return_value = PlexConfig(url="http://localhost:32400", token="test-token")
         mock_client = MagicMock()
         mock_client_cls.return_value = mock_client
 
@@ -113,16 +108,12 @@ class TestLibraryDeleteCommand:
 
     @patch("plexctl.commands.library.PlexClient")
     @patch("plexctl.commands.library.load_config")
-    def test_library_delete_with_confirmation(
-        self, mock_config, mock_client_cls
-    ) -> None:
+    def test_library_delete_with_confirmation(self, mock_config, mock_client_cls) -> None:
         """library delete --yes calls delete_section."""
         from plexctl.config import PlexConfig
         from plexctl.services.library import LibraryService
 
-        mock_config.return_value = PlexConfig(
-            url="http://localhost:32400", token="test-token"
-        )
+        mock_config.return_value = PlexConfig(url="http://localhost:32400", token="test-token")
         mock_client = MagicMock()
         mock_client_cls.return_value = mock_client
 
@@ -144,9 +135,7 @@ class TestLibraryCreateCommand:
         from plexctl.models import LibrarySection, MediaType
         from plexctl.services.library import LibraryService
 
-        mock_config.return_value = PlexConfig(
-            url="http://localhost:32400", token="test-token"
-        )
+        mock_config.return_value = PlexConfig(url="http://localhost:32400", token="test-token")
         mock_client = MagicMock()
         mock_client_cls.return_value = mock_client
 
@@ -203,9 +192,7 @@ class TestCollectionListCommand:
         from plexctl.config import PlexConfig
         from plexctl.services.library import LibraryService
 
-        mock_config.return_value = PlexConfig(
-            url="http://localhost:32400", token="test-token"
-        )
+        mock_config.return_value = PlexConfig(url="http://localhost:32400", token="test-token")
         mock_client = MagicMock()
         mock_client_cls.return_value = mock_client
 
@@ -222,16 +209,12 @@ class TestCollectionListCommand:
         from plexctl.models import CollectionInfo
         from plexctl.services.library import LibraryService
 
-        mock_config.return_value = PlexConfig(
-            url="http://localhost:32400", token="test-token"
-        )
+        mock_config.return_value = PlexConfig(url="http://localhost:32400", token="test-token")
         mock_client = MagicMock()
         mock_client_cls.return_value = mock_client
 
         collections = [
-            CollectionInfo(
-                key="100", title="Best Movies", smart=False, content_count=15
-            )
+            CollectionInfo(key="100", title="Best Movies", smart=False, content_count=15)
         ]
 
         with patch.object(LibraryService, "list_collections", return_value=collections):
@@ -248,16 +231,12 @@ class TestCollectionListCommand:
         from plexctl.models import CollectionInfo
         from plexctl.services.library import LibraryService
 
-        mock_config.return_value = PlexConfig(
-            url="http://localhost:32400", token="test-token"
-        )
+        mock_config.return_value = PlexConfig(url="http://localhost:32400", token="test-token")
         mock_client = MagicMock()
         mock_client_cls.return_value = mock_client
 
         collections = [
-            CollectionInfo(
-                key="100", title="Best Movies", smart=False, content_count=15
-            )
+            CollectionInfo(key="100", title="Best Movies", smart=False, content_count=15)
         ]
 
         with patch.object(LibraryService, "list_collections", return_value=collections):
@@ -278,23 +257,17 @@ class TestCollectionDeleteCommand:
 
     @patch("plexctl.commands.collections.PlexClient")
     @patch("plexctl.commands.collections.load_config")
-    def test_collection_delete_with_confirmation(
-        self, mock_config, mock_client_cls
-    ) -> None:
+    def test_collection_delete_with_confirmation(self, mock_config, mock_client_cls) -> None:
         """library collections delete --yes calls delete_collection."""
         from plexctl.config import PlexConfig
         from plexctl.services.library import LibraryService
 
-        mock_config.return_value = PlexConfig(
-            url="http://localhost:32400", token="test-token"
-        )
+        mock_config.return_value = PlexConfig(url="http://localhost:32400", token="test-token")
         mock_client = MagicMock()
         mock_client_cls.return_value = mock_client
 
         with patch.object(LibraryService, "delete_collection") as mock_delete:
-            result = runner.invoke(
-                app, ["library", "collections", "delete", "100", "--yes"]
-            )
+            result = runner.invoke(app, ["library", "collections", "delete", "100", "--yes"])
 
         assert result.exit_code == 0
         mock_delete.assert_called_once_with("100")
@@ -316,9 +289,7 @@ class TestCollectionUpdateCommand:
         from plexctl.models import CollectionMetadata
         from plexctl.services.library import LibraryService
 
-        mock_config.return_value = PlexConfig(
-            url="http://localhost:32400", token="test-token"
-        )
+        mock_config.return_value = PlexConfig(url="http://localhost:32400", token="test-token")
         mock_client = MagicMock()
         mock_client_cls.return_value = mock_client
 
@@ -330,8 +301,7 @@ class TestCollectionUpdateCommand:
             LibraryService, "update_collection", return_value=updated
         ) as mock_update:
             result = runner.invoke(
-                app,
-                ["library", "collections", "update", "100", "--title", "Updated Title"],
+                app, ["library", "collections", "update", "100", "--title", "Updated Title"]
             )
 
         assert result.exit_code == 0
@@ -461,9 +431,7 @@ class TestLibraryConverters:
         from plexctl.converters import collection_metadata_to_csv
         from plexctl.models import CollectionMetadata
 
-        coll = CollectionMetadata(
-            key="100", title="Test", summary="Line 1\nLine 2\nLine 3"
-        )
+        coll = CollectionMetadata(key="100", title="Test", summary="Line 1\nLine 2\nLine 3")
         csv_row = collection_metadata_to_csv(coll)
         assert "\n" not in csv_row.summary
         assert "Line 1" in csv_row.summary

@@ -20,7 +20,6 @@ A CLI toolkit for managing Plex Media Server.
 - **Shoko integration** — Query Shoko Server for anime metadata, TMDB linking, CRC audits (Core Plugin)
 
 ## Requirements
-
 - Python 3.12+
 - [pixi](https://pixi.sh) (recommended) or pip
 - A Plex Media Server with accessible API

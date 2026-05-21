@@ -4,6 +4,7 @@
 This script introspects the Typer app structure and generates a markdown
 document listing all active (non-deprecated) commands with descriptions.
 """
+
 from __future__ import annotations
 
 import sys
@@ -20,9 +21,9 @@ from plexctl.cli import app
 # Groups that appear at the top level but are canonical aliases of
 # sub-groups under other commands.  The canonical path should be used
 # instead, so we skip them from the command reference.
-_DEPRECATED_TOP_LEVEL_GROUPS: frozenset[str] = frozenset({
-    "collections",  # canonical: library collections
-})
+_DEPRECATED_TOP_LEVEL_GROUPS: frozenset[str] = frozenset(
+    {"collections"}  # canonical: library collections
+)
 
 # The DefaultPlaceholder sentinel Typer uses for "not set" values.
 _DUMMY = typer.models.DefaultPlaceholder
@@ -112,11 +113,7 @@ def get_group_help(typer_instance: Any) -> str:
     return ""
 
 
-def _format_commands(
-    commands: list[Any],
-    group_name: str,
-    indent: str,
-) -> list[str]:
+def _format_commands(commands: list[Any], group_name: str, indent: str) -> list[str]:
     """Format a list of registered Typer commands as markdown list items."""
     lines: list[str] = []
     for cmd in commands:
@@ -135,11 +132,7 @@ def _format_commands(
     return lines
 
 
-def _format_sub_groups(
-    sub_groups: list[Any],
-    group_name: str,
-    indent: str,
-) -> list[str]:
+def _format_sub_groups(sub_groups: list[Any], group_name: str, indent: str) -> list[str]:
     """Format a list of registered Typer sub-groups recursively."""
     lines: list[str] = []
     for sub_group in sub_groups:
@@ -152,9 +145,7 @@ def _format_sub_groups(
 
         sub_help = get_group_help(sub_typer)
         if sub_help:
-            lines.append(
-                f"{indent}- **`{group_name} {sub_name}`** — {sub_help}"
-            )
+            lines.append(f"{indent}- **`{group_name} {sub_name}`** — {sub_help}")
         else:
             lines.append(f"{indent}- **`{group_name} {sub_name}`**")
 
@@ -169,9 +160,7 @@ def _format_sub_groups(
         # Nested sub-groups (e.g. smart under playlists)
         sub_sub_groups = sub_typer.registered_groups
         if sub_sub_groups:
-            sub_sub_lines = _format_sub_groups(
-                sub_sub_groups, child_name, child_indent
-            )
+            sub_sub_lines = _format_sub_groups(sub_sub_groups, child_name, child_indent)
             lines.extend(sub_sub_lines)
 
     return lines
@@ -218,18 +207,14 @@ def generate_tree() -> str:
         # sub-commands we show it as the first entry (the "default" action);
         # when they have NO sub-commands (like `movies`) we show it as the
         # sole entry under the heading.
-        registered_callback = getattr(
-            typer_instance, "registered_callback", None
-        )
+        registered_callback = getattr(typer_instance, "registered_callback", None)
         if registered_callback and registered_callback.callback:
             cb_doc = (registered_callback.callback.__doc__ or "").strip()
             cb_help = cb_doc.split("\n")[0] if cb_doc else ""
             if has_subcommands:
                 # Show the default action first, before sub-commands
                 if cb_help:
-                    lines.append(
-                        f"- **`{name}`** *(default)* — {cb_help}"
-                    )
+                    lines.append(f"- **`{name}`** *(default)* — {cb_help}")
                 else:
                     lines.append(f"- **`{name}`** *(default)*")
                 command_count += 1
@@ -244,19 +229,13 @@ def generate_tree() -> str:
 
         cmd_lines = _format_commands(commands, name, "")
         lines.extend(cmd_lines)
-        command_count += sum(
-            1 for line in cmd_lines if line.startswith("- **`")
-        )
+        command_count += sum(1 for line in cmd_lines if line.startswith("- **`"))
 
         # Sub-groups (e.g. library collections, library playlists)
         if sub_groups:
             sub_lines = _format_sub_groups(sub_groups, name, "")
             lines.extend(sub_lines)
-            command_count += sum(
-                1
-                for line in sub_lines
-                if line.startswith("- **`")
-            )
+            command_count += sum(1 for line in sub_lines if line.startswith("- **`"))
 
         lines.append("")
 
@@ -269,18 +248,14 @@ def generate_tree() -> str:
 
 def main() -> None:
     """Write the generated command tree to the docs directory."""
-    output_path = (
-        Path(__file__).resolve().parent.parent / "docs" / "command_tree.md"
-    )
+    output_path = Path(__file__).resolve().parent.parent / "docs" / "command_tree.md"
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     tree = generate_tree()
     output_path.write_text(tree)
 
     # Count command entries (lines starting with "- **`")
-    count = sum(
-        1 for line in tree.split("\n") if line.startswith("- **`")
-    )
+    count = sum(1 for line in tree.split("\n") if line.startswith("- **`"))
     print(f"Generated command tree with {count} commands → {output_path}")
 
 

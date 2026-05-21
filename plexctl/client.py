@@ -7,13 +7,17 @@ HTTP client for endpoints not exposed by plexapi.
 
 from __future__ import annotations
 
-import xml.etree.ElementTree as ET
 from typing import TYPE_CHECKING, Any
 
 import httpx
+from defusedxml.ElementTree import fromstring as _safe_xml_fromstring
 from plexapi.server import PlexServer
 
 if TYPE_CHECKING:
+    # ET is used only for type annotations; all actual XML parsing uses
+    # defusedxml to prevent XML bomb and entity-expansion attacks.
+    import xml.etree.ElementTree as ET  # nosec B405
+
     from plexctl.config import PlexConfig
 
 
@@ -61,9 +65,7 @@ class PlexClient:
         if self._server is None:
             try:
                 self._server = PlexServer(  # type: ignore[no-untyped-call]
-                    self._config.url,
-                    self._config.token,
-                    timeout=self._config.timeout,
+                    self._config.url, self._config.token, timeout=self._config.timeout
                 )
             except Exception as exc:
                 msg = f"Cannot connect to Plex at {self._config.url}: {exc}"
@@ -86,10 +88,7 @@ class PlexClient:
         if self._http_client is None:
             self._http_client = httpx.Client(
                 base_url=self._config.url,
-                headers={
-                    "X-Plex-Token": self._config.token,
-                    "Accept": "application/json",
-                },
+                headers={"X-Plex-Token": self._config.token, "Accept": "application/json"},
                 timeout=self._config.timeout,
             )
             # Verify connectivity
@@ -190,7 +189,7 @@ def _parse_xml_response(content: bytes) -> Any:
     Returns:
         Parsed dict with the root element's tag as the top-level key.
     """
-    root = ET.fromstring(content)
+    root = _safe_xml_fromstring(content)
     return {root.tag: _xml_to_dict(root)}
 
 
@@ -255,10 +254,7 @@ class PlexHTTPClient:
         return self._parse_response(resp)
 
     def put(
-        self,
-        path: str,
-        params: dict[str, Any] | None = None,
-        data: dict[str, Any] | None = None,
+        self, path: str, params: dict[str, Any] | None = None, data: dict[str, Any] | None = None
     ) -> Any:
         """Send an authenticated PUT request to the Plex API.
 
@@ -278,10 +274,7 @@ class PlexHTTPClient:
         return self._parse_response(resp)
 
     def post(
-        self,
-        path: str,
-        params: dict[str, Any] | None = None,
-        data: dict[str, Any] | None = None,
+        self, path: str, params: dict[str, Any] | None = None, data: dict[str, Any] | None = None
     ) -> Any:
         """Send an authenticated POST request to the Plex API.
 

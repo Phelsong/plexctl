@@ -1,4 +1,5 @@
 """CLI-level integration tests for the 'playlists' command group."""
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
@@ -149,17 +150,14 @@ class TestPlaylistCreateCommand:
         with patch.object(
             PlaylistService, "create_playlist", return_value=playlist
         ) as mock_create:
-            result = runner.invoke(
-                app, ["library", "playlists", "create", "New Playlist"]
-            )
+            result = runner.invoke(app, ["library", "playlists", "create", "New Playlist"])
 
         assert result.exit_code == 0
         assert "New Playlist" in result.output
         mock_create.assert_called_once()
         call_kwargs = mock_create.call_args
         assert (
-            call_kwargs[1].get("title") == "New Playlist"
-            or call_kwargs[0][0] == "New Playlist"
+            call_kwargs[1].get("title") == "New Playlist" or call_kwargs[0][0] == "New Playlist"
         )
 
     @patch(CLIENT_PATCH)
@@ -197,19 +195,14 @@ class TestPlaylistCreateCommand:
         mock_client_cls.return_value = mock_client
 
         playlist = Playlist(
-            key="502",
-            title="Seeded",
-            playlist_type=PlaylistType.VIDEO,
-            smart=False,
-            item_count=2,
+            key="502", title="Seeded", playlist_type=PlaylistType.VIDEO, smart=False, item_count=2
         )
 
         with patch.object(
             PlaylistService, "create_playlist", return_value=playlist
         ) as _mock_create:
             result = runner.invoke(
-                app,
-                ["library", "playlists", "create", "Seeded", "-i", "100", "-i", "200"],
+                app, ["library", "playlists", "create", "Seeded", "-i", "100", "-i", "200"]
             )
 
         assert result.exit_code == 0
@@ -254,9 +247,7 @@ class TestPlaylistDeleteCommand:
         mock_client_cls.return_value = mock_client
 
         with patch.object(PlaylistService, "delete_playlist") as mock_delete:
-            result = runner.invoke(
-                app, ["library", "playlists", "delete", "12345", "--yes"]
-            )
+            result = runner.invoke(app, ["library", "playlists", "delete", "12345", "--yes"])
 
         assert result.exit_code == 0
         assert "12345" in result.output
@@ -396,9 +387,7 @@ class TestPlaylistRemoveCommand:
 
     def test_remove_requires_confirmation(self) -> None:
         """remove without --yes exits with code 1."""
-        result = runner.invoke(
-            app, ["library", "playlists", "remove", "12345", "56789"]
-        )
+        result = runner.invoke(app, ["library", "playlists", "remove", "12345", "56789"])
         assert result.exit_code == 1
         assert "yes" in result.output.lower() or "confirm" in result.output.lower()
 
@@ -410,9 +399,7 @@ class TestPlaylistRemoveCommand:
         mock_client = MagicMock()
         mock_client_cls.return_value = mock_client
 
-        with patch.object(
-            PlaylistService, "remove_items", return_value=1
-        ) as mock_remove:
+        with patch.object(PlaylistService, "remove_items", return_value=1) as mock_remove:
             result = runner.invoke(
                 app, ["library", "playlists", "remove", "12345", "56789", "--yes"]
             )

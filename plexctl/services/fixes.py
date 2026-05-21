@@ -182,19 +182,10 @@ class FixService:
             item.unmatch()
         except Exception as exc:
             return FixResult(
-                key=str(key),
-                title=title,
-                action="unmatch",
-                success=False,
-                error=str(exc),
+                key=str(key), title=title, action="unmatch", success=False, error=str(exc)
             )
 
-        return FixResult(
-            key=str(key),
-            title=title,
-            action="unmatch",
-            success=True,
-        )
+        return FixResult(key=str(key), title=title, action="unmatch", success=True)
 
     def refresh_item(self, rating_key: str | int) -> FixResult:
         """Refresh metadata for a single item.
@@ -215,19 +206,10 @@ class FixService:
             item.refresh()
         except Exception as exc:
             return FixResult(
-                key=str(key),
-                title=title,
-                action="refresh",
-                success=False,
-                error=str(exc),
+                key=str(key), title=title, action="refresh", success=False, error=str(exc)
             )
 
-        return FixResult(
-            key=str(key),
-            title=title,
-            action="refresh",
-            success=True,
-        )
+        return FixResult(key=str(key), title=title, action="refresh", success=True)
 
     def refresh_section(self, section_title: str) -> FixResult:
         """Refresh metadata for all items in a library section.
@@ -254,17 +236,10 @@ class FixService:
             )
 
         return FixResult(
-            key=str(section.key),
-            title=section.title,
-            action="refresh-section",
-            success=True,
+            key=str(section.key), title=section.title, action="refresh-section", success=True
         )
 
-    def scan_section(
-        self,
-        section_title: str,
-        path: str | None = None,
-    ) -> FixResult:
+    def scan_section(self, section_title: str, path: str | None = None) -> FixResult:
         """Scan a library section for new or changed files.
 
         Args:
@@ -287,18 +262,9 @@ class FixService:
                 error=str(exc),
             )
 
-        return FixResult(
-            key=str(section.key),
-            title=section.title,
-            action="scan",
-            success=True,
-        )
+        return FixResult(key=str(section.key), title=section.title, action="scan", success=True)
 
-    def batch_analyze(
-        self,
-        section_title: str,
-        only_unanalyzed: bool = True,
-    ) -> BatchFixResult:
+    def batch_analyze(self, section_title: str, only_unanalyzed: bool = True) -> BatchFixResult:
         """Trigger re-analysis for all shows with problems in a section.
 
         Scans the section for shows with unanalyzed or multi-media episodes,
@@ -325,10 +291,7 @@ class FixService:
             s
             for s in scan.shows
             if (only_unanalyzed and s.unanalyzed_episodes > 0)
-            or (
-                not only_unanalyzed
-                and (s.unanalyzed_episodes > 0 or s.multi_media_episodes > 0)
-            )
+            or (not only_unanalyzed and (s.unanalyzed_episodes > 0 or s.multi_media_episodes > 0))
         ]
 
         if not problem_shows:
@@ -367,17 +330,10 @@ class FixService:
                 )
 
         return BatchFixResult(
-            total=len(problem_shows),
-            succeeded=succeeded,
-            failed=len(results),
-            results=results,
+            total=len(problem_shows), succeeded=succeeded, failed=len(results), results=results
         )
 
-    def batch_refresh(
-        self,
-        section_title: str,
-        only_unanalyzed: bool = True,
-    ) -> BatchFixResult:
+    def batch_refresh(self, section_title: str, only_unanalyzed: bool = True) -> BatchFixResult:
         """Trigger metadata refresh for all shows with problems in a section.
 
         Similar to batch_analyze but triggers a full metadata refresh
@@ -402,10 +358,7 @@ class FixService:
             s
             for s in scan.shows
             if (only_unanalyzed and s.unanalyzed_episodes > 0)
-            or (
-                not only_unanalyzed
-                and (s.unanalyzed_episodes > 0 or s.multi_media_episodes > 0)
-            )
+            or (not only_unanalyzed and (s.unanalyzed_episodes > 0 or s.multi_media_episodes > 0))
         ]
 
         if not problem_shows:
@@ -443,10 +396,7 @@ class FixService:
                 )
 
         return BatchFixResult(
-            total=len(problem_shows),
-            succeeded=succeeded,
-            failed=len(results),
-            results=results,
+            total=len(problem_shows), succeeded=succeeded, failed=len(results), results=results
         )
 
     def split_show(self, rating_key: str | int) -> FixResult:
@@ -490,11 +440,7 @@ class FixService:
             item.split()  # type: ignore[no-untyped-call]
         except Exception as exc:
             return FixResult(
-                key=str(key),
-                title=title,
-                action="split",
-                success=False,
-                error=str(exc),
+                key=str(key), title=title, action="split", success=False, error=str(exc)
             )
 
         locations = getattr(item, "locations", [])
@@ -506,11 +452,7 @@ class FixService:
             success=True,
         )
 
-    def remove_duplicate_media(
-        self,
-        section_title: str,
-        dry_run: bool = True,
-    ) -> BatchFixResult:
+    def remove_duplicate_media(self, section_title: str, dry_run: bool = True) -> BatchFixResult:
         """Remove duplicate media versions from episodes in a section.
 
         Scans all shows in a section for episodes with multiple media

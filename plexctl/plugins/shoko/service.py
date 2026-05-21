@@ -66,9 +66,7 @@ class ShokoService:
     # --- Series operations ---------------------------------------------------
 
     def list_series(
-        self,
-        page: int = 1,
-        page_size: int = _DEFAULT_PAGE_SIZE,
+        self, page: int = 1, page_size: int = _DEFAULT_PAGE_SIZE
     ) -> tuple[list[ShokoSeries], int]:
         """List all series from Shoko.
 
@@ -79,10 +77,7 @@ class ShokoService:
         Returns:
             Tuple of (series_list, total_count).
         """
-        items, total = self._client.get_list(
-            "/Series",
-            {"pageSize": page_size, "page": page},
-        )
+        items, total = self._client.get_list("/Series", {"pageSize": page_size, "page": page})
         return [self._parse_series(s) for s in items], total
 
     def get_series(self, series_id: int) -> ShokoSeries:
@@ -94,10 +89,7 @@ class ShokoService:
         Returns:
             ShokoSeries with full details including AniDB/TMDB data.
         """
-        raw = self._client.get(
-            f"/Series/{series_id}",
-            {"includeDataFrom": "AniDB,TMDB"},
-        )
+        raw = self._client.get(f"/Series/{series_id}", {"includeDataFrom": "AniDB,TMDB"})
         return self._parse_series(raw)
 
     def search_series(self, query: str) -> list[ShokoSeries]:
@@ -109,19 +101,13 @@ class ShokoService:
         Returns:
             List of matching series.
         """
-        items, _ = self._client.get_list(
-            "/Series",
-            {"search": query, "pageSize": 50},
-        )
+        items, _ = self._client.get_list("/Series", {"search": query, "pageSize": 50})
         return [self._parse_series(s) for s in items]
 
     # --- Episode operations -------------------------------------------------
 
     def list_episodes(
-        self,
-        series_id: int,
-        page: int = 1,
-        page_size: int = _DEFAULT_PAGE_SIZE,
+        self, series_id: int, page: int = 1, page_size: int = _DEFAULT_PAGE_SIZE
     ) -> tuple[list[ShokoEpisode], int]:
         """List episodes for a series.
 
@@ -148,18 +134,13 @@ class ShokoService:
         Returns:
             ShokoEpisode with AniDB/TMDB cross-references.
         """
-        raw = self._client.get(
-            f"/Episode/{episode_id}",
-            {"includeDataFrom": "AniDB,TMDB"},
-        )
+        raw = self._client.get(f"/Episode/{episode_id}", {"includeDataFrom": "AniDB,TMDB"})
         return self._parse_episode(raw)
 
     # --- File operations ----------------------------------------------------
 
     def list_files(
-        self,
-        page: int = 1,
-        page_size: int = _DEFAULT_PAGE_SIZE,
+        self, page: int = 1, page_size: int = _DEFAULT_PAGE_SIZE
     ) -> tuple[list[ShokoFile], int]:
         """List all files tracked by Shoko.
 
@@ -171,16 +152,12 @@ class ShokoService:
             Tuple of (file_list, total_count).
         """
         items, total = self._client.get_list(
-            "/File",
-            {"pageSize": page_size, "page": page, "include": "MediaInfo,XRefs"},
+            "/File", {"pageSize": page_size, "page": page, "include": "MediaInfo,XRefs"}
         )
         return [self._parse_file(f) for f in items], total
 
     def list_series_files(
-        self,
-        series_id: int,
-        page: int = 1,
-        page_size: int = _DEFAULT_PAGE_SIZE,
+        self, series_id: int, page: int = 1, page_size: int = _DEFAULT_PAGE_SIZE
     ) -> tuple[list[ShokoFile], int]:
         """List files for a specific series.
 
@@ -193,8 +170,7 @@ class ShokoService:
             Tuple of (file_list, total_count).
         """
         items, total = self._client.get_list(
-            f"/Series/{series_id}/File",
-            {"pageSize": page_size, "page": page, "include": "XRefs"},
+            f"/Series/{series_id}/File", {"pageSize": page_size, "page": page, "include": "XRefs"}
         )
         return [self._parse_file(f) for f in items], total
 
@@ -207,10 +183,7 @@ class ShokoService:
         Returns:
             ShokoFile with cross-references.
         """
-        raw = self._client.get(
-            f"/File/{file_id}",
-            {"include": "MediaInfo,XRefs"},
-        )
+        raw = self._client.get(f"/File/{file_id}", {"include": "MediaInfo,XRefs"})
         return self._parse_file(raw)
 
     def search_file_by_path(self, path_suffix: str) -> list[ShokoFile]:
@@ -229,10 +202,7 @@ class ShokoService:
         Returns:
             List of matching ShokoFile objects.
         """
-        raw_items = self._client.get(
-            f"/File/PathEndsWith/{path_suffix}",
-            {"include": "XRefs"},
-        )
+        raw_items = self._client.get(f"/File/PathEndsWith/{path_suffix}", {"include": "XRefs"})
         # This endpoint returns a list directly, not a paginated response
         if not isinstance(raw_items, list):
             return []
@@ -252,8 +222,7 @@ class ShokoService:
             List of matching ShokoFile objects.
         """
         raw_items = self._client.get(
-            "/File/PathEndsWith",
-            {"path": path_suffix, "include": "XRefs"},
+            "/File/PathEndsWith", {"path": path_suffix, "include": "XRefs"}
         )
         if not isinstance(raw_items, list):
             return []
@@ -262,9 +231,7 @@ class ShokoService:
     # --- Group operations ---------------------------------------------------
 
     def list_groups(
-        self,
-        page: int = 1,
-        page_size: int = _DEFAULT_PAGE_SIZE,
+        self, page: int = 1, page_size: int = _DEFAULT_PAGE_SIZE
     ) -> tuple[list[ShokoGroup], int]:
         """List all groups from Shoko.
 
@@ -277,10 +244,7 @@ class ShokoService:
         Returns:
             Tuple of (group_list, total_count).
         """
-        items, total = self._client.get_list(
-            "/Group",
-            {"pageSize": page_size, "page": page},
-        )
+        items, total = self._client.get_list("/Group", {"pageSize": page_size, "page": page})
         return [self._parse_group(g) for g in items], total
 
     # --- Triage operations --------------------------------------------------
@@ -300,9 +264,7 @@ class ShokoService:
 
         while total is None or len(unlinked) < total:
             files, total = self.list_files(page=page, page_size=_DEFAULT_PAGE_SIZE)
-            unlinked.extend(
-                f for f in files if f.series_id is None and not f.is_ignored
-            )
+            unlinked.extend(f for f in files if f.series_id is None and not f.is_ignored)
             page += 1
             # Safety limit to prevent infinite loops
             if page > (total // _DEFAULT_PAGE_SIZE) + 2:
@@ -347,9 +309,7 @@ class ShokoService:
                             mismatch_type="no_tmdb_link",
                             shoko_id=s.ids.id,
                             name=s.name,
-                            detail=(
-                                f"Series '{s.name}' has no TMDB link for season mapping"
-                            ),
+                            detail=(f"Series '{s.name}' has no TMDB link for season mapping"),
                             severity="warning",
                         )
                     )
@@ -377,11 +337,7 @@ class ShokoService:
 
     # --- TMDB link operations -----------------------------------------------
 
-    def search_tmdb_shows(
-        self,
-        query: str,
-        year: int | None = None,
-    ) -> list[TmdbSearchResult]:
+    def search_tmdb_shows(self, query: str, year: int | None = None) -> list[TmdbSearchResult]:
         """Search TMDB for TV shows via Shoko's online search.
 
         Args:
@@ -395,17 +351,10 @@ class ShokoService:
         if year:
             params["year"] = year
 
-        raw_items, _ = self._client.get_list(
-            "/Tmdb/Show/Online/Search",
-            params,
-        )
+        raw_items, _ = self._client.get_list("/Tmdb/Show/Online/Search", params)
         return [self._parse_tmdb_search(item) for item in raw_items]
 
-    def search_tmdb_movies(
-        self,
-        query: str,
-        year: int | None = None,
-    ) -> list[TmdbSearchResult]:
+    def search_tmdb_movies(self, query: str, year: int | None = None) -> list[TmdbSearchResult]:
         """Search TMDB for movies via Shoko's online search.
 
         Args:
@@ -419,19 +368,11 @@ class ShokoService:
         if year:
             params["year"] = year
 
-        raw_items, _ = self._client.get_list(
-            "/Tmdb/Movie/Online/Search",
-            params,
-        )
+        raw_items, _ = self._client.get_list("/Tmdb/Movie/Online/Search", params)
         return [self._parse_tmdb_search(item) for item in raw_items]
 
     def link_tmdb_show(
-        self,
-        series_id: int,
-        tmdb_show_id: int,
-        *,
-        replace: bool = False,
-        refresh: bool = False,
+        self, series_id: int, tmdb_show_id: int, *, replace: bool = False, refresh: bool = False
     ) -> TmdbLinkResult:
         """Link a TMDB show to a Shoko series.
 
@@ -450,10 +391,7 @@ class ShokoService:
                 json={"ID": tmdb_show_id, "Replace": replace, "Refresh": refresh},
             )
             return TmdbLinkResult(
-                series_id=series_id,
-                tmdb_id=tmdb_show_id,
-                action="linked",
-                success=True,
+                series_id=series_id, tmdb_id=tmdb_show_id, action="linked", success=True
             )
         except Exception as exc:
             return TmdbLinkResult(
@@ -499,10 +437,7 @@ class ShokoService:
                 },
             )
             return TmdbLinkResult(
-                series_id=series_id,
-                tmdb_id=tmdb_movie_id,
-                action="linked",
-                success=True,
+                series_id=series_id, tmdb_id=tmdb_movie_id, action="linked", success=True
             )
         except Exception as exc:
             return TmdbLinkResult(
@@ -514,11 +449,7 @@ class ShokoService:
             )
 
     def unlink_tmdb_show(
-        self,
-        series_id: int,
-        tmdb_show_id: int,
-        *,
-        purge: bool = False,
+        self, series_id: int, tmdb_show_id: int, *, purge: bool = False
     ) -> TmdbLinkResult:
         """Remove a TMDB show link from a Shoko series.
 
@@ -532,14 +463,10 @@ class ShokoService:
         """
         try:
             self._client.delete(
-                f"/Series/{series_id}/TMDB/Show",
-                json={"ID": tmdb_show_id, "Purge": purge},
+                f"/Series/{series_id}/TMDB/Show", json={"ID": tmdb_show_id, "Purge": purge}
             )
             return TmdbLinkResult(
-                series_id=series_id,
-                tmdb_id=tmdb_show_id,
-                action="unlinked",
-                success=True,
+                series_id=series_id, tmdb_id=tmdb_show_id, action="unlinked", success=True
             )
         except Exception as exc:
             return TmdbLinkResult(
@@ -564,17 +491,10 @@ class ShokoService:
                 f"/Series/{series_id}/TMDB/Show/Action/Refresh",
                 json={"Immediate": True, "Force": True, "DownloadImages": True},
             )
-            return TmdbLinkResult(
-                series_id=series_id,
-                action="refreshed",
-                success=True,
-            )
+            return TmdbLinkResult(series_id=series_id, action="refreshed", success=True)
         except Exception as exc:
             return TmdbLinkResult(
-                series_id=series_id,
-                action="refreshed",
-                success=False,
-                error=str(exc),
+                series_id=series_id, action="refreshed", success=False, error=str(exc)
             )
 
     # --- Parse helpers -------------------------------------------------------
@@ -589,18 +509,18 @@ class ShokoService:
         ids = ShokoSeriesIDs(
             id=ids_raw.get("ID", 0),
             anidb=ids_raw.get("AniDB"),
-            tmdb_show=ids_raw.get("TMDB", {}).get("Show", [])
-            if isinstance(ids_raw.get("TMDB"), dict)
-            else [],
-            tmdb_movie=ids_raw.get("TMDB", {}).get("Movie", [])
-            if isinstance(ids_raw.get("TMDB"), dict)
-            else [],
-            tvdb=ids_raw.get("TvDB", [])
-            if isinstance(ids_raw.get("TvDB"), list)
-            else [],
-            imdb=ids_raw.get("IMDB", [])
-            if isinstance(ids_raw.get("IMDB"), list)
-            else [],
+            tmdb_show=(
+                ids_raw.get("TMDB", {}).get("Show", [])
+                if isinstance(ids_raw.get("TMDB"), dict)
+                else []
+            ),
+            tmdb_movie=(
+                ids_raw.get("TMDB", {}).get("Movie", [])
+                if isinstance(ids_raw.get("TMDB"), dict)
+                else []
+            ),
+            tvdb=ids_raw.get("TvDB", []) if isinstance(ids_raw.get("TvDB"), list) else [],
+            imdb=ids_raw.get("IMDB", []) if isinstance(ids_raw.get("IMDB"), list) else [],
         )
 
         local_sizes = ShokoSeriesSizes(
@@ -642,9 +562,7 @@ class ShokoService:
         season_number = None
         tmdb_episode_number = None
         tmdb_episode_id = None
-        tmdb_episodes = (
-            tmdb_raw.get("Episodes", []) if isinstance(tmdb_raw, dict) else []
-        )
+        tmdb_episodes = tmdb_raw.get("Episodes", []) if isinstance(tmdb_raw, dict) else []
         if tmdb_episodes:
             season_number = tmdb_episodes[0].get("SeasonNumber")
             tmdb_episode_number = tmdb_episodes[0].get("EpisodeNumber")
@@ -660,12 +578,10 @@ class ShokoService:
 
         return ShokoEpisode(
             id=episode_id,
-            name=raw.get(
-                "Name", anidb_raw.get("Title") if isinstance(anidb_raw, dict) else None
+            name=raw.get("Name", anidb_raw.get("Title") if isinstance(anidb_raw, dict) else None),
+            episode_number=(
+                anidb_raw.get("EpisodeNumber") if isinstance(anidb_raw, dict) else None
             ),
-            episode_number=anidb_raw.get("EpisodeNumber")
-            if isinstance(anidb_raw, dict)
-            else None,
             episode_type=ShokoEpisodeType.from_api_type(anidb_type),
             season_number=season_number,
             tmdb_episode_number=tmdb_episode_number,
@@ -684,9 +600,7 @@ class ShokoService:
 
         if series_ids_list:
             first_series = (
-                series_ids_list[0]
-                if isinstance(series_ids_list, list)
-                else series_ids_list
+                series_ids_list[0] if isinstance(series_ids_list, list) else series_ids_list
             )
             if isinstance(first_series, dict):
                 series_id = first_series.get("SeriesID", {}).get("ID")
@@ -702,9 +616,7 @@ class ShokoService:
         location = ShokoFileLocation(
             relative_path=locations[0].get("RelativePath", "") if locations else "",
             is_accessible=locations[0].get("IsAccessible", True) if locations else True,
-            managed_folder_id=locations[0].get("ManagedFolderID")
-            if locations
-            else None,
+            managed_folder_id=locations[0].get("ManagedFolderID") if locations else None,
         )
 
         # Extract filename from path
@@ -769,9 +681,11 @@ class ShokoService:
             id=raw.get("IDs", {}).get("ID", 0),
             name=raw.get("Name", "Unknown"),
             series_count=raw.get("Sizes", {}).get("Series", 0),
-            series_ids=raw.get("IDs", {}).get("SeriesIDs", [])
-            if isinstance(raw.get("IDs", {}).get("SeriesIDs"), list)
-            else [],
+            series_ids=(
+                raw.get("IDs", {}).get("SeriesIDs", [])
+                if isinstance(raw.get("IDs", {}).get("SeriesIDs"), list)
+                else []
+            ),
         )
 
     def _parse_tmdb_search(self, raw: dict[str, Any]) -> TmdbSearchResult:
@@ -838,8 +752,7 @@ class ShokoService:
                 if f.series_id is not None:
                     if f.series_id not in series_data:
                         series_data[f.series_id] = CrcAuditResult(
-                            series_id=f.series_id,
-                            series_name=f.series_name or "Unknown",
+                            series_id=f.series_id, series_name=f.series_name or "Unknown"
                         )
                     result = series_data[f.series_id]
                     result.total_files += 1
@@ -966,12 +879,7 @@ class ShokoService:
             if page > (file_total // _DEFAULT_PAGE_SIZE) + 2:
                 break
 
-        return BatchFixResult(
-            total=total,
-            succeeded=succeeded,
-            failed=failed,
-            results=results,
-        )
+        return BatchFixResult(total=total, succeeded=succeeded, failed=failed, results=results)
 
     def trigger_import(self) -> bool:
         """Trigger Shoko to import new files.
@@ -1052,9 +960,7 @@ class ShokoService:
 
         # Gather episodes and files, then match them
         entries = self._build_plexmatch_entries(
-            series_id,
-            plexmatch_dir=plexmatch_dir,
-            ordering_episode_map=ordering_episode_map,
+            series_id, plexmatch_dir=plexmatch_dir, ordering_episode_map=ordering_episode_map
         )
 
         plexmatch = PlexMatch(
@@ -1149,9 +1055,7 @@ class ShokoService:
         seen_keys: set[tuple[int, int]] = set()
         for series_id in series_ids:
             entries = self._build_plexmatch_entries(
-                series_id,
-                plexmatch_dir=plexmatch_dir,
-                ordering_episode_map=ordering_episode_map,
+                series_id, plexmatch_dir=plexmatch_dir, ordering_episode_map=ordering_episode_map
             )
             for entry in entries:
                 key = (entry.season_number, entry.episode_number)
@@ -1269,8 +1173,7 @@ class ShokoService:
         """
         # Fetch seasons for this ordering
         seasons_raw, _ = self._client.get_list(
-            f"/TMDB/Show/{tmdb_show_id}/Season",
-            {"alternateOrderingID": ordering_id},
+            f"/TMDB/Show/{tmdb_show_id}/Season", {"alternateOrderingID": ordering_id}
         )
 
         episode_map: dict[int, tuple[int, int]] = {}
@@ -1287,9 +1190,7 @@ class ShokoService:
                 continue
 
             # Fetch episodes for this season
-            episodes_raw, _ = self._client.get_list(
-                f"/TMDB/Season/{season_id}/Episode",
-            )
+            episodes_raw, _ = self._client.get_list(f"/TMDB/Season/{season_id}/Episode")
 
             for ep_raw in episodes_raw:
                 if not isinstance(ep_raw, dict):
@@ -1332,19 +1233,14 @@ class ShokoService:
         Returns:
             List of PlexMatchEntry objects, sorted by season/episode number.
         """
-        episodes, total_episodes = self.list_episodes(
-            series_id,
-            page_size=_DEFAULT_PAGE_SIZE,
-        )
+        episodes, total_episodes = self.list_episodes(series_id, page_size=_DEFAULT_PAGE_SIZE)
 
         # Paginate to get all episodes
         all_episodes = list(episodes)
         page = 2
         while len(all_episodes) < total_episodes:
             more_episodes, _ = self.list_episodes(
-                series_id,
-                page=page,
-                page_size=_DEFAULT_PAGE_SIZE,
+                series_id, page=page, page_size=_DEFAULT_PAGE_SIZE
             )
             if not more_episodes:
                 break
@@ -1371,9 +1267,7 @@ class ShokoService:
         file_total = None
         while file_total is None or len(series_files) < file_total:
             page_files, file_total = self.list_series_files(
-                series_id,
-                page=page,
-                page_size=_DEFAULT_PAGE_SIZE,
+                series_id, page=page, page_size=_DEFAULT_PAGE_SIZE
             )
             series_files.extend(page_files)
             page += 1
@@ -1382,9 +1276,7 @@ class ShokoService:
 
         # Filter out variation and ignored files
         series_files_filtered = [
-            f
-            for f in series_files
-            if not f.is_variation and not f.is_ignored and f.filename
+            f for f in series_files if not f.is_variation and not f.is_ignored and f.filename
         ]
 
         # Build episode_id -> episode mapping
@@ -1407,9 +1299,7 @@ class ShokoService:
         # the episode has no place in the TMDB season structure and is
         # treated as a special (S00). This handles cases like OVAs that
         # Shoko classifies as "Episode" type but TMDB treats as specials.
-        def _assign_season_episode(
-            ep: ShokoEpisode,
-        ) -> tuple[int, int]:
+        def _assign_season_episode(ep: ShokoEpisode) -> tuple[int, int]:
             if ordering_episode_map and ep.tmdb_episode_id is not None:
                 ordering_match = ordering_episode_map.get(ep.tmdb_episode_id)
                 if ordering_match is not None:
@@ -1417,10 +1307,7 @@ class ShokoService:
                 # Not in ordering map: fall through to stored data
 
             if ep.season_number is not None:
-                return (
-                    ep.season_number,
-                    ep.tmdb_episode_number or ep.episode_number or 0,
-                )
+                return (ep.season_number, ep.tmdb_episode_number or ep.episode_number or 0)
 
             if ep.episode_type == ShokoEpisodeType.SPECIAL or (
                 ep.tmdb_episode_number is None and ep.season_number is None
@@ -1434,10 +1321,7 @@ class ShokoService:
         # same season/episode number produce only one entry (first file wins).
         seen_keys: set[tuple[int, int]] = set()
         entries: list[PlexMatchEntry] = []
-        for ep in sorted(
-            relevant_episodes,
-            key=lambda e: _assign_season_episode(e),
-        ):
+        for ep in sorted(relevant_episodes, key=lambda e: _assign_season_episode(e)):
             matched_file = episode_to_file.get(ep.id)
             if matched_file is None or matched_file.filename is None:
                 continue
@@ -1460,9 +1344,7 @@ class ShokoService:
             seen_keys.add(key)
             entries.append(
                 PlexMatchEntry(
-                    season_number=season,
-                    episode_number=episode_num,
-                    filename=filepath,
+                    season_number=season, episode_number=episode_num, filename=filepath
                 )
             )
 
@@ -1577,11 +1459,7 @@ class ShokoService:
         scan_dir = Path(media_root) / library if library else Path(media_root)
 
         if not scan_dir.is_dir():
-            return PlexMatchBatchResult(
-                total_dirs=0,
-                results=[],
-                failed=1,
-            )
+            return PlexMatchBatchResult(total_dirs=0, results=[], failed=1)
 
         # Collect all subdirectories that look like series dirs
         series_dirs = [
@@ -1591,20 +1469,14 @@ class ShokoService:
         ]
 
         if not series_dirs:
-            return PlexMatchBatchResult(
-                total_dirs=0,
-                results=[],
-            )
+            return PlexMatchBatchResult(total_dirs=0, results=[])
 
         # Fetch all Shoko series and build lookup tables
         all_shoko_series: list[ShokoSeries] = []
         page = 1
         total = None
         while total is None or len(all_shoko_series) < total:
-            series_page, total = self.list_series(
-                page=page,
-                page_size=_DEFAULT_PAGE_SIZE,
-            )
+            series_page, total = self.list_series(page=page, page_size=_DEFAULT_PAGE_SIZE)
             if not series_page:
                 break
             all_shoko_series.extend(series_page)
@@ -1663,9 +1535,7 @@ class ShokoService:
 
             # Check if this series shares a TMDB show with other series
             tmdb_id: int | None = (
-                primary_series.ids.tmdb_show[0]
-                if primary_series.ids.tmdb_show
-                else None
+                primary_series.ids.tmdb_show[0] if primary_series.ids.tmdb_show else None
             )
             combined_ids: list[int] = [primary_series.ids.id]
 
@@ -1687,16 +1557,13 @@ class ShokoService:
                 # Check if subdirectories match the other series in the group
                 # If so, write .plexmatch to the parent directory
                 has_subs = any(
-                    (dir_path / s.name).is_dir()
-                    or (dir_path / s.name.rstrip(")")).is_dir()
+                    (dir_path / s.name).is_dir() or (dir_path / s.name.rstrip(")")).is_dir()
                     for s in group
                 )
                 if not has_subs:
                     # Check if any subdirectory of this dir matches a group series
                     sub_names = {
-                        self._normalize_name(d.name)
-                        for d in dir_path.iterdir()
-                        if d.is_dir()
+                        self._normalize_name(d.name) for d in dir_path.iterdir() if d.is_dir()
                     }
                     for s in group:
                         if self._normalize_name(s.name or "") in sub_names:
@@ -1780,9 +1647,7 @@ class ShokoService:
     # --- Triage helpers ------------------------------------------------------
 
     def triage_section(
-        self,
-        section_title: str = "Anime",
-        path_map: dict[str, str] | None = None,
+        self, section_title: str = "Anime", path_map: dict[str, str] | None = None
     ) -> TriageReport:
         """Cross-reference all data sources for a library section.
 
@@ -1812,10 +1677,7 @@ class ShokoService:
         summary = self._build_summary(issues, section_title, total_shows)
 
         return TriageReport(
-            section_title=section_title,
-            total_shows=total_shows,
-            issues=issues,
-            summary=summary,
+            section_title=section_title, total_shows=total_shows, issues=issues, summary=summary
         )
 
     def _collect_shoko_issues(self) -> list[TriageIssue]:
@@ -1830,9 +1692,7 @@ class ShokoService:
         return self._shoko_service.collect_triage_issues()
 
     def _collect_filesystem_issues(
-        self,
-        section_title: str,
-        path_map: dict[str, str] | None,
+        self, section_title: str, path_map: dict[str, str] | None
     ) -> list[TriageIssue]:
         """Collect issues from filesystem comparison."""
         from plexctl.services.fs_compare import FsCompareService
@@ -1976,17 +1836,12 @@ class ShokoService:
                 gaps.append(gap)
 
         # Sort by episode deficit (largest gap first)
-        gaps.sort(
-            key=lambda g: g.expected_episode_count - g.actual_episode_count,
-            reverse=True,
-        )
+        gaps.sort(key=lambda g: g.expected_episode_count - g.actual_episode_count, reverse=True)
 
         # Count shows with actual gaps
         gap_count = sum(1 for g in gaps if g.is_missing)
 
-        summary = self._build_gap_summary(
-            section_title, len(plex_shows), gap_count, gaps
-        )
+        summary = self._build_gap_summary(section_title, len(plex_shows), gap_count, gaps)
         return SeasonGapReport(
             section_title=section_title,
             total_shows=len(plex_shows),

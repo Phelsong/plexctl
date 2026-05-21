@@ -1,4 +1,5 @@
 """CLI command modules for plexctl."""
+
 from plexctl.commands.collections import collections_app
 from plexctl.commands.item import item_app
 from plexctl.commands.library import library_app

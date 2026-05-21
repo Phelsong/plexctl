@@ -59,9 +59,7 @@ class UserService:
         Raises:
             httpx.HTTPStatusError: If the API request fails.
         """
-        response = self._client.server.get(
-            f"/library/metadata/{media_key}/users/top"
-        )
+        response = self._client.server.get(f"/library/metadata/{media_key}/users/top")
         data = response.json()
 
         # Parse users from MediaContainer wrapper

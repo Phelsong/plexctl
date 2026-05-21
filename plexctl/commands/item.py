@@ -19,12 +19,7 @@ from plexctl.converters import (
     similar_media_to_csv,
     subtitle_stream_to_csv,
 )
-from plexctl.csv_utils import (
-    from_csv,
-    get_model_class,
-    list_model_names,
-    write_csv_to_output,
-)
+from plexctl.csv_utils import from_csv, get_model_class, list_model_names, write_csv_to_output
 from plexctl.models import MediaType, MetadataEdit
 from plexctl.options import CsvFlag, OutputFile
 from plexctl.services.fixes import FixService
@@ -33,9 +28,7 @@ from plexctl.services.search import SearchService
 from plexctl.services.server import ServerService
 
 item_app = typer.Typer(
-    name="item",
-    help="Operations on individual media items.",
-    no_args_is_help=True,
+    name="item", help="Operations on individual media items.", no_args_is_help=True
 )
 console = Console()
 
@@ -74,9 +67,7 @@ def _get_search_service() -> SearchService:
 @item_app.command(name="search")
 def search_items(
     query: str = typer.Argument(help="Search query"),
-    section: Annotated[
-        str | None, typer.Option(help="Limit to library section")
-    ] = None,
+    section: Annotated[str | None, typer.Option(help="Limit to library section")] = None,
     type: Annotated[MediaType | None, typer.Option(help="Media type filter")] = None,
     csv_output: CsvFlag = False,
     output: OutputFile = None,
@@ -138,11 +129,10 @@ def edit_item(
 @item_app.command(name="ingest")
 def ingest_csv(
     model: str = typer.Argument(
-        help="Model to ingest (e.g. triage_issue). Use 'list' to see all.",
+        help="Model to ingest (e.g. triage_issue). Use 'list' to see all."
     ),
     file: str | None = typer.Argument(
-        default=None,
-        help="Path to CSV file to ingest. Not needed for 'list'.",
+        default=None, help="Path to CSV file to ingest. Not needed for 'list'."
     ),
 ) -> None:
     """Read CSV data back into validated Pydantic models.
@@ -269,9 +259,7 @@ def rate_item(
 
 
 @item_app.command(name="watch")
-def mark_watched(
-    key: str = typer.Argument(help="Plex rating key of the item"),
-) -> None:
+def mark_watched(key: str = typer.Argument(help="Plex rating key of the item")) -> None:
     """Mark a media item as watched.
 
     Example:
@@ -287,9 +275,7 @@ def mark_watched(
 
 
 @item_app.command(name="unwatch")
-def mark_unwatched(
-    key: str = typer.Argument(help="Plex rating key of the item"),
-) -> None:
+def mark_unwatched(key: str = typer.Argument(help="Plex rating key of the item")) -> None:
     """Mark a media item as unwatched.
 
     Example:
@@ -310,12 +296,7 @@ def mark_unwatched(
 @item_app.command(name="delete")
 def delete_item(
     key: str = typer.Argument(help="Plex rating key of the item to delete"),
-    confirm: bool = typer.Option(
-        False,
-        "--yes",
-        "-y",
-        help="Skip confirmation prompt.",
-    ),
+    confirm: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation prompt."),
 ) -> None:
     """Delete a media item from the library.
 
@@ -346,12 +327,8 @@ def find_matches(
     agent: Annotated[
         str | None, typer.Option(help="Metadata agent (e.g. tv.plex.agents.series)")
     ] = None,
-    title: Annotated[
-        str | None, typer.Option(help="Override title for the search")
-    ] = None,
-    year: Annotated[
-        str | None, typer.Option(help="Override year for the search")
-    ] = None,
+    title: Annotated[str | None, typer.Option(help="Override title for the search")] = None,
+    year: Annotated[str | None, typer.Option(help="Override year for the search")] = None,
 ) -> None:
     """Search for metadata matches for an item.
 
@@ -382,9 +359,7 @@ def find_matches(
         )
 
     console.print(table)
-    console.print(
-        "\n[dim]Use 'fix-match' with --match-index to apply a specific match.[/dim]"
-    )
+    console.print("\n[dim]Use 'fix-match' with --match-index to apply a specific match.[/dim]")
 
 
 # --- Fix match (from fixes.py) --------------------------------------------
@@ -396,19 +371,12 @@ def fix_match(
     match_index: Annotated[
         int,
         typer.Option(
-            "--match-index",
-            help="Which match to apply (0 = best match, see 'matches' command)",
+            "--match-index", help="Which match to apply (0 = best match, see 'matches' command)"
         ),
     ] = 0,
-    agent: Annotated[
-        str | None, typer.Option(help="Metadata agent for the search")
-    ] = None,
-    title: Annotated[
-        str | None, typer.Option(help="Override title for the search")
-    ] = None,
-    year: Annotated[
-        str | None, typer.Option(help="Override year for the search")
-    ] = None,
+    agent: Annotated[str | None, typer.Option(help="Metadata agent for the search")] = None,
+    title: Annotated[str | None, typer.Option(help="Override title for the search")] = None,
+    year: Annotated[str | None, typer.Option(help="Override year for the search")] = None,
 ) -> None:
     """Fix an incorrect metadata match.
 
@@ -416,13 +384,7 @@ def fix_match(
     Use the 'matches' command first to see available options.
     """
     service = _get_fix_service()
-    result = service.fix_match(
-        key,
-        match_index=match_index,
-        agent=agent,
-        title=title,
-        year=year,
-    )
+    result = service.fix_match(key, match_index=match_index, agent=agent, title=title, year=year)
 
     if result.success:
         matched_to = result.matched_to or ""
@@ -442,9 +404,7 @@ def fix_match(
 
 
 @item_app.command(name="unmatch")
-def unmatch_item(
-    key: str = typer.Argument(help="Plex rating key of the item"),
-) -> None:
+def unmatch_item(key: str = typer.Argument(help="Plex rating key of the item")) -> None:
     """Remove metadata match from an item.
 
     This disconnects the item from its current metadata source,
@@ -532,11 +492,7 @@ def search_advanced(
     """
     service = _get_search_service()
     results = service.search_advanced(
-        query=query,
-        media_type=type,
-        section=section,
-        sort=sort,
-        limit=limit,
+        query=query, media_type=type, section=section, sort=sort, limit=limit
     )
 
     if not results:
@@ -570,9 +526,7 @@ def search_advanced(
 @item_app.command("actor")
 def search_by_actor(
     actor: str = typer.Argument(help="Actor name to search for"),
-    type: str = typer.Option(
-        "movie", "--type", "-t", help="Media type (movie or show)"
-    ),
+    type: str = typer.Option("movie", "--type", "-t", help="Media type (movie or show)"),
     csv_output: CsvFlag = False,
     output: OutputFile = None,
 ) -> None:
@@ -618,9 +572,7 @@ def search_by_actor(
 @item_app.command("director")
 def search_by_director(
     director: str = typer.Argument(help="Director name to search for"),
-    type: str = typer.Option(
-        "movie", "--type", "-t", help="Media type (movie or show)"
-    ),
+    type: str = typer.Option("movie", "--type", "-t", help="Media type (movie or show)"),
     csv_output: CsvFlag = False,
     output: OutputFile = None,
 ) -> None:
@@ -666,9 +618,7 @@ def search_by_director(
 @item_app.command("genre")
 def search_by_genre(
     genre: str = typer.Argument(help="Genre name (e.g. Action, Comedy, Drama)"),
-    type: str | None = typer.Option(
-        None, "--type", "-t", help="Media type filter (movie, show)"
-    ),
+    type: str | None = typer.Option(None, "--type", "-t", help="Media type filter (movie, show)"),
     csv_output: CsvFlag = False,
     output: OutputFile = None,
 ) -> None:
@@ -768,9 +718,7 @@ def search_by_title(
 @item_app.command("year")
 def search_by_year(
     year: int = typer.Argument(help="Release year to search for"),
-    type: str | None = typer.Option(
-        None, "--type", "-t", help="Media type filter (movie, show)"
-    ),
+    type: str | None = typer.Option(None, "--type", "-t", help="Media type filter (movie, show)"),
     csv_output: CsvFlag = False,
     output: OutputFile = None,
 ) -> None:
@@ -864,9 +812,7 @@ def find_similar(
 @item_app.command("tmdb")
 def search_tmdb(
     query: str = typer.Argument(help="Search query"),
-    type: str = typer.Option(
-        "movie", "--type", "-t", help="Media type (movie or show)"
-    ),
+    type: str = typer.Option("movie", "--type", "-t", help="Media type (movie or show)"),
     year: int | None = typer.Option(None, "--year", "-y", help="Release year"),
     csv_output: CsvFlag = False,
     output: OutputFile = None,
@@ -969,9 +915,7 @@ def _make_tag_commands(tag_type: str, display_name: str) -> None:
         service = _get_metadata_service()
         result = service.remove_tag(key, tag_type, values, locked=locked)
         if result:
-            console.print(
-                f"[green]✓ Removed {display_name}(s) from {result.title}[/green]"
-            )
+            console.print(f"[green]✓ Removed {display_name}(s) from {result.title}[/green]")
         else:
             console.print(f"[red]✗ Failed to remove {display_name}(s)[/red]")
             raise typer.Exit(code=1)
@@ -994,9 +938,7 @@ _make_tag_commands("country", "country")
 @item_app.command("lock")
 def lock_fields(
     key: str = typer.Argument(help="Rating key of the item"),
-    fields: list[str] = typer.Argument(
-        help="Field name(s) to lock (e.g. title, summary, year)"
-    ),
+    fields: list[str] = typer.Argument(help="Field name(s) to lock (e.g. title, summary, year)"),
 ) -> None:
     """Lock metadata field(s) to prevent automatic changes.
 
@@ -1048,10 +990,7 @@ def search_subtitles(
     hearing_impaired: int = typer.Option(
         0,
         "--hi",
-        help=(
-            "Hearing impaired: 0=prefer non-SDH, "
-            "1=prefer SDH, 2=only SDH, 3=only non-SDH"
-        ),
+        help=("Hearing impaired: 0=prefer non-SDH, " "1=prefer SDH, 2=only SDH, 3=only non-SDH"),
     ),
     forced: int = typer.Option(
         0,
@@ -1136,10 +1075,7 @@ def download_subtitle(
         console.print(f"[red]✗ {exc}[/red]")
         raise typer.Exit(code=1) from None
 
-    msg = (
-        f"[green]✓ Subtitle download requested for "
-        f"stream {stream_id} on item {key}[/green]"
-    )
+    msg = f"[green]✓ Subtitle download requested for " f"stream {stream_id} on item {key}[/green]"
     console.print(msg)
 
 
@@ -1226,8 +1162,7 @@ def set_item_progress(
 
     if result.success:
         console.print(
-            f"[green]✓ Set progress for item {result.key} "
-            f"to {time_ms}ms ({state})[/green]"
+            f"[green]✓ Set progress for item {result.key} " f"to {time_ms}ms ({state})[/green]"
         )
     else:
         console.print(f"[red]✗ Failed to set progress: {result.error}[/red]")
@@ -1236,16 +1171,8 @@ def set_item_progress(
 @item_app.command(name="merge")
 def merge_items(
     target: str = typer.Argument(help="Rating key of the target item"),
-    sources: list[str] = typer.Argument(
-        ...,
-        help="Rating keys of items to merge into target",
-    ),
-    confirm: bool = typer.Option(
-        False,
-        "--yes",
-        "-y",
-        help="Skip confirmation prompt.",
-    ),
+    sources: list[str] = typer.Argument(..., help="Rating keys of items to merge into target"),
+    confirm: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation prompt."),
 ) -> None:
     """Merge multiple media items into one.
 
@@ -1269,8 +1196,6 @@ def merge_items(
         raise typer.Exit(code=1) from None
 
     if result.success:
-        console.print(
-            f"[green]✓ Merged {len(sources)} item(s) into {result.key}[/green]"
-        )
+        console.print(f"[green]✓ Merged {len(sources)} item(s) into {result.key}[/green]")
     else:
         console.print(f"[red]✗ Failed to merge: {result.error}[/red]")

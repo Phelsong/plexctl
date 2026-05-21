@@ -78,9 +78,7 @@ class TreeService:
         target_type = type_aliases.get(section_ref.lower())
         if target_type:
             matches = [
-                s
-                for s in sections
-                if s.section_type and s.section_type.value == target_type
+                s for s in sections if s.section_type and s.section_type.value == target_type
             ]
             if len(matches) == 1:
                 return matches[0].key
@@ -88,9 +86,7 @@ class TreeService:
         return None
 
     def get_section_tree(
-        self,
-        section_key: str | int,
-        media_type: str | None = None,
+        self, section_key: str | int, media_type: str | None = None
     ) -> list[MediaTreeItem]:
         """Get top-level items in a library section as a tree.
 
@@ -107,12 +103,7 @@ class TreeService:
         http = PlexHTTPClient(self._client)
         params: dict[str, Any] = {}
         if media_type:
-            type_map = {
-                "movie": "1",
-                "show": "2",
-                "artist": "3",
-                "photo": "4",
-            }
+            type_map = {"movie": "1", "show": "2", "artist": "3", "photo": "4"}
             params["type"] = type_map.get(media_type.lower(), media_type)
 
         data = http.get(f"/library/sections/{key}/all", params=params)
@@ -177,11 +168,7 @@ class TreeService:
             raw_children = [raw_children]
 
         seasons = [
-            _parse_tree_item(
-                entry,
-                parent_key=key,
-                parent_title=show_item.title,
-            )
+            _parse_tree_item(entry, parent_key=key, parent_title=show_item.title)
             for entry in raw_children
         ]
 
@@ -223,9 +210,7 @@ class TreeService:
             parent_key_val = str(parent_key_val)
 
         season_item = _parse_tree_item(
-            raw_season,
-            parent_key=parent_key_val,
-            parent_title=parent_title,
+            raw_season, parent_key=parent_key_val, parent_title=parent_title
         )
 
         # Then get children (episodes)
@@ -244,11 +229,7 @@ class TreeService:
             raw_children = [raw_children]
 
         episodes = [
-            _parse_tree_item(
-                entry,
-                parent_key=key,
-                parent_title=season_item.title,
-            )
+            _parse_tree_item(entry, parent_key=key, parent_title=season_item.title)
             for entry in raw_children
         ]
 
@@ -260,9 +241,7 @@ class TreeService:
 
 
 def _parse_tree_item(
-    entry: dict[str, Any],
-    parent_key: str | None = None,
-    parent_title: str | None = None,
+    entry: dict[str, Any], parent_key: str | None = None, parent_title: str | None = None
 ) -> MediaTreeItem:
     """Parse a raw API metadata entry into a MediaTreeItem.
 

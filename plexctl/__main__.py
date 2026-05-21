@@ -1,4 +1,5 @@
 """CLI entry point for plexctl."""
+
 from plexctl.cli import app
 from asyncio import run
 

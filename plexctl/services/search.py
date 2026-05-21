@@ -200,11 +200,7 @@ class SearchService:
 
         return results
 
-    def search_by_actor(
-        self,
-        actor_name: str,
-        media_type: str = "movie",
-    ) -> list[SearchResult]:
+    def search_by_actor(self, actor_name: str, media_type: str = "movie") -> list[SearchResult]:
         """Search for media featuring a specific actor.
 
         Args:
@@ -222,19 +218,14 @@ class SearchService:
         http = PlexHTTPClient(self._client)
 
         type_code = _TYPE_MAP.get(media_type.lower(), "1")
-        params: dict[str, Any] = {
-            "type": type_code,
-            "actor": actor_name,
-        }
+        params: dict[str, Any] = {"type": type_code, "actor": actor_name}
 
         data = http.get("/library/all", params=params)
 
         return self._parse_library_response(data)
 
     def search_by_director(
-        self,
-        director_name: str,
-        media_type: str = "movie",
+        self, director_name: str, media_type: str = "movie"
     ) -> list[SearchResult]:
         """Search for media directed by a specific director.
 
@@ -253,20 +244,14 @@ class SearchService:
         http = PlexHTTPClient(self._client)
 
         type_code = _TYPE_MAP.get(media_type.lower(), "1")
-        params: dict[str, Any] = {
-            "type": type_code,
-            "director": director_name,
-        }
+        params: dict[str, Any] = {"type": type_code, "director": director_name}
 
         data = http.get("/library/all", params=params)
 
         return self._parse_library_response(data)
 
     def search_by_title(
-        self,
-        query: str,
-        media_type: str | None = None,
-        section: str | int | None = None,
+        self, query: str, media_type: str | None = None, section: str | int | None = None
     ) -> list[SearchResult]:
         """Search for media by title.
 
@@ -300,11 +285,7 @@ class SearchService:
 
         return self._parse_library_response(data)
 
-    def search_by_year(
-        self,
-        year: int,
-        media_type: str | None = None,
-    ) -> list[SearchResult]:
+    def search_by_year(self, year: int, media_type: str | None = None) -> list[SearchResult]:
         """Search for media by release year.
 
         Args:
@@ -327,11 +308,7 @@ class SearchService:
 
         return self._parse_library_response(data)
 
-    def search_by_genre(
-        self,
-        genre: str,
-        media_type: str | None = None,
-    ) -> list[SearchResult]:
+    def search_by_genre(self, genre: str, media_type: str | None = None) -> list[SearchResult]:
         """Search for media by genre.
 
         Args:
@@ -357,11 +334,7 @@ class SearchService:
 
         return self._parse_library_response(data)
 
-    def find_similar(
-        self,
-        key: str | int,
-        limit: int = 20,
-    ) -> list[SimilarMedia]:
+    def find_similar(self, key: str | int, limit: int = 20) -> list[SimilarMedia]:
         """Find media similar to a given item.
 
         Args:
@@ -405,10 +378,7 @@ class SearchService:
         return results
 
     def search_tmdb(
-        self,
-        query: str,
-        media_type: str = "movie",
-        year: int | None = None,
+        self, query: str, media_type: str = "movie", year: int | None = None
     ) -> list[SearchResult]:
         """Search for media using the Plex Hub search with TMDB integration.
 

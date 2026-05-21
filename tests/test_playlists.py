@@ -1,16 +1,12 @@
 """Tests for PlaylistService — regular playlist creation and management."""
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
 import pytest
 from plexctl.models import CsvPlaylist, MediaType, Playlist, PlaylistItem, PlaylistType
-from plexctl.services.playlists import (
-    PlaylistService,
-    _parse_playlist,
-    _safe_bool,
-    _safe_int,
-)
+from plexctl.services.playlists import PlaylistService, _parse_playlist, _safe_bool, _safe_int
 
 # --- Helper function tests -----------------------------------------------------
 
@@ -90,12 +86,7 @@ class TestParsePlaylist:
         assert result.item_count == 10
 
     def test_playlist_type_parsing(self) -> None:
-        item = {
-            "ratingKey": "100",
-            "title": "Audio Mix",
-            "playlistType": "audio",
-            "smart": 0,
-        }
+        item = {"ratingKey": "100", "title": "Audio Mix", "playlistType": "audio", "smart": 0}
         result = _parse_playlist(item)
         assert result.playlist_type == PlaylistType.AUDIO
 
@@ -436,9 +427,7 @@ class TestAddItems:
     def test_add_items_success(self) -> None:
         mock_client = MagicMock()
         mock_http = MagicMock()
-        mock_http.get.return_value = {
-            "MediaContainer": {"machineIdentifier": "machine123"}
-        }
+        mock_http.get.return_value = {"MediaContainer": {"machineIdentifier": "machine123"}}
         mock_http.put.return_value = None
 
         with patch("plexctl.client.PlexHTTPClient", return_value=mock_http):
@@ -630,11 +619,7 @@ class TestPlaylistConverters:
         from plexctl.converters import playlist_item_to_csv
 
         item = PlaylistItem(
-            key="100",
-            title="Inception",
-            media_type=MediaType.MOVIE,
-            year=2010,
-            duration=1480000,
+            key="100", title="Inception", media_type=MediaType.MOVIE, year=2010, duration=1480000
         )
         csv_row = playlist_item_to_csv(item)
         assert csv_row.key == "100"
@@ -676,11 +661,7 @@ class TestPlaylistCsvRoundtrip:
         from plexctl.models import CsvPlaylistItem
 
         item = PlaylistItem(
-            key="100",
-            title="Inception",
-            media_type=MediaType.MOVIE,
-            year=2010,
-            duration=1480000,
+            key="100", title="Inception", media_type=MediaType.MOVIE, year=2010, duration=1480000
         )
         csv_row = playlist_item_to_csv(item)
         csv_content = to_csv([csv_row])

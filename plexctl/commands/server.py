@@ -41,9 +41,7 @@ from plexctl.services.server import ServerService, parse_duration
 from plexctl.services.users import UserService
 
 server_app = typer.Typer(
-    name="server",
-    help="Plex server administration and playback commands.",
-    no_args_is_help=True,
+    name="server", help="Plex server administration and playback commands.", no_args_is_help=True
 )
 console = Console()
 
@@ -59,10 +57,7 @@ def _get_service() -> ServerService:
 
 
 @server_app.command(name="sessions")
-def list_sessions(
-    csv_output: CsvFlag = False,
-    output: OutputFile = None,
-) -> None:
+def list_sessions(csv_output: CsvFlag = False, output: OutputFile = None) -> None:
     """List active playback sessions on the server."""
     service = _get_service()
     sessions = service.list_sessions()
@@ -141,17 +136,14 @@ def rate_item(
 
 
 @server_app.command(name="watch", deprecated=True)
-def mark_watched(
-    key: str = typer.Argument(help="Plex rating key of the item"),
-) -> None:
+def mark_watched(key: str = typer.Argument(help="Plex rating key of the item")) -> None:
     """Mark a media item as watched.
 
     Example:
         plexctl server watch 12345
     """
     warnings.warn(
-        "Command 'plexctl server watch' is deprecated. "
-        "Use 'plexctl item watch' instead.",
+        "Command 'plexctl server watch' is deprecated. " "Use 'plexctl item watch' instead.",
         DeprecationWarning,
         stacklevel=2,
     )
@@ -165,17 +157,14 @@ def mark_watched(
 
 
 @server_app.command(name="unwatch", deprecated=True)
-def mark_unwatched(
-    key: str = typer.Argument(help="Plex rating key of the item"),
-) -> None:
+def mark_unwatched(key: str = typer.Argument(help="Plex rating key of the item")) -> None:
     """Mark a media item as unwatched.
 
     Example:
         plexctl server unwatch 12345
     """
     warnings.warn(
-        "Command 'plexctl server unwatch' is deprecated. "
-        "Use 'plexctl item unwatch' instead.",
+        "Command 'plexctl server unwatch' is deprecated. " "Use 'plexctl item unwatch' instead.",
         DeprecationWarning,
         stacklevel=2,
     )
@@ -194,12 +183,7 @@ def mark_unwatched(
 @server_app.command(name="delete", deprecated=True)
 def delete_item(
     key: str = typer.Argument(help="Plex rating key of the item to delete"),
-    confirm: bool = typer.Option(
-        False,
-        "--yes",
-        "-y",
-        help="Skip confirmation prompt.",
-    ),
+    confirm: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation prompt."),
 ) -> None:
     """Delete a media item from the library.
 
@@ -209,8 +193,7 @@ def delete_item(
         plexctl server delete 12345 --yes
     """
     warnings.warn(
-        "Command 'plexctl server delete' is deprecated. "
-        "Use 'plexctl item delete' instead.",
+        "Command 'plexctl server delete' is deprecated. " "Use 'plexctl item delete' instead.",
         DeprecationWarning,
         stacklevel=2,
     )
@@ -234,7 +217,7 @@ def delete_item(
 def merge_items(
     target: str = typer.Argument(help="Rating key of the target item"),
     sources: list[str] = typer.Argument(  # noqa: B008
-        help="Rating keys of items to merge into target",
+        help="Rating keys of items to merge into target"
     ),
 ) -> None:
     """Merge multiple media items into one.
@@ -258,9 +241,7 @@ def merge_items(
 
 @server_app.command(name="empty-trash")
 def empty_trash(
-    section_key: str = typer.Argument(
-        help="Section key (use 'plexctl library list' to find it)",
-    ),
+    section_key: str = typer.Argument(help="Section key (use 'plexctl library list' to find it)"),
 ) -> None:
     """Empty the trash for a library section.
 
@@ -282,10 +263,7 @@ def empty_trash(
 
 
 @server_app.command(name="info")
-def server_info(
-    csv_output: CsvFlag = False,
-    output: OutputFile = None,
-) -> None:
+def server_info(csv_output: CsvFlag = False, output: OutputFile = None) -> None:
     """Display Plex server identity and version information."""
     service = _get_service()
     info = service.server_info()
@@ -309,10 +287,7 @@ def server_info(
 
 
 @server_app.command(name="prefs")
-def list_prefs(
-    csv_output: CsvFlag = False,
-    output: OutputFile = None,
-) -> None:
+def list_prefs(csv_output: CsvFlag = False, output: OutputFile = None) -> None:
     """List Plex server preference settings."""
     service = _get_service()
     prefs = service.list_preferences()
@@ -333,12 +308,7 @@ def list_prefs(
     table.add_column("Type", style="magenta")
 
     for pref in prefs:
-        table.add_row(
-            pref.id,
-            pref.label,
-            str(pref.value),
-            pref.type,
-        )
+        table.add_row(pref.id, pref.label, str(pref.value), pref.type)
 
     console.print(table)
 
@@ -366,10 +336,7 @@ def set_pref(
 
 
 @server_app.command(name="butler")
-def list_butler_tasks(
-    csv_output: CsvFlag = False,
-    output: OutputFile = None,
-) -> None:
+def list_butler_tasks(csv_output: CsvFlag = False, output: OutputFile = None) -> None:
     """List all butler (background maintenance) tasks."""
     service = _get_service()
     tasks = service.list_butler_tasks()
@@ -427,9 +394,7 @@ def watch_history(
         "--mindate",
         help="Only show items viewed after this date (e.g. '7d', '1h', '30m', '1w').",
     ),
-    key: int | None = typer.Option(
-        None, "--key", help="Filter to a specific rating key."
-    ),
+    key: int | None = typer.Option(None, "--key", help="Filter to a specific rating key."),
     account: int | None = typer.Option(
         None, "--account", help="Filter to a specific Plex account ID."
     ),
@@ -545,8 +510,7 @@ def set_progress(
 
     if result.success:
         console.print(
-            f"[green]✓ Set progress for item {result.key} "
-            f"to {time_ms}ms ({state})[/green]"
+            f"[green]✓ Set progress for item {result.key} " f"to {time_ms}ms ({state})[/green]"
         )
     else:
         console.print(f"[red]✗ Failed to set progress: {result.error}[/red]")
@@ -606,9 +570,7 @@ def recently_added(
     section: int | None = typer.Option(
         None, "-s", "--section", help="Library section key to scope results."
     ),
-    limit: int = typer.Option(
-        50, "--limit", "-n", help="Maximum number of items to return."
-    ),
+    limit: int = typer.Option(50, "--limit", "-n", help="Maximum number of items to return."),
     type: str | None = typer.Option(
         None, "--type", help="Library type filter (e.g. 'movie', 'episode')."
     ),
@@ -701,10 +663,7 @@ def continue_watching(
 
 
 @server_app.command(name="get-transcodes")
-def list_transcode_sessions(
-    csv_output: CsvFlag = False,
-    output: OutputFile = None,
-) -> None:
+def list_transcode_sessions(csv_output: CsvFlag = False, output: OutputFile = None) -> None:
     """List active transcode sessions.
 
     Example:
@@ -750,16 +709,11 @@ def list_transcode_sessions(
 # --- Check for Update -------------------------------------------------------
 
 
-VALID_TIMESPANS: frozenset[str] = frozenset(
-    {"seconds", "hours", "days", "weeks", "months"}
-)
+VALID_TIMESPANS: frozenset[str] = frozenset({"seconds", "hours", "days", "weeks", "months"})
 
 
 @server_app.command(name="check-update")
-def check_for_update(
-    csv_output: CsvFlag = False,
-    output: OutputFile = None,
-) -> None:
+def check_for_update(csv_output: CsvFlag = False, output: OutputFile = None) -> None:
     """Check for available Plex Media Server updates."""
     service = _get_service()
     info = service.check_for_update()
@@ -816,18 +770,11 @@ def install_update() -> None:
 @server_app.command(name="bandwidth")
 def bandwidth_stats(
     timespan: str = typer.Option(
-        "hours",
-        "--timespan",
-        "-t",
-        help="Time granularity: seconds, hours, days, weeks, months",
+        "hours", "--timespan", "-t", help="Time granularity: seconds, hours, days, weeks, months"
     ),
     account: int | None = typer.Option(None, "--account", help="Filter by account ID."),
     device: int | None = typer.Option(None, "--device", help="Filter by device ID."),
-    lan: bool | None = typer.Option(
-        None,
-        "--lan/--remote",
-        help="Local only or remote only.",
-    ),
+    lan: bool | None = typer.Option(None, "--lan/--remote", help="Local only or remote only."),
     csv_output: CsvFlag = False,
     output: OutputFile = None,
 ) -> None:
@@ -840,10 +787,7 @@ def bandwidth_stats(
 
     service = _get_service()
     stats = service.bandwidth_stats(
-        timespan=normalized,
-        account_id=account,
-        device_id=device,
-        lan=lan,
+        timespan=normalized, account_id=account, device_id=device, lan=lan
     )
 
     if not stats:
@@ -867,13 +811,7 @@ def bandwidth_stats(
         lan_str = "✓" if stat.lan else ""
         acct_str = str(stat.account_id) if stat.account_id is not None else ""
         dev_str = str(stat.device_id) if stat.device_id is not None else ""
-        table.add_row(
-            stat.at,
-            f"{stat.bytes:,}",
-            lan_str,
-            acct_str,
-            dev_str,
-        )
+        table.add_row(stat.at, f"{stat.bytes:,}", lan_str, acct_str, dev_str)
 
     console.print(table)
 
@@ -882,10 +820,7 @@ def bandwidth_stats(
 
 
 @server_app.command(name="resources")
-def resource_stats(
-    csv_output: CsvFlag = False,
-    output: OutputFile = None,
-) -> None:
+def resource_stats(csv_output: CsvFlag = False, output: OutputFile = None) -> None:
     """Show server resource utilization (CPU/memory)."""
     service = _get_service()
     stats = service.resource_stats()
@@ -923,9 +858,7 @@ def resource_stats(
 
 @server_app.command(name="download-logs")
 def download_logs(
-    savepath: str | None = typer.Option(
-        None, "--path", "-p", help="Directory to save logs."
-    ),
+    savepath: str | None = typer.Option(None, "--path", "-p", help="Directory to save logs."),
     unpack: bool = typer.Option(False, "--unpack", help="Unpack the zip file."),
 ) -> None:
     """Download Plex Media Server logs."""
@@ -964,7 +897,7 @@ def download_databases(
 def list_accounts(
     media_key: int | None = typer.Option(
         None, "--media", "-m", help="Rating key of media item to find users."
-    ),
+    )
 ) -> None:
     """List Plex account users.
 
@@ -979,7 +912,9 @@ def list_accounts(
         console.print(
             "[yellow]Note: Full account list endpoint requires authentication.[/yellow]"
         )
-        console.print("[yellow]Use --media with a rating key to find users who interacted with items.[/yellow]")
+        console.print(
+            "[yellow]Use --media with a rating key to find users who interacted with items.[/yellow]"
+        )
         return
 
     if not users:
@@ -994,7 +929,9 @@ def list_accounts(
     table.add_column("Friend", style="magenta")
 
     for user in users:
-        table.add_row(str(user.id), user.username, user.email, user.title, "✓" if user.friend else "✗")
+        table.add_row(
+            str(user.id), user.username, user.email, user.title, "✓" if user.friend else "✗"
+        )
 
     console.print(table)
 

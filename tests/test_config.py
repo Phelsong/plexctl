@@ -1,4 +1,5 @@
 """Test configuration for plexctl."""
+
 import os
 import tempfile
 import warnings
@@ -180,8 +181,7 @@ class TestLoadConfigFromToml:
         """PlexConfig should read from a TOML [plex] section."""
         with tempfile.NamedTemporaryFile(suffix=".toml", mode="w") as f:
             f.write(
-                '[plex]\nurl = "https://plex.toml.test"\n'
-                'token = "toml-token"\ntimeout = 60\n'
+                '[plex]\nurl = "https://plex.toml.test"\n' 'token = "toml-token"\ntimeout = 60\n'
             )
             f.flush()
             with patch("plexctl.config.config_path", return_value=Path(f.name)):

@@ -171,18 +171,9 @@ class ServerService:
                 },
             )
         except Exception as exc:
-            return FixResult(
-                key=key,
-                action="rate",
-                success=False,
-                error=str(exc),
-            )
+            return FixResult(key=key, action="rate", success=False, error=str(exc))
 
-        return FixResult(
-            key=key,
-            action="rate",
-            success=True,
-        )
+        return FixResult(key=key, action="rate", success=True)
 
     # --- Watch state --------------------------------------------------------
 
@@ -202,22 +193,12 @@ class ServerService:
 
         try:
             http.put(
-                "/:/scrobble",
-                params={"key": key, "identifier": "com.plexapp.plugins.library"},
+                "/:/scrobble", params={"key": key, "identifier": "com.plexapp.plugins.library"}
             )
         except Exception as exc:
-            return FixResult(
-                key=key,
-                action="scrobble",
-                success=False,
-                error=str(exc),
-            )
+            return FixResult(key=key, action="scrobble", success=False, error=str(exc))
 
-        return FixResult(
-            key=key,
-            action="scrobble",
-            success=True,
-        )
+        return FixResult(key=key, action="scrobble", success=True)
 
     def unscrobble(self, rating_key: str | int) -> FixResult:
         """Mark a media item as unwatched.
@@ -235,22 +216,12 @@ class ServerService:
 
         try:
             http.put(
-                "/:/unscrobble",
-                params={"key": key, "identifier": "com.plexapp.plugins.library"},
+                "/:/unscrobble", params={"key": key, "identifier": "com.plexapp.plugins.library"}
             )
         except Exception as exc:
-            return FixResult(
-                key=key,
-                action="unscrobble",
-                success=False,
-                error=str(exc),
-            )
+            return FixResult(key=key, action="unscrobble", success=False, error=str(exc))
 
-        return FixResult(
-            key=key,
-            action="unscrobble",
-            success=True,
-        )
+        return FixResult(key=key, action="unscrobble", success=True)
 
     # --- Library management -------------------------------------------------
 
@@ -271,18 +242,9 @@ class ServerService:
         try:
             http.put(f"/library/sections/{key}/emptyTrash")
         except Exception as exc:
-            return FixResult(
-                key=key,
-                action="empty-trash",
-                success=False,
-                error=str(exc),
-            )
+            return FixResult(key=key, action="empty-trash", success=False, error=str(exc))
 
-        return FixResult(
-            key=key,
-            action="empty-trash",
-            success=True,
-        )
+        return FixResult(key=key, action="empty-trash", success=True)
 
     def delete_item(self, rating_key: str | int) -> FixResult:
         """Delete a media item from the library.
@@ -303,25 +265,14 @@ class ServerService:
             try:
                 item = self._client.server.fetchItem(int(key))  # type: ignore[no-untyped-call]
                 title = getattr(item, "title", "(unknown)")
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug("Could not fetch title for rating key %s: %s", key, exc)
 
             http.delete(f"/library/metadata/{key}")
         except Exception as exc:
-            return FixResult(
-                key=key,
-                title=title,
-                action="delete",
-                success=False,
-                error=str(exc),
-            )
+            return FixResult(key=key, title=title, action="delete", success=False, error=str(exc))
 
-        return FixResult(
-            key=key,
-            title=title,
-            action="delete",
-            success=True,
-        )
+        return FixResult(key=key, title=title, action="delete", success=True)
 
     def merge(self, target_key: str | int, source_keys: list[str | int]) -> FixResult:
         """Merge multiple media items into one.
@@ -343,17 +294,9 @@ class ServerService:
         http = PlexHTTPClient(self._client)
 
         try:
-            http.put(
-                f"/library/metadata/{target}/merge",
-                params={"id": sources},
-            )
+            http.put(f"/library/metadata/{target}/merge", params={"id": sources})
         except Exception as exc:
-            return FixResult(
-                key=target,
-                action="merge",
-                success=False,
-                error=str(exc),
-            )
+            return FixResult(key=target, action="merge", success=False, error=str(exc))
 
         return FixResult(
             key=target,
@@ -438,18 +381,9 @@ class ServerService:
         try:
             http.put("/:/prefs", params={pref_id: value})
         except Exception as exc:
-            return FixResult(
-                key=pref_id,
-                action="set-preference",
-                success=False,
-                error=str(exc),
-            )
+            return FixResult(key=pref_id, action="set-preference", success=False, error=str(exc))
 
-        return FixResult(
-            key=pref_id,
-            action="set-preference",
-            success=True,
-        )
+        return FixResult(key=pref_id, action="set-preference", success=True)
 
     # --- Butler tasks -------------------------------------------------------
 
@@ -504,18 +438,9 @@ class ServerService:
         try:
             http.post(f"/butler/{task_name}")
         except Exception as exc:
-            return FixResult(
-                key=task_name,
-                action="butler-run",
-                success=False,
-                error=str(exc),
-            )
+            return FixResult(key=task_name, action="butler-run", success=False, error=str(exc))
 
-        return FixResult(
-            key=task_name,
-            action="butler-run",
-            success=True,
-        )
+        return FixResult(key=task_name, action="butler-run", success=True)
 
     # --- Watch history ------------------------------------------------------
 
@@ -563,20 +488,14 @@ class ServerService:
             viewed_at_str = (
                 viewed_at_val.strftime("%Y-%m-%d %H:%M:%S")
                 if isinstance(viewed_at_val, datetime)
-                else str(viewed_at_val)
-                if viewed_at_val is not None
-                else None
+                else str(viewed_at_val) if viewed_at_val is not None else None
             )
             entries.append(
                 WatchHistoryEntry(
                     key=str(getattr(item, "ratingKey", "")),
                     title=getattr(item, "title", ""),
                     media_type=getattr(item, "type", ""),
-                    year=(
-                        int(getattr(item, "year", 0))
-                        if getattr(item, "year", None)
-                        else None
-                    ),
+                    year=(int(getattr(item, "year", 0)) if getattr(item, "year", None) else None),
                     viewed_at=viewed_at_str,
                     account_id=_safe_int(getattr(item, "accountID", None)),
                     device_id=_safe_int(getattr(item, "deviceID", None)),
@@ -615,16 +534,9 @@ class ServerService:
                     session.stop(reason=reason)  # type: ignore[no-untyped-call]
                 except Exception as exc:
                     return FixResult(
-                        key=session_key,
-                        action="stop-session",
-                        success=False,
-                        error=str(exc),
+                        key=session_key, action="stop-session", success=False, error=str(exc)
                     )
-                return FixResult(
-                    key=session_key,
-                    action="stop-session",
-                    success=True,
-                )
+                return FixResult(key=session_key, action="stop-session", success=True)
 
         return FixResult(
             key=session_key,
@@ -634,10 +546,7 @@ class ServerService:
         )
 
     def set_progress(
-        self,
-        rating_key: str | int,
-        time_ms: int,
-        state: str = "stopped",
+        self, rating_key: str | int, time_ms: int, state: str = "stopped"
     ) -> FixResult:
         """Set playback progress for a media item.
 
@@ -656,18 +565,10 @@ class ServerService:
             item = server.fetchItem(int(key))  # type: ignore[no-untyped-call]
             item.updateProgress(time_ms, state)  # type: ignore[no-untyped-call]
         except Exception as exc:
-            return FixResult(
-                key=key,
-                action="set-progress",
-                success=False,
-                error=str(exc),
-            )
+            return FixResult(key=key, action="set-progress", success=False, error=str(exc))
 
         return FixResult(
-            key=key,
-            title=getattr(item, "title", None),
-            action="set-progress",
-            success=True,
+            key=key, title=getattr(item, "title", None), action="set-progress", success=True
         )
 
     # --- On Deck / Recently Added / Continue Watching -----------------------
@@ -695,10 +596,7 @@ class ServerService:
         return [_plex_item_to_metadata(item) for item in items]
 
     def recently_added(
-        self,
-        section_key: int | None = None,
-        maxresults: int = 50,
-        libtype: str | None = None,
+        self, section_key: int | None = None, maxresults: int = 50, libtype: str | None = None
     ) -> list[MediaMetadata]:
         """Fetch recently added items.
 
@@ -871,9 +769,7 @@ class ServerService:
             at_str = (
                 at_val.strftime("%Y-%m-%d %H:%M:%S")
                 if hasattr(at_val, "strftime")
-                else str(at_val)
-                if at_val is not None
-                else ""
+                else str(at_val) if at_val is not None else ""
             )
             entries.append(
                 BandwidthStats(
@@ -906,9 +802,7 @@ class ServerService:
             at_str = (
                 at_val.strftime("%Y-%m-%d %H:%M:%S")
                 if hasattr(at_val, "strftime")
-                else str(at_val)
-                if at_val is not None
-                else ""
+                else str(at_val) if at_val is not None else ""
             )
             entries.append(
                 ResourceStats(
@@ -936,9 +830,7 @@ class ServerService:
         server = self._client.server
         return server.downloadLogs(savepath=savepath, unpack=unpack)  # type: ignore[no-untyped-call]
 
-    def download_databases(
-        self, savepath: str | None = None, unpack: bool = False
-    ) -> str:
+    def download_databases(self, savepath: str | None = None, unpack: bool = False) -> str:
         """Download Plex Media Server databases for backup.
 
         Args:

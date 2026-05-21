@@ -20,10 +20,4 @@ from plexctl.plugins.registry import (
     register_plugins,
 )
 
-__all__ = [
-    "Plugin",
-    "PluginRegistry",
-    "discover_plugins",
-    "get_registry",
-    "register_plugins",
-]
+__all__ = ["Plugin", "PluginRegistry", "discover_plugins", "get_registry", "register_plugins"]

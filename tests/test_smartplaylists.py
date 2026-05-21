@@ -1,4 +1,5 @@
 """Tests for SmartPlaylistService — smart playlist creation and management."""
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
@@ -99,9 +100,7 @@ class TestBuildPlexFilterQuery:
 
     def test_advanced_operator_filter(self) -> None:
         filters = [SmartPlaylistFilter(field="year", operator=">=", value="2019")]
-        params = _build_plex_filter_query(
-            filters=filters, name="Recent", playlist_type="video"
-        )
+        params = _build_plex_filter_query(filters=filters, name="Recent", playlist_type="video")
         assert params["year"] == "[year>=2019]"
 
     def test_multiple_filters(self) -> None:
@@ -135,25 +134,17 @@ class TestBuildPlexFilterQuery:
 
     def test_playlist_type_audio(self) -> None:
         filters = [SmartPlaylistFilter(field="genre", operator="=", value="Rock")]
-        params = _build_plex_filter_query(
-            filters=filters, name="Rock", playlist_type="audio"
-        )
+        params = _build_plex_filter_query(filters=filters, name="Rock", playlist_type="audio")
         assert params["type"] == "2"
 
     def test_playlist_type_photo(self) -> None:
         filters = [SmartPlaylistFilter(field="genre", operator="=", value="Nature")]
-        params = _build_plex_filter_query(
-            filters=filters, name="Nature", playlist_type="photo"
-        )
+        params = _build_plex_filter_query(filters=filters, name="Nature", playlist_type="photo")
         assert params["type"] == "3"
 
     def test_contains_operator(self) -> None:
-        filters = [
-            SmartPlaylistFilter(field="title", operator="contains", value="Star")
-        ]
-        params = _build_plex_filter_query(
-            filters=filters, name="Star", playlist_type="video"
-        )
+        filters = [SmartPlaylistFilter(field="title", operator="contains", value="Star")]
+        params = _build_plex_filter_query(filters=filters, name="Star", playlist_type="video")
         assert params["title"] == "[titlecontainsStar]"
 
 
@@ -550,12 +541,7 @@ class TestGetPlaylistItems:
                         "year": 2010,
                         "duration": 1480000,
                     },
-                    {
-                        "ratingKey": "101",
-                        "title": "Interstellar",
-                        "type": "movie",
-                        "year": 2014,
-                    },
+                    {"ratingKey": "101", "title": "Interstellar", "type": "movie", "year": 2014},
                 ]
             }
         }
@@ -790,11 +776,7 @@ class TestSmartPlaylistConverters:
         from plexctl.converters import playlist_item_to_csv
 
         item = PlaylistItem(
-            key="100",
-            title="Inception",
-            media_type=MediaType.MOVIE,
-            year=2010,
-            duration=1480000,
+            key="100", title="Inception", media_type=MediaType.MOVIE, year=2010, duration=1480000
         )
         csv_row = playlist_item_to_csv(item)
         assert csv_row.key == "100"
@@ -862,11 +844,7 @@ class TestSmartPlaylistCsvRoundtrip:
         from plexctl.models import CsvPlaylistItem
 
         item = PlaylistItem(
-            key="100",
-            title="Inception",
-            media_type=MediaType.MOVIE,
-            year=2010,
-            duration=1480000,
+            key="100", title="Inception", media_type=MediaType.MOVIE, year=2010, duration=1480000
         )
         csv_row = playlist_item_to_csv(item)
         csv_content = to_csv([csv_row])

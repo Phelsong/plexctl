@@ -1,4 +1,5 @@
 """Test diagnostics service for plexctl."""
+
 from unittest.mock import MagicMock
 
 from plexctl.services.diagnostics import DiagnosticService
@@ -114,9 +115,7 @@ class TestEpisodeToDiagnostics:
 
     def test_deep_scan_populates_file_details(self) -> None:
         """Deep scan should populate file details for each media part."""
-        ep = _make_mock_episode(
-            media_count=1, file_paths=["/data/anime/show/s01e01.mkv"]
-        )
+        ep = _make_mock_episode(media_count=1, file_paths=["/data/anime/show/s01e01.mkv"])
         result = DiagnosticService._episode_to_diagnostics(ep, deep=True)
 
         assert len(result.file_details) == 1

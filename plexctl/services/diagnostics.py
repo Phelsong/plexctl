@@ -41,11 +41,7 @@ class DiagnosticService:
     def __init__(self, client: PlexClient) -> None:
         self._client = client
 
-    def scan_section(
-        self,
-        section_title: str,
-        deep: bool = False,
-    ) -> SectionDiagnostics:
+    def scan_section(self, section_title: str, deep: bool = False) -> SectionDiagnostics:
         """Scan a library section for shows with file parsing issues.
 
         Args:
@@ -87,11 +83,7 @@ class DiagnosticService:
             shows=show_diagnostics,
         )
 
-    def diagnose_show(
-        self,
-        rating_key: str | int,
-        deep: bool = False,
-    ) -> ShowDiagnostics:
+    def diagnose_show(self, rating_key: str | int, deep: bool = False) -> ShowDiagnostics:
         """Diagnose a single show by rating key.
 
         Args:
@@ -108,10 +100,7 @@ class DiagnosticService:
             raise ValueError(msg)
         return self._diagnose_show(show, deep=deep)
 
-    def get_episode_details(
-        self,
-        rating_key: str | int,
-    ) -> EpisodeDiagnostics:
+    def get_episode_details(self, rating_key: str | int) -> EpisodeDiagnostics:
         """Get detailed file information for a single episode.
 
         Args:
@@ -124,10 +113,7 @@ class DiagnosticService:
         episode = self._client.server.fetchItem(key)  # type: ignore[no-untyped-call]
         return self._episode_to_diagnostics(episode, deep=True)
 
-    def trigger_analyze(
-        self,
-        rating_key: str | int,
-    ) -> str:
+    def trigger_analyze(self, rating_key: str | int) -> str:
         """Trigger Plex to re-analyze a media item.
 
         Args:
@@ -141,10 +127,7 @@ class DiagnosticService:
         item.analyze()
         return f"Analysis triggered for '{getattr(item, 'title', key)}'"
 
-    def trigger_section_analyze(
-        self,
-        section_title: str,
-    ) -> str:
+    def trigger_section_analyze(self, section_title: str) -> str:
         """Trigger Plex to re-analyze all items in a section.
 
         Args:
@@ -159,11 +142,7 @@ class DiagnosticService:
 
     # --- Private helpers ---------------------------------------------------
 
-    def _diagnose_show(
-        self,
-        show: Show,
-        deep: bool = False,
-    ) -> ShowDiagnostics:
+    def _diagnose_show(self, show: Show, deep: bool = False) -> ShowDiagnostics:
         """Build diagnostics for a single show.
 
         Args:
@@ -203,8 +182,7 @@ class DiagnosticService:
                 if diag.media_count > 1:
                     multi_media_count += 1
                 has_missing = any(
-                    part.exists is False or part.accessible is False
-                    for part in diag.file_details
+                    part.exists is False or part.accessible is False for part in diag.file_details
                 )
                 if has_missing:
                     missing_file_count += 1
@@ -224,10 +202,7 @@ class DiagnosticService:
         )
 
     @staticmethod
-    def _episode_to_diagnostics(
-        episode: object,
-        deep: bool = False,
-    ) -> EpisodeDiagnostics:
+    def _episode_to_diagnostics(episode: object, deep: bool = False) -> EpisodeDiagnostics:
         """Convert a plexapi Episode to EpisodeDiagnostics.
 
         Args:

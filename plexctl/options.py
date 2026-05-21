@@ -9,18 +9,10 @@ from typing import Annotated
 import typer
 
 CsvFlag = Annotated[
-    bool,
-    typer.Option(
-        "--csv",
-        help="Output results as CSV instead of formatted tables.",
-    ),
+    bool, typer.Option("--csv", help="Output results as CSV instead of formatted tables.")
 ]
 
 OutputFile = Annotated[
     str | None,
-    typer.Option(
-        "--output",
-        "-o",
-        help="Write output to this file path instead of stdout.",
-    ),
+    typer.Option("--output", "-o", help="Write output to this file path instead of stdout."),
 ]

@@ -32,9 +32,7 @@ from plexctl.services.music import MusicService
 from plexctl.services.tree import TreeService
 
 music_app = typer.Typer(
-    name="music",
-    help="Browse and manage music libraries.",
-    invoke_without_command=True,
+    name="music", help="Browse and manage music libraries.", invoke_without_command=True
 )
 console = Console()
 
@@ -80,24 +78,11 @@ def _render_artist_tree(items: list) -> Tree:
 @music_app.callback(invoke_without_command=True)
 def music_default(
     ctx: typer.Context,
-    section: str = typer.Option(
-        "Music",
-        "--section",
-        "-s",
-        help="Library section name",
-    ),
+    section: str = typer.Option("Music", "--section", "-s", help="Library section name"),
     limit: int = typer.Option(
-        25,
-        "--limit",
-        "-l",
-        help="Maximum number of results (list view only)",
+        25, "--limit", "-l", help="Maximum number of results (list view only)"
     ),
-    tree: bool = typer.Option(
-        False,
-        "--tree",
-        "-t",
-        help="Display as a tree with rating keys",
-    ),
+    tree: bool = typer.Option(False, "--tree", "-t", help="Display as a tree with rating keys"),
     csv_output: CsvFlag = False,
     output: OutputFile = None,
 ) -> None:
@@ -125,9 +110,7 @@ def music_default(
         section_key = tree_service.resolve_section_key(section)
         if section_key is None:
             console.print(f"[red]Section not found: {section}[/red]")
-            console.print(
-                "[dim]Use 'plexctl library list' to see available sections.[/dim]"
-            )
+            console.print("[dim]Use 'plexctl library list' to see available sections.[/dim]")
             raise typer.Exit(code=1)
 
         items = tree_service.get_section_tree(section_key, media_type="artist")
@@ -170,8 +153,7 @@ def music_default(
     console.print(table)
     if len(artists) > limit:
         console.print(
-            f"[dim]Showing {limit} of {len(artists)} artists. "
-            f"Use --limit to see more.[/dim]"
+            f"[dim]Showing {limit} of {len(artists)} artists. " f"Use --limit to see more.[/dim]"
         )
 
 
@@ -180,24 +162,11 @@ def music_default(
 
 @music_app.command("albums")
 def music_albums(
-    section: str = typer.Option(
-        "Music",
-        "--section",
-        "-s",
-        help="Library section name",
-    ),
+    section: str = typer.Option("Music", "--section", "-s", help="Library section name"),
     artist_key: str | None = typer.Option(
-        None,
-        "--artist",
-        "-a",
-        help="Filter by artist rating key",
+        None, "--artist", "-a", help="Filter by artist rating key"
     ),
-    limit: int = typer.Option(
-        50,
-        "--limit",
-        "-l",
-        help="Maximum number of results",
-    ),
+    limit: int = typer.Option(50, "--limit", "-l", help="Maximum number of results"),
     csv_output: CsvFlag = False,
     output: OutputFile = None,
 ) -> None:
@@ -208,11 +177,7 @@ def music_albums(
         plexctl music albums --artist 12345   # Albums by a specific artist
     """
     service = _get_service()
-    albums = service.list_albums(
-        section_title=section,
-        artist_key=artist_key,
-        limit=limit,
-    )
+    albums = service.list_albums(section_title=section, artist_key=artist_key, limit=limit)
 
     if not albums:
         if artist_key:
@@ -250,30 +215,14 @@ def music_albums(
 
 @music_app.command("tracks")
 def music_tracks(
-    section: str = typer.Option(
-        "Music",
-        "--section",
-        "-s",
-        help="Library section name",
-    ),
+    section: str = typer.Option("Music", "--section", "-s", help="Library section name"),
     album_key: str | None = typer.Option(
-        None,
-        "--album",
-        "-a",
-        help="Filter by album rating key",
+        None, "--album", "-a", help="Filter by album rating key"
     ),
     artist_key: str | None = typer.Option(
-        None,
-        "--artist",
-        "-A",
-        help="Filter by artist rating key",
+        None, "--artist", "-A", help="Filter by artist rating key"
     ),
-    limit: int = typer.Option(
-        100,
-        "--limit",
-        "-l",
-        help="Maximum number of results",
-    ),
+    limit: int = typer.Option(100, "--limit", "-l", help="Maximum number of results"),
     csv_output: CsvFlag = False,
     output: OutputFile = None,
 ) -> None:
@@ -286,10 +235,7 @@ def music_tracks(
     """
     service = _get_service()
     tracks = service.list_tracks(
-        section_title=section,
-        album_key=album_key,
-        artist_key=artist_key,
-        limit=limit,
+        section_title=section, album_key=album_key, artist_key=artist_key, limit=limit
     )
 
     if not tracks:
@@ -339,16 +285,10 @@ def music_tracks(
 @music_app.command("tree")
 def music_tree(
     section: str = typer.Option(
-        ...,
-        "--section",
-        "-s",
-        help="Section name or key to browse (e.g. '3', 'Music')",
+        ..., "--section", "-s", help="Section name or key to browse (e.g. '3', 'Music')"
     ),
     media_type: str | None = typer.Option(
-        None,
-        "--type",
-        "-t",
-        help="Filter by type: artist, album, track",
+        None, "--type", "-t", help="Filter by type: artist, album, track"
     ),
     csv_output: CsvFlag = False,
     output: OutputFile = None,
@@ -364,9 +304,7 @@ def music_tree(
 
     if section_key is None:
         console.print(f"[red]Section not found: {section}[/red]")
-        console.print(
-            "[dim]Use 'plexctl library list' to see available sections.[/dim]"
-        )
+        console.print("[dim]Use 'plexctl library list' to see available sections.[/dim]")
         raise typer.Exit(code=1)
 
     items = service.get_section_tree(section_key, media_type=media_type)
@@ -395,18 +333,8 @@ def music_tree(
 
 @music_app.command("recently-added")
 def music_recently_added(
-    section: str = typer.Option(
-        "Music",
-        "--section",
-        "-s",
-        help="Library section name",
-    ),
-    limit: int = typer.Option(
-        50,
-        "--limit",
-        "-l",
-        help="Maximum number of results",
-    ),
+    section: str = typer.Option("Music", "--section", "-s", help="Library section name"),
+    limit: int = typer.Option(50, "--limit", "-l", help="Maximum number of results"),
     csv_output: CsvFlag = False,
     output: OutputFile = None,
 ) -> None:
@@ -457,12 +385,6 @@ def music_recently_added(
         elif isinstance(item, ArtistInfo):
             year = "-"
 
-        table.add_row(
-            item.key,
-            item_type,
-            item.title or "Unknown",
-            artist,
-            year,
-        )
+        table.add_row(item.key, item_type, item.title or "Unknown", artist, year)
 
     console.print(table)

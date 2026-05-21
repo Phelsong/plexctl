@@ -42,11 +42,13 @@ def config_dir() -> Path:
     """Return the plexctl OS-default config directory."""
     return Path(get_app_dir("plexctl"))
 
+
 @lru_cache(maxsize=1)
 def config_path() -> Path:
     """Return the path to plexctl.toml."""
     config_path: Path = Path(config_dir()) / "plexctl.toml"
     return config_path
+
 
 def _check_permissions(path: Path) -> None:
     """Warn if the config file has overly permissive permissions.
@@ -86,10 +88,7 @@ def _read_toml_config(path: Path) -> dict[str, Any]:
         with open(path, "rb") as fh:
             return tomllib.load(fh)
     except (tomllib.TOMLDecodeError, OSError) as exc:
-        warnings.warn(
-            f"Could not read config file {path}: {exc}",
-            stacklevel=3,
-        )
+        warnings.warn(f"Could not read config file {path}: {exc}", stacklevel=3)
         return {}
 
 
@@ -107,10 +106,7 @@ class PlexConfig(BaseSettings):
     """
 
     model_config = SettingsConfigDict(
-        env_prefix="PLEX_",
-        env_file=".env",
-        env_file_encoding="utf-8",
-        extra="ignore",
+        env_prefix="PLEX_", env_file=".env", env_file_encoding="utf-8", extra="ignore"
     )
 
     url: str = Field(default="http://localhost:32400", description="Plex server URL")
@@ -200,10 +196,7 @@ def load_config(env_path: Path | None = None) -> PlexConfig:
     # env var is not set. This preserves the env > dotenv > TOML
     # priority order.
     overrides = _load_toml_overrides(
-        toml_data,
-        section="plex",
-        env_prefix="PLEX_",
-        field_names=("url", "token", "timeout"),
+        toml_data, section="plex", env_prefix="PLEX_", field_names=("url", "token", "timeout")
     )
 
     if env_path is not None:

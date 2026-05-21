@@ -120,10 +120,7 @@ class MetadataService:
         return [self._show_to_metadata(s) for s in shows]
 
     def search(
-        self,
-        query: str,
-        section_title: str | None = None,
-        media_type: MediaType | None = None,
+        self, query: str, section_title: str | None = None, media_type: MediaType | None = None
     ) -> list[MediaMetadata]:
         """Search for media items by title.
 
@@ -175,11 +172,7 @@ class MetadataService:
 
     # --- Metadata writing --------------------------------------------------
 
-    def edit_metadata(
-        self,
-        rating_key: str | int,
-        edits: list[MetadataEdit],
-    ) -> MediaMetadata:
+    def edit_metadata(self, rating_key: str | int, edits: list[MetadataEdit]) -> MediaMetadata:
         """Apply metadata edits to a single item.
 
         Args:
@@ -202,9 +195,7 @@ class MetadataService:
         raise ValueError(msg)
 
     def batch_edit(
-        self,
-        rating_keys: list[str | int],
-        edits: list[MetadataEdit],
+        self, rating_keys: list[str | int], edits: list[MetadataEdit]
     ) -> BatchEditResult:
         """Apply the same edits to multiple items.
 
@@ -229,11 +220,7 @@ class MetadataService:
     # --- Tag operations -----------------------------------------------------
 
     def add_tag(
-        self,
-        rating_key: str | int,
-        tag_type: str,
-        values: list[str],
-        locked: bool = True,
+        self, rating_key: str | int, tag_type: str, values: list[str], locked: bool = True
     ) -> MediaMetadata | None:
         """Add tag(s) to a media item.
 
@@ -264,11 +251,7 @@ class MetadataService:
         return self._to_metadata(item)
 
     def remove_tag(
-        self,
-        rating_key: str | int,
-        tag_type: str,
-        values: list[str],
-        locked: bool = True,
+        self, rating_key: str | int, tag_type: str, values: list[str], locked: bool = True
     ) -> MediaMetadata | None:
         """Remove tag(s) from a media item.
 
@@ -300,11 +283,7 @@ class MetadataService:
 
     # --- Field lock/unlock --------------------------------------------------
 
-    def lock_field(
-        self,
-        rating_key: str | int,
-        fields: list[str],
-    ) -> MediaMetadata | None:
+    def lock_field(self, rating_key: str | int, fields: list[str]) -> MediaMetadata | None:
         """Lock metadata field(s) on a media item.
 
         Locking prevents Plex from automatically overwriting the field
@@ -324,11 +303,7 @@ class MetadataService:
         item.reload()
         return self._to_metadata(item)
 
-    def unlock_field(
-        self,
-        rating_key: str | int,
-        fields: list[str],
-    ) -> MediaMetadata | None:
+    def unlock_field(self, rating_key: str | int, fields: list[str]) -> MediaMetadata | None:
         """Unlock metadata field(s) on a media item.
 
         Unlocking allows Plex to automatically update the field
@@ -444,10 +419,7 @@ class MetadataService:
         return True
 
     def remove_subtitle(
-        self,
-        rating_key: str | int,
-        stream_id: int | None = None,
-        stream_title: str | None = None,
+        self, rating_key: str | int, stream_id: int | None = None, stream_title: str | None = None
     ) -> bool:
         """Remove a subtitle from a media item.
 
@@ -500,9 +472,7 @@ class MetadataService:
             user_id=getattr(stream, "userID", None),
         )
 
-    def _to_metadata(
-        self, item: Movie | Show | Episode | Season
-    ) -> MediaMetadata | None:
+    def _to_metadata(self, item: Movie | Show | Episode | Season) -> MediaMetadata | None:
         """Convert a plexapi item to MediaMetadata based on its type.
 
         Delegates to the appropriate type-specific converter.

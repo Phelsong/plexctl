@@ -30,9 +30,7 @@ from plexctl.services.photos import PhotoService
 from plexctl.services.tree import TreeService
 
 photos_app = typer.Typer(
-    name="photos",
-    help="Browse and manage photo libraries.",
-    no_args_is_help=True,
+    name="photos", help="Browse and manage photo libraries.", no_args_is_help=True
 )
 console = Console()
 
@@ -51,10 +49,7 @@ def _get_tree_service() -> TreeService:
     return TreeService(client)
 
 
-def _render_album_table(
-    albums: list[PhotoAlbumInfo],
-    section: str,
-) -> None:
+def _render_album_table(albums: list[PhotoAlbumInfo], section: str) -> None:
     """Render photo albums as a Rich table."""
     table = Table(title=f"Photo Albums in {section}")
     table.add_column("Key", style="cyan", justify="right")
@@ -109,24 +104,11 @@ def _render_album_tree(albums: list[PhotoAlbumInfo]) -> Tree:
 @photos_app.callback(invoke_without_command=True)
 def photos_default(
     ctx: typer.Context,
-    section: str = typer.Option(
-        "Photos",
-        "--section",
-        "-s",
-        help="Library section name",
-    ),
+    section: str = typer.Option("Photos", "--section", "-s", help="Library section name"),
     limit: int = typer.Option(
-        25,
-        "--limit",
-        "-l",
-        help="Maximum number of results (list view only)",
+        25, "--limit", "-l", help="Maximum number of results (list view only)"
     ),
-    tree: bool = typer.Option(
-        False,
-        "--tree",
-        "-t",
-        help="Display as a tree with rating keys",
-    ),
+    tree: bool = typer.Option(False, "--tree", "-t", help="Display as a tree with rating keys"),
     csv_output: CsvFlag = False,
     output: OutputFile = None,
 ) -> None:
@@ -152,9 +134,7 @@ def photos_default(
         section_key = tree_service.resolve_section_key(section)
         if section_key is None:
             console.print(f"[red]Section not found: {section}[/red]")
-            console.print(
-                "[dim]Use 'plexctl library list' to see available sections.[/dim]"
-            )
+            console.print("[dim]Use 'plexctl library list' to see available sections.[/dim]")
             raise typer.Exit(code=1)
 
         items = tree_service.get_section_tree(section_key, media_type="photo")
@@ -188,8 +168,7 @@ def photos_default(
     _render_album_table(albums[:limit], section)
     if len(albums) > limit:
         console.print(
-            f"[dim]Showing {limit} of {len(albums)} albums. "
-            f"Use --limit to see more.[/dim]"
+            f"[dim]Showing {limit} of {len(albums)} albums. " f"Use --limit to see more.[/dim]"
         )
 
 
@@ -198,24 +177,11 @@ def photos_default(
 
 @photos_app.command("list")
 def photos_list(
-    section: str = typer.Option(
-        "Photos",
-        "--section",
-        "-s",
-        help="Library section name",
-    ),
+    section: str = typer.Option("Photos", "--section", "-s", help="Library section name"),
     album_key: str | None = typer.Option(
-        None,
-        "--album",
-        "-a",
-        help="Rating key of a photo album to filter by",
+        None, "--album", "-a", help="Rating key of a photo album to filter by"
     ),
-    limit: int = typer.Option(
-        25,
-        "--limit",
-        "-l",
-        help="Maximum number of results",
-    ),
+    limit: int = typer.Option(25, "--limit", "-l", help="Maximum number of results"),
     csv_output: CsvFlag = False,
     output: OutputFile = None,
 ) -> None:
@@ -226,11 +192,7 @@ def photos_list(
         plexctl photos list --album 12345    # List photos in a specific album
     """
     service = _get_photo_service()
-    photos = service.list_photos(
-        section_title=section,
-        album_key=album_key,
-        limit=limit,
-    )
+    photos = service.list_photos(section_title=section, album_key=album_key, limit=limit)
 
     if not photos:
         if album_key:
@@ -247,8 +209,7 @@ def photos_list(
     _render_photo_table(photos[:limit])
     if len(photos) > limit:
         console.print(
-            f"[dim]Showing {limit} of {len(photos)} photos. "
-            f"Use --limit to see more.[/dim]"
+            f"[dim]Showing {limit} of {len(photos)} photos. " f"Use --limit to see more.[/dim]"
         )
 
 
@@ -258,10 +219,7 @@ def photos_list(
 @photos_app.command("tree")
 def photos_tree(
     section: str = typer.Option(
-        "Photos",
-        "--section",
-        "-s",
-        help="Section name or key to browse (e.g. 'Photos', '1')",
+        "Photos", "--section", "-s", help="Section name or key to browse (e.g. 'Photos', '1')"
     ),
     csv_output: CsvFlag = False,
     output: OutputFile = None,
@@ -277,9 +235,7 @@ def photos_tree(
 
     if section_key is None:
         console.print(f"[red]Section not found: {section}[/red]")
-        console.print(
-            "[dim]Use 'plexctl library list' to see available sections.[/dim]"
-        )
+        console.print("[dim]Use 'plexctl library list' to see available sections.[/dim]")
         raise typer.Exit(code=1)
 
     items = tree_service.get_section_tree(section_key, media_type="photo")
@@ -302,9 +258,7 @@ def photos_tree(
         year_label = f" [dim]({item.year})[/dim]" if item.year else ""
         leaf_label = f" [dim]({item.leaf_count} items)[/dim]" if item.leaf_count else ""
         key_label = f" [dim](key={item.key})[/dim]"
-        node_label = (
-            f"{item.title or item.key}{type_label}{year_label}{leaf_label}{key_label}"
-        )
+        node_label = f"{item.title or item.key}{type_label}{year_label}{leaf_label}{key_label}"
         rich_tree.add(node_label)
     console.print(rich_tree)
 
@@ -314,18 +268,8 @@ def photos_tree(
 
 @photos_app.command("recently-added")
 def photos_recently_added(
-    section: str = typer.Option(
-        "Photos",
-        "--section",
-        "-s",
-        help="Library section name",
-    ),
-    limit: int = typer.Option(
-        50,
-        "--limit",
-        "-l",
-        help="Maximum number of results",
-    ),
+    section: str = typer.Option("Photos", "--section", "-s", help="Library section name"),
+    limit: int = typer.Option(50, "--limit", "-l", help="Maximum number of results"),
     csv_output: CsvFlag = False,
     output: OutputFile = None,
 ) -> None:

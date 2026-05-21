@@ -1,4 +1,5 @@
 """Tests for filesystem comparison models and service."""
+
 from pathlib import Path
 
 from plexctl.models import VIDEO_EXTENSIONS, FsCompareResult, FsDir
@@ -90,9 +91,7 @@ class TestFsCompareResult:
     """Tests for FsCompareResult model."""
 
     def test_empty_result(self) -> None:
-        result = FsCompareResult(
-            section_root="/mnt/nfs/media/anime", section_title="Anime"
-        )
+        result = FsCompareResult(section_root="/mnt/nfs/media/anime", section_title="Anime")
         assert result.total_dirs == 0
         assert result.plex_tracked_dirs == 0
         assert result.orphan_dirs == []

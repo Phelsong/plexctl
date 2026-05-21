@@ -1,4 +1,5 @@
 """Test models for plexctl."""
+
 from plexctl.models import (
     BatchEditResult,
     BatchFixResult,
@@ -76,9 +77,7 @@ def test_collection_info_model() -> None:
 
 def test_library_section_model() -> None:
     """LibrarySection should store section metadata."""
-    section = LibrarySection(
-        key="1", title="Movies", section_type=MediaType.MOVIE, count=500
-    )
+    section = LibrarySection(key="1", title="Movies", section_type=MediaType.MOVIE, count=500)
     assert section.title == "Movies"
     assert section.section_type == MediaType.MOVIE
     assert section.count == 500
@@ -173,11 +172,7 @@ def test_batch_fix_result_with_failures() -> None:
     from plexctl.models import FixResult
 
     failure = FixResult(
-        key="99",
-        title="Broken Show",
-        action="batch-analyze",
-        success=False,
-        error="Timeout",
+        key="99", title="Broken Show", action="batch-analyze", success=False, error="Timeout"
     )
     result = BatchFixResult(total=5, succeeded=4, failed=1, results=[failure])
     assert result.total == 5
@@ -220,15 +215,9 @@ def test_reorganize_plan() -> None:
         total_actions=2,
         actions=[
             ReorgAction(
-                action="move",
-                source="/source",
-                destination="/dest",
-                reason="test",
-                risk="low",
+                action="move", source="/source", destination="/dest", reason="test", risk="low"
             ),
-            ReorgAction(
-                action="review", source="/source2", reason="review needed", risk="high"
-            ),
+            ReorgAction(action="review", source="/source2", reason="review needed", risk="high"),
         ],
         summary="2 actions proposed",
     )

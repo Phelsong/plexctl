@@ -1,4 +1,5 @@
 """Tests for FixService and match/fix models."""
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock
@@ -11,9 +12,7 @@ class TestMatchResult:
     """Tests for MatchResult model."""
 
     def test_match_result_creation(self) -> None:
-        result = MatchResult(
-            name="Arifureta", score=95, year="2019", guid="plex://show/abc123"
-        )
+        result = MatchResult(name="Arifureta", score=95, year="2019", guid="plex://show/abc123")
         assert result.name == "Arifureta"
         assert result.score == 95
         assert result.year == "2019"

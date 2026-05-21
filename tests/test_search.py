@@ -1,15 +1,11 @@
 """Tests for SearchService — advanced metadata search operations."""
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
 from plexctl.models import MediaType, SearchResult, SimilarMedia
-from plexctl.services.search import (
-    SearchService,
-    _parse_search_result,
-    _safe_float,
-    _safe_int,
-)
+from plexctl.services.search import SearchService, _parse_search_result, _safe_float, _safe_int
 
 # --- Helper function tests -----------------------------------------------------
 
@@ -312,13 +308,7 @@ class TestSearchAdvanced:
         mock_http = MagicMock()
         mock_http.get.return_value = {
             "MediaContainer": {
-                "Hub": {
-                    "Metadata": {
-                        "ratingKey": "100",
-                        "title": "Solo Item",
-                        "type": "movie",
-                    }
-                }
+                "Hub": {"Metadata": {"ratingKey": "100", "title": "Solo Item", "type": "movie"}}
             }
         }
 
@@ -343,12 +333,7 @@ class TestSearchByActor:
         mock_http.get.return_value = {
             "MediaContainer": {
                 "Metadata": [
-                    {
-                        "ratingKey": "1",
-                        "title": "The Revenant",
-                        "type": "movie",
-                        "year": 2015,
-                    }
+                    {"ratingKey": "1", "title": "The Revenant", "type": "movie", "year": 2015}
                 ]
             }
         }
@@ -403,12 +388,7 @@ class TestSearchByDirector:
         mock_http.get.return_value = {
             "MediaContainer": {
                 "Metadata": [
-                    {
-                        "ratingKey": "10",
-                        "title": "Oppenheimer",
-                        "type": "movie",
-                        "year": 2023,
-                    }
+                    {"ratingKey": "10", "title": "Oppenheimer", "type": "movie", "year": 2023}
                 ]
             }
         }
@@ -448,12 +428,7 @@ class TestSearchByTitle:
         mock_http.get.return_value = {
             "MediaContainer": {
                 "Metadata": [
-                    {
-                        "ratingKey": "5",
-                        "title": "The Matrix",
-                        "type": "movie",
-                        "year": 1999,
-                    }
+                    {"ratingKey": "5", "title": "The Matrix", "type": "movie", "year": 1999}
                 ]
             }
         }
@@ -506,12 +481,7 @@ class TestSearchByYear:
         mock_http.get.return_value = {
             "MediaContainer": {
                 "Metadata": [
-                    {
-                        "ratingKey": "7",
-                        "title": "Dune: Part Two",
-                        "type": "movie",
-                        "year": 2024,
-                    }
+                    {"ratingKey": "7", "title": "Dune: Part Two", "type": "movie", "year": 2024}
                 ]
             }
         }
@@ -552,12 +522,7 @@ class TestSearchByGenre:
         mock_http.get.return_value = {
             "MediaContainer": {
                 "Metadata": [
-                    {
-                        "ratingKey": "8",
-                        "title": "Die Hard",
-                        "type": "movie",
-                        "year": 1988,
-                    }
+                    {"ratingKey": "8", "title": "Die Hard", "type": "movie", "year": 1988}
                 ]
             }
         }
@@ -847,11 +812,7 @@ class TestSearchConverters:
         from plexctl.converters import similar_media_to_csv
 
         media = SimilarMedia(
-            key="200",
-            title="Tenet",
-            media_type=MediaType.MOVIE,
-            year=2020,
-            similarity=92,
+            key="200", title="Tenet", media_type=MediaType.MOVIE, year=2020, similarity=92
         )
         csv_row = similar_media_to_csv(media)
         assert csv_row.key == "200"
@@ -908,11 +869,7 @@ class TestSearchCsvRoundtrip:
 
         media = [
             SimilarMedia(
-                key="200",
-                title="Tenet",
-                media_type=MediaType.MOVIE,
-                year=2020,
-                similarity=85,
+                key="200", title="Tenet", media_type=MediaType.MOVIE, year=2020, similarity=85
             )
         ]
         rows = [similar_media_to_csv(m) for m in media]

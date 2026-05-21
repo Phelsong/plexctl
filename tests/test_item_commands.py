@@ -1,17 +1,12 @@
 """CLI-level integration tests for the 'item' command group."""
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
 from plexctl.cli import app
 from plexctl.config import PlexConfig
-from plexctl.models import (
-    FixResult,
-    MatchResult,
-    MediaMetadata,
-    MediaType,
-    SearchResult,
-)
+from plexctl.models import FixResult, MatchResult, MediaMetadata, MediaType, SearchResult
 from plexctl.services.fixes import FixService
 from plexctl.services.metadata import MetadataService
 from plexctl.services.search import SearchService
@@ -115,10 +110,7 @@ class TestItemInfoCommand:
             result = runner.invoke(app, ["item", "info", "99999"])
 
         assert result.exit_code == 0
-        assert (
-            "not found" in result.output.lower()
-            or "unsupported" in result.output.lower()
-        )
+        assert "not found" in result.output.lower() or "unsupported" in result.output.lower()
 
 
 # ---------------------------------------------------------------------------
@@ -138,9 +130,7 @@ class TestItemSearchCommand:
         mock_client_cls.return_value = mock_client
 
         results = [
-            MediaMetadata(
-                key="1", title="Big Buck Bunny", media_type=MediaType.MOVIE, year=2008
-            )
+            MediaMetadata(key="1", title="Big Buck Bunny", media_type=MediaType.MOVIE, year=2008)
         ]
 
         with _patch_item_service(MetadataService, "search", results):
@@ -180,16 +170,10 @@ class TestItemEditCommand:
         mock_client = MagicMock()
         mock_client_cls.return_value = mock_client
 
-        updated = MediaMetadata(
-            key="12345", title="Updated Title", media_type=MediaType.MOVIE
-        )
+        updated = MediaMetadata(key="12345", title="Updated Title", media_type=MediaType.MOVIE)
 
-        with patch.object(
-            MetadataService, "edit_metadata", return_value=updated
-        ) as mock_edit:
-            result = runner.invoke(
-                app, ["item", "edit", "12345", "title", "Updated Title"]
-            )
+        with patch.object(MetadataService, "edit_metadata", return_value=updated) as mock_edit:
+            result = runner.invoke(app, ["item", "edit", "12345", "title", "Updated Title"])
 
         assert result.exit_code == 0
         assert "Updated" in result.output or "title" in result.output.lower()
@@ -234,9 +218,7 @@ class TestItemRateCommand:
         mock_client = MagicMock()
         mock_client_cls.return_value = mock_client
 
-        rate_result = FixResult(
-            key="12345", action="rate", success=False, error="server error"
-        )
+        rate_result = FixResult(key="12345", action="rate", success=False, error="server error")
 
         with patch.object(ServerService, "rate", return_value=rate_result):
             result = runner.invoke(app, ["item", "rate", "12345", "8.5"])
@@ -308,9 +290,7 @@ class TestItemIngestCommand:
 
     def test_item_ingest_unknown_model_fails(self) -> None:
         """item ingest with an unknown model name exits with error."""
-        result = runner.invoke(
-            app, ["item", "ingest", "completely_fake_model", "/tmp/fake.csv"]
-        )
+        result = runner.invoke(app, ["item", "ingest", "completely_fake_model", "/tmp/fake.csv"])
         assert result.exit_code == 1
         assert "unknown model" in result.output.lower()
 
@@ -332,15 +312,11 @@ class TestItemMatchesCommand:
         mock_client_cls.return_value = mock_client
 
         matches = [
-            MatchResult(
-                name="Correct Show", score=100, year="2024", guid="tvdb://12345"
-            ),
+            MatchResult(name="Correct Show", score=100, year="2024", guid="tvdb://12345"),
             MatchResult(name="Wrong Show", score=50, year="2020", guid="tvdb://67890"),
         ]
 
-        with patch.object(
-            FixService, "find_matches", return_value=matches
-        ) as mock_find:
+        with patch.object(FixService, "find_matches", return_value=matches) as mock_find:
             result = runner.invoke(app, ["item", "matches", "12345"])
 
         assert result.exit_code == 0
@@ -394,9 +370,7 @@ class TestItemFixMatchCommand:
             "12345", match_index=0, agent=None, title=None, year=None
         )
         assert (
-            "Fixed" in result.output
-            or "fixed" in result.output.lower()
-            or "✓" in result.output
+            "Fixed" in result.output or "fixed" in result.output.lower() or "✓" in result.output
         )
 
     @patch(CLIENT_PATCH)
@@ -480,13 +454,9 @@ class TestItemUnmatchCommand:
         mock_client = MagicMock()
         mock_client_cls.return_value = mock_client
 
-        unmatch_result = FixResult(
-            key="12345", title="Test Show", action="unmatch", success=True
-        )
+        unmatch_result = FixResult(key="12345", title="Test Show", action="unmatch", success=True)
 
-        with patch.object(
-            FixService, "unmatch", return_value=unmatch_result
-        ) as mock_unmatch:
+        with patch.object(FixService, "unmatch", return_value=unmatch_result) as mock_unmatch:
             result = runner.invoke(app, ["item", "unmatch", "12345"])
 
         assert result.exit_code == 0

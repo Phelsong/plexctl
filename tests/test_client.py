@@ -1,6 +1,6 @@
 """Test client module for plexctl."""
-import httpx
 
+import httpx
 from plexctl.client import (
     PlexClient,
     PlexHTTPClient,
@@ -105,11 +105,14 @@ def test_xml_to_dict_multiple_same_tag_children() -> None:
 
 def test_parse_xml_response_wraps_root_tag() -> None:
     """Should wrap result under the root element's tag name."""
-    xml_bytes = b'<?xml version="1.0" encoding="UTF-8"?>\n<MediaContainer size="25" friendlyName="Yggdrasil"/>'
+    xml_bytes = (
+        b'<?xml version="1.0" encoding="UTF-8"?>\n'
+        b'<MediaContainer size="25" friendlyName="TestServer"/>'
+    )
     result = _parse_xml_response(xml_bytes)
     assert "MediaContainer" in result
     assert result["MediaContainer"]["size"] == "25"
-    assert result["MediaContainer"]["friendlyName"] == "Yggdrasil"
+    assert result["MediaContainer"]["friendlyName"] == "TestServer"
 
 
 # --- PlexHTTPClient._parse_response ---
@@ -139,9 +142,7 @@ def test_parse_response_handles_json_content_type() -> None:
     http_client = PlexHTTPClient(client)
 
     json_body = b'{"MediaContainer": {"size": 1}}'
-    resp = httpx.Response(
-        200, content=json_body, headers={"Content-Type": "application/json"}
-    )
+    resp = httpx.Response(200, content=json_body, headers={"Content-Type": "application/json"})
     result = http_client._parse_response(resp)
 
     assert result is not None

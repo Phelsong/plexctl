@@ -1,4 +1,5 @@
 """Tests for TreeService — hierarchical media tree navigation."""
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
@@ -182,18 +183,8 @@ class TestGetShowTree:
         show_data = _show_response("100", "Arifureta")
         seasons_data = _children_response(
             [
-                {
-                    "ratingKey": "110",
-                    "title": "Season 1",
-                    "type": "season",
-                    "leafCount": 12,
-                },
-                {
-                    "ratingKey": "120",
-                    "title": "Season 2",
-                    "type": "season",
-                    "leafCount": 12,
-                },
+                {"ratingKey": "110", "title": "Season 1", "type": "season", "leafCount": 12},
+                {"ratingKey": "120", "title": "Season 2", "type": "season", "leafCount": 12},
             ]
         )
 
@@ -496,9 +487,7 @@ class TestResolveSectionKey:
         )
         mock_library.list_sections.return_value = sections
 
-        with patch(
-            "plexctl.services.library.LibraryService", return_value=mock_library
-        ):
+        with patch("plexctl.services.library.LibraryService", return_value=mock_library):
             service = TreeService(mock_client)
             result = service.resolve_section_key("TV Shows")
 
@@ -509,14 +498,10 @@ class TestResolveSectionKey:
         mock_client = MagicMock()
         mock_library = MagicMock()
 
-        sections = self._make_sections(
-            [{"key": "2", "title": "TV Shows", "type": "show"}]
-        )
+        sections = self._make_sections([{"key": "2", "title": "TV Shows", "type": "show"}])
         mock_library.list_sections.return_value = sections
 
-        with patch(
-            "plexctl.services.library.LibraryService", return_value=mock_library
-        ):
+        with patch("plexctl.services.library.LibraryService", return_value=mock_library):
             service = TreeService(mock_client)
             result = service.resolve_section_key("tv shows")
 
@@ -527,14 +512,10 @@ class TestResolveSectionKey:
         mock_client = MagicMock()
         mock_library = MagicMock()
 
-        sections = self._make_sections(
-            [{"key": "2", "title": "TV Shows", "type": "show"}]
-        )
+        sections = self._make_sections([{"key": "2", "title": "TV Shows", "type": "show"}])
         mock_library.list_sections.return_value = sections
 
-        with patch(
-            "plexctl.services.library.LibraryService", return_value=mock_library
-        ):
+        with patch("plexctl.services.library.LibraryService", return_value=mock_library):
             service = TreeService(mock_client)
             result = service.resolve_section_key("Shows")
 
@@ -553,9 +534,7 @@ class TestResolveSectionKey:
         )
         mock_library.list_sections.return_value = sections
 
-        with patch(
-            "plexctl.services.library.LibraryService", return_value=mock_library
-        ):
+        with patch("plexctl.services.library.LibraryService", return_value=mock_library):
             service = TreeService(mock_client)
             result = service.resolve_section_key("shows")
 
@@ -574,9 +553,7 @@ class TestResolveSectionKey:
         )
         mock_library.list_sections.return_value = sections
 
-        with patch(
-            "plexctl.services.library.LibraryService", return_value=mock_library
-        ):
+        with patch("plexctl.services.library.LibraryService", return_value=mock_library):
             service = TreeService(mock_client)
             result = service.resolve_section_key("movies")
 
@@ -596,9 +573,7 @@ class TestResolveSectionKey:
         )
         mock_library.list_sections.return_value = sections
 
-        with patch(
-            "plexctl.services.library.LibraryService", return_value=mock_library
-        ):
+        with patch("plexctl.services.library.LibraryService", return_value=mock_library):
             service = TreeService(mock_client)
             result = service.resolve_section_key("shows")
 
@@ -609,14 +584,10 @@ class TestResolveSectionKey:
         mock_client = MagicMock()
         mock_library = MagicMock()
 
-        sections = self._make_sections(
-            [{"key": "1", "title": "Movies", "type": "movie"}]
-        )
+        sections = self._make_sections([{"key": "1", "title": "Movies", "type": "movie"}])
         mock_library.list_sections.return_value = sections
 
-        with patch(
-            "plexctl.services.library.LibraryService", return_value=mock_library
-        ):
+        with patch("plexctl.services.library.LibraryService", return_value=mock_library):
             service = TreeService(mock_client)
             result = service.resolve_section_key("nonexistent")
 
@@ -648,14 +619,7 @@ class TestTreeWorkflow:
 
         show_data = _show_response("100", "Arifureta")
         seasons_data = _children_response(
-            [
-                {
-                    "ratingKey": "110",
-                    "title": "Season 1",
-                    "type": "season",
-                    "leafCount": 12,
-                }
-            ]
+            [{"ratingKey": "110", "title": "Season 1", "type": "season", "leafCount": 12}]
         )
 
         season_data = {

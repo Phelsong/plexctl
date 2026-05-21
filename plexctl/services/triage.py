@@ -42,17 +42,13 @@ class TriageService:
     """
 
     def __init__(
-        self,
-        plex_client: PlexClient,
-        shoko_service: ShokoService | None = None,
+        self, plex_client: PlexClient, shoko_service: ShokoService | None = None
     ) -> None:
         self._plex_client = plex_client
         self._shoko_service = shoko_service
 
     def triage_section(
-        self,
-        section_title: str = "Movies",
-        path_map: dict[str, str] | None = None,
+        self, section_title: str = "Movies", path_map: dict[str, str] | None = None
     ) -> TriageReport:
         """Cross-reference all data sources for a library section.
 
@@ -77,10 +73,7 @@ class TriageService:
         summary = self._build_summary(issues, section_title, total_shows)
 
         return TriageReport(
-            section_title=section_title,
-            total_shows=total_shows,
-            issues=issues,
-            summary=summary,
+            section_title=section_title, total_shows=total_shows, issues=issues, summary=summary
         )
 
     def _collect_plex_issues(self, section_title: str) -> list[TriageIssue]:
@@ -146,9 +139,7 @@ class TriageService:
         return issues
 
     def _collect_filesystem_issues(
-        self,
-        section_title: str,
-        path_map: dict[str, str] | None,
+        self, section_title: str, path_map: dict[str, str] | None
     ) -> list[TriageIssue]:
         """Collect issues from filesystem comparison."""
         from plexctl.services.fs_compare import FsCompareService
@@ -178,9 +169,7 @@ class TriageService:
                     issue_type=TriageIssueType.MULTI_LOCATION,
                     severity=TriageSeverity.WARNING,
                     action=TriageAction.SHOKO_CONFIG,
-                    detail=(
-                        f"Plex show references {len(locations)} filesystem directories "
-                    ),
+                    detail=(f"Plex show references {len(locations)} filesystem directories "),
                     paths=locations,
                     plex_title=show_title,
                 )
@@ -261,17 +250,12 @@ class TriageService:
                 gaps.append(gap)
 
         # Sort by episode deficit (largest gap first)
-        gaps.sort(
-            key=lambda g: g.expected_episode_count - g.actual_episode_count,
-            reverse=True,
-        )
+        gaps.sort(key=lambda g: g.expected_episode_count - g.actual_episode_count, reverse=True)
 
         # Count shows with actual gaps
         gap_count = sum(1 for g in gaps if g.is_missing)
 
-        summary = self._build_gap_summary(
-            section_title, len(plex_shows), gap_count, gaps
-        )
+        summary = self._build_gap_summary(section_title, len(plex_shows), gap_count, gaps)
         return SeasonGapReport(
             section_title=section_title,
             total_shows=len(plex_shows),
@@ -400,10 +384,7 @@ class TriageService:
 
     @staticmethod
     def _build_gap_summary(
-        section_title: str,
-        total_shows: int,
-        gap_count: int,
-        gaps: list[SeasonGap],
+        section_title: str, total_shows: int, gap_count: int, gaps: list[SeasonGap]
     ) -> str:
         """Build a human-readable summary of the season gap report."""
         total_expected = sum(g.expected_episode_count for g in gaps)
@@ -433,10 +414,7 @@ class TriageService:
         return "\n".join(lines)
 
     def _build_summary(
-        self,
-        issues: list[TriageIssue],
-        section_title: str,
-        total_shows: int,
+        self, issues: list[TriageIssue], section_title: str, total_shows: int
     ) -> str:
         """Build a human-readable summary of the triage report."""
         by_type: dict[str, int] = {}
@@ -445,9 +423,7 @@ class TriageService:
 
         for issue in issues:
             by_type[issue.issue_type.value] = by_type.get(issue.issue_type.value, 0) + 1
-            by_severity[issue.severity.value] = (
-                by_severity.get(issue.severity.value, 0) + 1
-            )
+            by_severity[issue.severity.value] = by_severity.get(issue.severity.value, 0) + 1
             by_action[issue.action.value] = by_action.get(issue.action.value, 0) + 1
 
         error_count = by_severity.get("error", 0)

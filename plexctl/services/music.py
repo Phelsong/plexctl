@@ -54,9 +54,7 @@ class MusicService:
         self._client = client
 
     def list_artists(
-        self,
-        section_title: str = "Music",
-        limit: int | None = None,
+        self, section_title: str = "Music", limit: int | None = None
     ) -> list[ArtistInfo]:
         """List all artists in a music section via plexapi."""
         server = self._client.server
@@ -137,10 +135,7 @@ class MusicService:
         return None
 
     def recently_added(
-        self,
-        section_title: str = "Music",
-        maxresults: int = 50,
-        libtype: str | None = None,
+        self, section_title: str = "Music", maxresults: int = 50, libtype: str | None = None
     ) -> list[ArtistInfo | AlbumInfo | TrackInfo]:
         """Get recently added music.
 

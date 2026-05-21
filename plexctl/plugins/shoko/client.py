@@ -88,9 +88,7 @@ class ShokoClient:
         return result
 
     def get_list(
-        self,
-        path: str,
-        params: dict[str, Any] | None = None,
+        self, path: str, params: dict[str, Any] | None = None
     ) -> tuple[list[dict[str, Any]], int]:
         """Send a GET request that returns a paginated list.
 
@@ -106,11 +104,7 @@ class ShokoClient:
         resp = self.get(path, params)
         return resp.get("List", []), resp.get("Total", 0)
 
-    def post(
-        self,
-        path: str,
-        json: dict[str, Any] | None = None,
-    ) -> dict[str, Any] | None:
+    def post(self, path: str, json: dict[str, Any] | None = None) -> dict[str, Any] | None:
         """Send an authenticated POST request to the Shoko API.
 
         Args:
@@ -130,11 +124,7 @@ class ShokoClient:
         result: dict[str, Any] = resp.json()
         return result
 
-    def delete(
-        self,
-        path: str,
-        json: dict[str, Any] | None = None,
-    ) -> dict[str, Any] | None:
+    def delete(self, path: str, json: dict[str, Any] | None = None) -> dict[str, Any] | None:
         """Send an authenticated DELETE request to the Shoko API.
 
         Args:

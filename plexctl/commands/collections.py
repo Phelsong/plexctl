@@ -11,18 +11,13 @@ from rich.table import Table
 
 from plexctl.client import PlexClient
 from plexctl.config import load_config
-from plexctl.converters import (
-    collection_info_to_csv,
-    collection_metadata_to_csv,
-)
+from plexctl.converters import collection_info_to_csv, collection_metadata_to_csv
 from plexctl.csv_utils import write_csv_to_output
 from plexctl.options import CsvFlag, OutputFile
 from plexctl.services.library import LibraryService
 
 collections_app = typer.Typer(
-    name="collections",
-    help="Manage Plex collections.",
-    no_args_is_help=True,
+    name="collections", help="Manage Plex collections.", no_args_is_help=True
 )
 console = Console()
 
@@ -40,10 +35,7 @@ def _get_service() -> LibraryService:
 @collections_app.command("list")
 def list_collections(
     section: str | None = typer.Option(
-        None,
-        "--section",
-        "-s",
-        help="Section key to filter collections",
+        None, "--section", "-s", help="Section key to filter collections"
     ),
     csv_output: CsvFlag = False,
     output: OutputFile = None,
@@ -71,12 +63,7 @@ def list_collections(
     table.add_column("Items", style="magenta", justify="right")
 
     for coll in colls:
-        table.add_row(
-            coll.key,
-            coll.title,
-            "✓" if coll.smart else "✗",
-            str(coll.content_count),
-        )
+        table.add_row(coll.key, coll.title, "✓" if coll.smart else "✗", str(coll.content_count))
 
     console.print(table)
 
@@ -120,10 +107,7 @@ def get_collection(
 def create_collection(
     name: str = typer.Argument(help="Collection title"),
     section: str = typer.Option(
-        ...,
-        "--section",
-        "-s",
-        help="Section key to create the collection in",
+        ..., "--section", "-s", help="Section key to create the collection in"
     ),
     smart: bool = typer.Option(False, "--smart", help="Create a smart collection"),
 ) -> None:
@@ -134,14 +118,8 @@ def create_collection(
         plexctl library collections create "Action Movies" --section 2 --smart
     """
     service = _get_service()
-    coll = service.create_collection(
-        title=name,
-        section_key=section,
-        smart=smart,
-    )
-    console.print(
-        f"[green]✓ Created collection '{coll.title}' (key={coll.key})[/green]"
-    )
+    coll = service.create_collection(title=name, section_key=section, smart=smart)
+    console.print(f"[green]✓ Created collection '{coll.title}' (key={coll.key})[/green]")
 
 
 # --- Update collection -------------------------------------------------------
@@ -150,12 +128,8 @@ def create_collection(
 @collections_app.command("update")
 def update_collection(
     key: str = typer.Argument(help="Collection rating key"),
-    title: str | None = typer.Option(
-        None, "--title", "-t", help="New title for the collection"
-    ),
-    summary: str | None = typer.Option(
-        None, "--summary", help="New summary/description"
-    ),
+    title: str | None = typer.Option(None, "--title", "-t", help="New title for the collection"),
+    summary: str | None = typer.Option(None, "--summary", help="New summary/description"),
 ) -> None:
     """Update a collection's metadata.
 
@@ -164,9 +138,7 @@ def update_collection(
         plexctl library collections update 12345 --summary "Updated description"
     """
     if title is None and summary is None:
-        console.print(
-            "[yellow]Specify at least --title or --summary to update.[/yellow]"
-        )
+        console.print("[yellow]Specify at least --title or --summary to update.[/yellow]")
         raise typer.Exit(code=1)
 
     service = _get_service()
@@ -185,12 +157,7 @@ def update_collection(
 @collections_app.command("delete")
 def delete_collection(
     key: str = typer.Argument(help="Collection rating key"),
-    confirm: bool = typer.Option(
-        False,
-        "--yes",
-        "-y",
-        help="Skip confirmation prompt.",
-    ),
+    confirm: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation prompt."),
 ) -> None:
     """Delete a collection permanently.
 
@@ -200,9 +167,7 @@ def delete_collection(
         plexctl library collections delete 12345 --yes
     """
     if not confirm:
-        console.print(
-            f"[yellow]Will delete collection {key}. Use --yes to confirm.[/yellow]"
-        )
+        console.print(f"[yellow]Will delete collection {key}. Use --yes to confirm.[/yellow]")
         raise typer.Exit(code=1)
 
     service = _get_service()
@@ -251,12 +216,7 @@ def add_to_collection(
 def remove_from_collection(
     key: str = typer.Argument(help="Rating key of the collection"),
     items: list[str] = typer.Argument(..., help="Rating keys of items to remove"),
-    confirm: bool = typer.Option(
-        False,
-        "--yes",
-        "-y",
-        help="Skip confirmation prompt.",
-    ),
+    confirm: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation prompt."),
 ) -> None:
     """Remove items from a collection.
 
@@ -281,6 +241,4 @@ def remove_from_collection(
         console.print(f"[red]{exc}[/red]")
         raise typer.Exit(code=1)
 
-    console.print(
-        f"[green]✓ Removed {len(items)} item(s) from collection {key}[/green]"
-    )
+    console.print(f"[green]✓ Removed {len(items)} item(s) from collection {key}[/green]")

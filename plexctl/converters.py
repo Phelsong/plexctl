@@ -169,8 +169,7 @@ def season_gap_to_csv(gap: SeasonGap) -> CsvSeasonGap:
         f"{s.name}({s.episode_count}ep,AniDB:{s.anidb_id})" for s in gap.shoko_series
     )
     plex_seasons = "|".join(
-        f"S{s.season_number:02d}:{s.title}({s.episode_count}ep)"
-        for s in gap.plex_seasons
+        f"S{s.season_number:02d}:{s.title}({s.episode_count}ep)" for s in gap.plex_seasons
     )
     deficit = gap.expected_episode_count - gap.actual_episode_count
 
@@ -264,8 +263,7 @@ def fs_dir_to_csv(fs_dir: FsDir) -> CsvFsDir:
 def episode_diagnostics_to_csv(ep: EpisodeDiagnostics) -> CsvEpisodeDiagnostics:
     """Convert EpisodeDiagnostics to a flat CSV row."""
     file_details = "|".join(
-        f"{d.file_path}(accessible={d.accessible},exists={d.exists})"
-        for d in ep.file_details
+        f"{d.file_path}(accessible={d.accessible},exists={d.exists})" for d in ep.file_details
     )
     return CsvEpisodeDiagnostics(
         key=ep.key,
@@ -344,38 +342,38 @@ def server_info_to_csv(info: ServerInfo) -> CsvServerInfo:
 
 def server_identity_to_table(identity: ServerIdentity) -> Table:
     """Create a Rich Table from ServerIdentity for display.
-    
+
     Args:
         identity: ServerIdentity object to convert
-        
+
     Returns:
         Rich Table object with server identity information
     """
     table = Table(title="Server Identity", show_header=True, header_style="bold magenta")
     table.add_column("Property", style="cyan", width=30)
     table.add_column("Value", style="green")
-    
+
     table.add_row("Machine ID", identity.machineIdentifier)
     table.add_row("Version", identity.version)
     table.add_row("Claimed", "Yes" if identity.claimed else "No")
     table.add_row("Size", f"{identity.size:,} bytes")
-    
+
     return table
 
 
 def user_account_to_table(user: UserAccount) -> Table:
     """Create a Rich Table from UserAccount for display.
-    
+
     Args:
         user: UserAccount object to convert
-        
+
     Returns:
         Rich Table object with user account information
     """
     table = Table(title="User Account Info", show_header=True, header_style="bold blue")
     table.add_column("Field", style="cyan", width=20)
     table.add_column("Value", style="green")
-    
+
     table.add_row("ID", str(user.id))
     table.add_row("Username", user.username)
     table.add_row("Email", user.email)
@@ -384,7 +382,7 @@ def user_account_to_table(user: UserAccount) -> Table:
     table.add_row("Restricted", "Yes" if user.restricted else "No")
     table.add_row("DoH", "Yes" if user.doh else "No")
     table.add_row("Anonymous", "Yes" if user.anonymous else "No")
-    
+
     return table
 
 
@@ -403,10 +401,7 @@ def butler_task_to_csv(task: ButlerTask) -> CsvButlerTask:
 
 def library_location_to_csv(location: LibraryLocation) -> CsvLibraryLocation:
     """Convert LibraryLocation to a flat CSV row."""
-    return CsvLibraryLocation(
-        id=str(location.id),
-        path=location.path,
-    )
+    return CsvLibraryLocation(id=str(location.id), path=location.path)
 
 
 def media_tree_item_to_csv(item: MediaTreeItem) -> CsvMediaTreeItem:
@@ -471,18 +466,12 @@ def similar_media_to_csv(media: SimilarMedia) -> CsvSimilarMedia:
 
 def smart_playlist_filter_to_csv(filt: SmartPlaylistFilter) -> CsvSmartPlaylistFilter:
     """Convert SmartPlaylistFilter to a flat CSV row."""
-    return CsvSmartPlaylistFilter(
-        field=filt.field,
-        operator=filt.operator,
-        value=filt.value,
-    )
+    return CsvSmartPlaylistFilter(field=filt.field, operator=filt.operator, value=filt.value)
 
 
 def smart_playlist_to_csv(playlist: SmartPlaylist) -> CsvSmartPlaylist:
     """Convert SmartPlaylist to a flat CSV row."""
-    filters_summary = "|".join(
-        f"{f.field}{f.operator}{f.value}" for f in playlist.filters
-    )
+    filters_summary = "|".join(f"{f.field}{f.operator}{f.value}" for f in playlist.filters)
     return CsvSmartPlaylist(
         key=playlist.key,
         title=playlist.title,

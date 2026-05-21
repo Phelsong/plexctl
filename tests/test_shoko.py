@@ -1,4 +1,5 @@
 """Tests for Shoko integration models and service."""
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock
@@ -173,11 +174,7 @@ class TestShokoServiceParseSeries:
 
     def test_parse_series_with_tmdb(self) -> None:
         raw = {
-            "IDs": {
-                "ID": 2,
-                "AniDB": 67890,
-                "TMDB": {"Show": [100, 200], "Movie": [300]},
-            },
+            "IDs": {"ID": 2, "AniDB": 67890, "TMDB": {"Show": [100, 200], "Movie": [300]}},
             "Name": "Frieren",
             "Sizes": {"Local": {}, "Total": {}},
         }
@@ -248,9 +245,7 @@ class TestShokoServiceParseFile:
                     "EpisodeIDs": [{"ID": 10}, {"ID": 11}],
                 }
             ],
-            "Locations": [
-                {"RelativePath": "/anime/Arifureta/S01E01.mkv", "IsAccessible": True}
-            ],
+            "Locations": [{"RelativePath": "/anime/Arifureta/S01E01.mkv", "IsAccessible": True}],
         }
         result = self.service._parse_file(raw)
         assert result.id == 100
@@ -301,14 +296,9 @@ class TestShokoServiceParseFile:
             "IsVariation": False,
             "IsIgnored": False,
             "Resolution": "1080p",
-            "SeriesIDs": [
-                {"SeriesID": {"ID": 20, "Name": "One Piece"}, "EpisodeIDs": []}
-            ],
+            "SeriesIDs": [{"SeriesID": {"ID": 20, "Name": "One Piece"}, "EpisodeIDs": []}],
             "Locations": [
-                {
-                    "RelativePath": "One_Piece/One_Piece_-_001_[%CRC].mkv",
-                    "IsAccessible": True,
-                }
+                {"RelativePath": "One_Piece/One_Piece_-_001_[%CRC].mkv", "IsAccessible": True}
             ],
             "Hashes": [
                 {"Type": "SHA1", "Value": "sha1hash"},
@@ -472,12 +462,7 @@ class TestShokoServiceTmdbLink:
         assert result.action == "linked"
         self.mock_client.post.assert_called_once_with(
             "/Series/218/TMDB/Movie",
-            json={
-                "ID": 683127,
-                "EpisodeID": 229573,
-                "Replace": False,
-                "Refresh": False,
-            },
+            json={"ID": 683127, "EpisodeID": 229573, "Replace": False, "Refresh": False},
         )
 
     def test_unlink_tmdb_show_success(self) -> None:
@@ -560,11 +545,7 @@ class TestCrcAuditModels:
         from plexctl.models import ShokoFile
 
         f = ShokoFile(
-            id=1,
-            filename="test.mkv",
-            crc32="ABCDEF12",
-            ed2k="ed2khash",
-            sha1="sha1hash",
+            id=1, filename="test.mkv", crc32="ABCDEF12", ed2k="ed2khash", sha1="sha1hash"
         )
         assert f.crc32 == "ABCDEF12"
         assert f.ed2k == "ed2khash"
@@ -610,16 +591,11 @@ class TestCrcAuditService:
                 {
                     "ID": 2,
                     "SeriesIDs": [
-                        {
-                            "SeriesID": {"ID": 20, "Name": "Black Clover"},
-                            "EpisodeIDs": [],
-                        }
+                        {"SeriesID": {"ID": 20, "Name": "Black Clover"}, "EpisodeIDs": []}
                     ],
                     "Locations": [
                         {
-                            "RelativePath": (
-                                "Black_Clover/Black_Clover_-_001_[350F23E7].mkv"
-                            ),
+                            "RelativePath": ("Black_Clover/Black_Clover_-_001_[350F23E7].mkv"),
                             "IsAccessible": True,
                         }
                     ],
@@ -652,14 +628,9 @@ class TestCrcAuditService:
             [
                 {
                     "ID": 1,
-                    "SeriesIDs": [
-                        {"SeriesID": {"ID": 10, "Name": "Test"}, "EpisodeIDs": []}
-                    ],
+                    "SeriesIDs": [{"SeriesID": {"ID": 10, "Name": "Test"}, "EpisodeIDs": []}],
                     "Locations": [
-                        {
-                            "RelativePath": "Test/Test_-_01_[ABCDEF12].mkv",
-                            "IsAccessible": True,
-                        }
+                        {"RelativePath": "Test/Test_-_01_[ABCDEF12].mkv", "IsAccessible": True}
                     ],
                     "Hashes": [{"Type": "CRC32", "Value": "ABCDEF12"}],
                     "IsVariation": False,
@@ -723,14 +694,9 @@ class TestCrcAuditService:
 class TestBatchRehashMissingCrc:
     """Test batch_rehash_missing_crc service method."""
 
-    def _make_file_data(
-        self, file_id: int, path: str, crc32_hash: str | None = None
-    ) -> dict:
+    def _make_file_data(self, file_id: int, path: str, crc32_hash: str | None = None) -> dict:
         """Build a mock file API response dict."""
-        hashes = [
-            {"Type": "ED2K", "Value": "ed2khash"},
-            {"Type": "SHA1", "Value": "sha1hash"},
-        ]
+        hashes = [{"Type": "ED2K", "Value": "ed2khash"}, {"Type": "SHA1", "Value": "sha1hash"}]
         if crc32_hash:
             hashes.append({"Type": "CRC32", "Value": crc32_hash})
         return {
@@ -764,10 +730,7 @@ class TestBatchRehashMissingCrc:
         mock_client = MagicMock()
         service = ShokoService(mock_client)
 
-        mock_client.get_list.return_value = (
-            [self._make_file_data(1, "Test/Ep01_[%CRC].mkv")],
-            1,
-        )
+        mock_client.get_list.return_value = ([self._make_file_data(1, "Test/Ep01_[%CRC].mkv")], 1)
         mock_client.post.return_value = None
 
         result = service.batch_rehash_missing_crc()
@@ -798,10 +761,7 @@ class TestBatchRehashMissingCrc:
         mock_client = MagicMock()
         service = ShokoService(mock_client)
 
-        mock_client.get_list.return_value = (
-            [self._make_file_data(1, "Test/Ep01_[%CRC].mkv")],
-            1,
-        )
+        mock_client.get_list.return_value = ([self._make_file_data(1, "Test/Ep01_[%CRC].mkv")], 1)
         mock_client.post.side_effect = Exception("error")
 
         result = service.batch_rehash_missing_crc()
@@ -817,9 +777,7 @@ class TestPlexMatchModels:
     def test_plexmatch_entry_basic(self) -> None:
         from plexctl.models import PlexMatchEntry
 
-        entry = PlexMatchEntry(
-            season_number=1, episode_number=1, filename="Episode_01.mkv"
-        )
+        entry = PlexMatchEntry(season_number=1, episode_number=1, filename="Episode_01.mkv")
         assert entry.season_number == 1
         assert entry.episode_number == 1
         assert entry.filename == "Episode_01.mkv"
@@ -842,9 +800,7 @@ class TestPlexMatchModels:
     def test_plexmatch_render_with_ids(self) -> None:
         from plexctl.models import PlexMatch
 
-        pm = PlexMatch(
-            title="WITCH WATCH", year=2025, tvdb_id=453127, imdb_id="tt33165027"
-        )
+        pm = PlexMatch(title="WITCH WATCH", year=2025, tvdb_id=453127, imdb_id="tt33165027")
         content = pm.render()
         assert "Title: WITCH WATCH" in content
         assert "Year: 2025" in content
@@ -867,11 +823,7 @@ class TestPlexMatchModels:
             ),
         ]
         pm = PlexMatch(
-            title="WITCH WATCH",
-            year=2025,
-            tvdb_id=453127,
-            imdb_id="tt33165027",
-            entries=entries,
+            title="WITCH WATCH", year=2025, tvdb_id=453127, imdb_id="tt33165027", entries=entries
         )
         content = pm.render()
         assert "Title: WITCH WATCH" in content
@@ -944,9 +896,7 @@ class TestPlexMatchGeneration:
                 "ID": episode_id * 100,
             },
             "TMDB": {
-                "Episodes": [
-                    {"SeasonNumber": season_number, "EpisodeNumber": episode_number}
-                ]
+                "Episodes": [{"SeasonNumber": season_number, "EpisodeNumber": episode_number}]
             },
             "IsHidden": is_hidden,
         }
@@ -1151,11 +1101,7 @@ class TestPlexMatchGeneration:
         ]
 
         pm = PlexMatch(
-            title="WITCH WATCH",
-            year=2025,
-            tvdb_id=453127,
-            imdb_id="tt33165027",
-            entries=entries,
+            title="WITCH WATCH", year=2025, tvdb_id=453127, imdb_id="tt33165027", entries=entries
         )
 
         content = pm.render()
@@ -1188,14 +1134,9 @@ class TestPlexMatchGeneration:
                 "IsIgnored": False,
                 "Resolution": "1080p",
                 "SeriesIDs": [
-                    {
-                        "SeriesID": {"ID": 1, "Name": "WITCH WATCH"},
-                        "EpisodeIDs": [{"ID": 1}],
-                    }
+                    {"SeriesID": {"ID": 1, "Name": "WITCH WATCH"}, "EpisodeIDs": [{"ID": 1}]}
                 ],
-                "Locations": [
-                    {"RelativePath": "WITCH WATCH/Ep01.mkv", "IsAccessible": True}
-                ],
+                "Locations": [{"RelativePath": "WITCH WATCH/Ep01.mkv", "IsAccessible": True}],
                 "Hashes": [],
             },
             # Variation file - should be excluded
@@ -1205,14 +1146,9 @@ class TestPlexMatchGeneration:
                 "IsIgnored": False,
                 "Resolution": "720p",
                 "SeriesIDs": [
-                    {
-                        "SeriesID": {"ID": 1, "Name": "WITCH WATCH"},
-                        "EpisodeIDs": [{"ID": 1}],
-                    }
+                    {"SeriesID": {"ID": 1, "Name": "WITCH WATCH"}, "EpisodeIDs": [{"ID": 1}]}
                 ],
-                "Locations": [
-                    {"RelativePath": "WITCH WATCH/Ep01_720.mkv", "IsAccessible": True}
-                ],
+                "Locations": [{"RelativePath": "WITCH WATCH/Ep01_720.mkv", "IsAccessible": True}],
                 "Hashes": [],
             },
             # Ignored file - should be excluded
@@ -1222,14 +1158,9 @@ class TestPlexMatchGeneration:
                 "IsIgnored": True,
                 "Resolution": "1080p",
                 "SeriesIDs": [
-                    {
-                        "SeriesID": {"ID": 1, "Name": "WITCH WATCH"},
-                        "EpisodeIDs": [{"ID": 1}],
-                    }
+                    {"SeriesID": {"ID": 1, "Name": "WITCH WATCH"}, "EpisodeIDs": [{"ID": 1}]}
                 ],
-                "Locations": [
-                    {"RelativePath": "WITCH WATCH/Ep01_alt.mkv", "IsAccessible": True}
-                ],
+                "Locations": [{"RelativePath": "WITCH WATCH/Ep01_alt.mkv", "IsAccessible": True}],
                 "Hashes": [],
             },
         ]
@@ -1540,27 +1471,21 @@ class TestPlexMatchGeneration:
                 "ID": 1,
                 "Name": "Episode 1",
                 "AniDB": {"Type": "Episode", "EpisodeNumber": 1, "ID": 100},
-                "TMDB": {
-                    "Episodes": [{"SeasonNumber": 1, "EpisodeNumber": 1, "ID": 852692}]
-                },
+                "TMDB": {"Episodes": [{"SeasonNumber": 1, "EpisodeNumber": 1, "ID": 852692}]},
                 "IsHidden": False,
             },
             {
                 "ID": 2,
                 "Name": "Episode 2",
                 "AniDB": {"Type": "Episode", "EpisodeNumber": 2, "ID": 200},
-                "TMDB": {
-                    "Episodes": [{"SeasonNumber": 1, "EpisodeNumber": 2, "ID": 852693}]
-                },
+                "TMDB": {"Episodes": [{"SeasonNumber": 1, "EpisodeNumber": 2, "ID": 852693}]},
                 "IsHidden": False,
             },
             {
                 "ID": 3,
                 "Name": "Episode 3",
                 "AniDB": {"Type": "Episode", "EpisodeNumber": 3, "ID": 300},
-                "TMDB": {
-                    "Episodes": [{"SeasonNumber": 1, "EpisodeNumber": 3, "ID": 852694}]
-                },
+                "TMDB": {"Episodes": [{"SeasonNumber": 1, "EpisodeNumber": 3, "ID": 852694}]},
                 "IsHidden": False,
             },
         ]
@@ -1612,18 +1537,14 @@ class TestPlexMatchGeneration:
                 "ID": 1,
                 "Name": "Episode 1",
                 "AniDB": {"Type": "Episode", "EpisodeNumber": 1, "ID": 100},
-                "TMDB": {
-                    "Episodes": [{"SeasonNumber": 1, "EpisodeNumber": 1, "ID": 852692}]
-                },
+                "TMDB": {"Episodes": [{"SeasonNumber": 1, "EpisodeNumber": 1, "ID": 852692}]},
                 "IsHidden": False,
             },
             {
                 "ID": 2,
                 "Name": "Episode 2",
                 "AniDB": {"Type": "Episode", "EpisodeNumber": 2, "ID": 200},
-                "TMDB": {
-                    "Episodes": [{"SeasonNumber": 1, "EpisodeNumber": 2, "ID": 999999}]
-                },
+                "TMDB": {"Episodes": [{"SeasonNumber": 1, "EpisodeNumber": 2, "ID": 999999}]},
                 "IsHidden": False,
             },
         ]
@@ -1713,9 +1634,7 @@ class TestTmdbOrderingModels:
 
     def test_tmdb_ordering_season_no_number(self) -> None:
         """Arc-based orderings may have season_number=None."""
-        s = TmdbOrderingSeason(
-            season_id="abc123", ordering_id="sagas", title="East Blue Saga"
-        )
+        s = TmdbOrderingSeason(season_id="abc123", ordering_id="sagas", title="East Blue Saga")
         assert s.season_number is None
 
     def test_tmdb_ordering_episode(self) -> None:
@@ -1802,16 +1721,9 @@ class TestTmdbOrderingService:
 
         mock_client.get_list.side_effect = mock_get_list
 
-        episode_map = service.fetch_ordering_episode_map(
-            37854, "62f98314175051007c594bdf"
-        )
+        episode_map = service.fetch_ordering_episode_map(37854, "62f98314175051007c594bdf")
 
-        assert episode_map == {
-            852692: (1, 1),
-            852693: (1, 2),
-            852694: (2, 1),
-            852695: (2, 2),
-        }
+        assert episode_map == {852692: (1, 1), 852693: (1, 2), 852694: (2, 1), 852695: (2, 2)}
 
     def test_fetch_ordering_skips_none_season_number(self) -> None:
         """Seasons with None season_number (arc-based) are skipped."""
@@ -1822,9 +1734,7 @@ class TestTmdbOrderingService:
             {"ID": "s00", "SeasonNumber": None, "Title": "East Blue Saga"},
             {"ID": "s01", "SeasonNumber": 1, "Title": "Romance Dawn"},
         ]
-        s01_episodes = [
-            {"ID": 852692, "SeasonNumber": 1, "EpisodeNumber": 1, "Title": "Ep1"}
-        ]
+        s01_episodes = [{"ID": 852692, "SeasonNumber": 1, "EpisodeNumber": 1, "Title": "Ep1"}]
 
         def mock_get_list(path: str, params: dict | None = None) -> tuple[list, int]:
             if path == "/TMDB/Show/37854/Season":
@@ -1836,9 +1746,7 @@ class TestTmdbOrderingService:
         mock_client.get_list.side_effect = mock_get_list
 
         # Only season with season_number=1 is processed
-        episode_map = service.fetch_ordering_episode_map(
-            37854, "62f98314175051007c594bdf"
-        )
+        episode_map = service.fetch_ordering_episode_map(37854, "62f98314175051007c594bdf")
 
         assert episode_map == {852692: (1, 1)}
 
@@ -1851,9 +1759,7 @@ class TestTmdbOrderingService:
             "ID": 42,
             "Name": "I'm Luffy!",
             "AniDB": {"Type": "Episode", "EpisodeNumber": 1, "ID": 100},
-            "TMDB": {
-                "Episodes": [{"SeasonNumber": 1, "EpisodeNumber": 1, "ID": 852692}]
-            },
+            "TMDB": {"Episodes": [{"SeasonNumber": 1, "EpisodeNumber": 1, "ID": 852692}]},
             "IsHidden": False,
         }
 

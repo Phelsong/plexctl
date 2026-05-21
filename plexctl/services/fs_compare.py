@@ -11,13 +11,7 @@ from contextlib import suppress
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from plexctl.models import (
-    VIDEO_EXTENSIONS,
-    FsCompareResult,
-    FsDir,
-    ReorgAction,
-    ReorganizePlan,
-)
+from plexctl.models import VIDEO_EXTENSIONS, FsCompareResult, FsDir, ReorgAction, ReorganizePlan
 
 if TYPE_CHECKING:
     from plexctl.client import PlexClient
@@ -40,11 +34,7 @@ class FsCompareService:
             ``{"/data": ""}``.
     """
 
-    def __init__(
-        self,
-        client: PlexClient,
-        path_map: dict[str, str] | None = None,
-    ) -> None:
+    def __init__(self, client: PlexClient, path_map: dict[str, str] | None = None) -> None:
         self._client = client
         self._path_map = path_map or {}
 
@@ -141,10 +131,7 @@ class FsCompareService:
         return sorted(subdirs)
 
     def compare_section(
-        self,
-        section_title: str,
-        max_depth: int = 2,
-        count_files: bool = False,
+        self, section_title: str, max_depth: int = 2, count_files: bool = False
     ) -> FsCompareResult:
         """Compare a section's filesystem with Plex's show locations.
 
@@ -308,10 +295,7 @@ class FsCompareService:
             )
 
     def list_orphans(
-        self,
-        section_title: str,
-        max_depth: int = 2,
-        count_files: bool = False,
+        self, section_title: str, max_depth: int = 2, count_files: bool = False
     ) -> list[FsDir]:
         """Find directories on disk that Plex doesn't track as show locations.
 
@@ -328,16 +312,11 @@ class FsCompareService:
         Returns:
             List of FsDir objects for orphaned directories.
         """
-        result = self.compare_section(
-            section_title, max_depth=max_depth, count_files=count_files
-        )
+        result = self.compare_section(section_title, max_depth=max_depth, count_files=count_files)
         return result.orphan_dirs
 
     def list_grouped(
-        self,
-        section_title: str,
-        max_depth: int = 2,
-        count_files: bool = False,
+        self, section_title: str, max_depth: int = 2, count_files: bool = False
     ) -> list[FsDir]:
         """Find directories that have both files and subdirectories.
 
@@ -353,16 +332,10 @@ class FsCompareService:
         Returns:
             List of FsDir objects for grouped directories.
         """
-        result = self.compare_section(
-            section_title, max_depth=max_depth, count_files=count_files
-        )
+        result = self.compare_section(section_title, max_depth=max_depth, count_files=count_files)
         return result.grouped_dirs
 
-    def reorganize_plan(
-        self,
-        section_title: str,
-        max_depth: int = 2,
-    ) -> ReorganizePlan:
+    def reorganize_plan(self, section_title: str, max_depth: int = 2) -> ReorganizePlan:
         """Generate a reorganization plan to fix Plex parsing issues.
 
         Analyzes the filesystem structure and Plex's show locations to
@@ -378,9 +351,7 @@ class FsCompareService:
         Returns:
             ReorganizePlan with proposed actions and summary.
         """
-        result = self.compare_section(
-            section_title, max_depth=max_depth, count_files=False
-        )
+        result = self.compare_section(section_title, max_depth=max_depth, count_files=False)
         actions: list[ReorgAction] = []
 
         # Action 1: Grouped directories — propose splitting subdirs to top-level.
@@ -429,12 +400,8 @@ class FsCompareService:
             )
 
         # Action 3: Orphans — categorize by risk.
-        orphans_with_files = [
-            d for d in result.orphan_dirs if d.has_files or d.video_files > 0
-        ]
-        empty_orphans = [
-            d for d in result.orphan_dirs if d.video_files == 0 and not d.has_files
-        ]
+        orphans_with_files = [d for d in result.orphan_dirs if d.has_files or d.video_files > 0]
+        empty_orphans = [d for d in result.orphan_dirs if d.video_files == 0 and not d.has_files]
 
         # Orphans with files and subdirs are likely unrecognized season dirs.
         for fs_dir in orphans_with_files:
@@ -470,9 +437,7 @@ class FsCompareService:
             ReorgAction(
                 action="remove_empty",
                 source=fs_dir.path,
-                reason=(
-                    f"'{fs_dir.name}' is empty and not tracked by Plex. Safe to remove."
-                ),
+                reason=(f"'{fs_dir.name}' is empty and not tracked by Plex. Safe to remove."),
                 risk="low",
             )
             for fs_dir in empty_orphans[:10]
@@ -497,11 +462,9 @@ class FsCompareService:
         empty_count = len(empty_orphans)
 
         lines = [
-            f"Found {grouped_count} grouping-risk dirs "
-            f"(files + subdirs at same level).",
+            f"Found {grouped_count} grouping-risk dirs " f"(files + subdirs at same level).",
             f"Found {multi_count} multi-location shows (multiple dirs → 1 Plex show).",
-            f"Found {orphan_file_count} orphan dirs with files, "
-            f"{empty_count} empty orphans.",
+            f"Found {orphan_file_count} orphan dirs with files, " f"{empty_count} empty orphans.",
         ]
         if grouped_count > 0:
             lines.append(

@@ -18,6 +18,7 @@ dependencies = [
     "rich>=13.0",
     "pydantic>=2.0",
     "pydantic-settings>=2.0",
+    "defusedxml>=0.7",
 ]
 
 [project.scripts]
@@ -27,6 +28,7 @@ plexctl = "plexctl.cli:app"
 packages = ["plexctl"]
 
 [tool.ruff]
+line-length = 98
 target-version = "py312"
 src = ["plexctl", "tests"]
 
@@ -61,7 +63,15 @@ mypy_path = "."
 module = "plexapi.*"
 ignore_missing_imports = true
 
+[tool.black]
+line-length = 98
+target_version = ["py312"]
+
+[tool.bandit]
+exclude_dirs = ['/.git', '/.vscode', '/.pixi', '__pycache__', '/__pycache__', '/.mypy_cache']
+targets = '.'
+recursive = true
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
-addopts = "--cov=plexctl --cov-report=term-missing"

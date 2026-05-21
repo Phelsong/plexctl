@@ -14,6 +14,7 @@ from __future__ import annotations
 import logging
 from functools import lru_cache
 from typing import TYPE_CHECKING, Any
+
 from rich.progress import track
 
 from plexctl.models import (
@@ -90,9 +91,7 @@ class LibraryService:
             "artist": "Plex Music Scanner",
             "photo": "Plex Photo Scanner",
         }
-        effective_scanner = scanner or scanner_defaults.get(
-            section_type, "Plex Movie Scanner"
-        )
+        effective_scanner = scanner or scanner_defaults.get(section_type, "Plex Movie Scanner")
 
         from plexctl.client import PlexHTTPClient
 
@@ -122,7 +121,6 @@ class LibraryService:
             scanner=effective_scanner,
             language=language,
         )
-
 
     def list_sections(self) -> list[LibrarySection]:
         """List all library sections on the server.
@@ -160,7 +158,6 @@ class LibraryService:
             )
 
         return sections
-
 
     @lru_cache(maxsize=1)
     def get_section(self, section_key: str | int) -> LibrarySection | None:
@@ -288,9 +285,7 @@ class LibraryService:
 
     # --- Collections --------------------------------------------------------
 
-    def list_collections(
-        self, section_key: str | int | None = None
-    ) -> list[CollectionInfo]:
+    def list_collections(self, section_key: str | int | None = None) -> list[CollectionInfo]:
         """List collections, optionally filtered by section.
 
         Args:
@@ -331,8 +326,9 @@ class LibraryService:
             path = f"/library/sections/{section.key}/collections"
             try:
                 data = http.get(path)
-            except Exception:
+            except Exception as exc:
                 # Some section types (e.g. photo) may not support collections
+                logger.debug("Skipping collections for section %s: %s", section.key, exc)
                 continue
             if data is None:
                 continue
@@ -341,13 +337,15 @@ class LibraryService:
             if isinstance(raw_metadata, dict):
                 raw_metadata = [raw_metadata]
             for item in raw_metadata:
-                all_collections.append(CollectionInfo(
-                    key=str(item.get("ratingKey", item.get("key", ""))),
-                    title=item.get("title", ""),
-                    smart=_safe_bool(item.get("smart")),
-                    content_count=_safe_int_or(item.get("childCount", 0)),
-                    section_title=section.title,
-                ))
+                all_collections.append(
+                    CollectionInfo(
+                        key=str(item.get("ratingKey", item.get("key", ""))),
+                        title=item.get("title", ""),
+                        smart=_safe_bool(item.get("smart")),
+                        content_count=_safe_int_or(item.get("childCount", 0)),
+                        section_title=section.title,
+                    )
+                )
         return all_collections
 
     def get_collection(self, collection_key: str | int) -> CollectionMetadata | None:
@@ -393,10 +391,7 @@ class LibraryService:
         )
 
     def create_collection(
-        self,
-        title: str,
-        section_key: str | int,
-        smart: bool = False,
+        self, title: str, section_key: str | int, smart: bool = False
     ) -> CollectionMetadata:
         """Create a new collection in a library section.
 
@@ -423,11 +418,7 @@ class LibraryService:
 
         key = str(section_key)
         http = PlexHTTPClient(self._client)
-        params: dict[str, Any] = {
-            "title": title,
-            "type": "1" if smart else "0",
-            "sectionId": key,
-        }
+        params: dict[str, Any] = {"title": title, "type": "1" if smart else "0", "sectionId": key}
         data = http.post(f"/library/sections/{key}/collections", params=params)
 
         if data is not None:
@@ -443,18 +434,10 @@ class LibraryService:
                 section_key=key,
             )
 
-        return CollectionMetadata(
-            key="",
-            title=title,
-            smart=smart,
-            section_key=key,
-        )
+        return CollectionMetadata(key="", title=title, smart=smart, section_key=key)
 
     def update_collection(
-        self,
-        collection_key: str | int,
-        title: str | None = None,
-        summary: str | None = None,
+        self, collection_key: str | int, title: str | None = None, summary: str | None = None
     ) -> CollectionMetadata | None:
         """Update a collection's metadata.
 
@@ -542,15 +525,13 @@ class LibraryService:
             "uri": [
                 f"server://{machine_id}/com.plexapp.plugins.library/library/metadata/{item_key}"
                 for item_key in item_keys
-            ],
+            ]
         }
         http.put(f"/library/metadata/{key}/items", params=params)
 
         return self.get_collection(key)
 
-    def remove_from_collection(
-        self, collection_key: str | int, item_keys: list[str]
-    ) -> None:
+    def remove_from_collection(self, collection_key: str | int, item_keys: list[str]) -> None:
         """Remove items from a collection.
 
         Args:

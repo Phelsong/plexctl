@@ -30,12 +30,7 @@ from plexctl.converters import (
     show_diagnostics_to_csv,
     triage_issue_to_csv,
 )
-from plexctl.csv_utils import (
-    from_csv,
-    get_model_class,
-    list_model_names,
-    write_csv_to_output,
-)
+from plexctl.csv_utils import from_csv, get_model_class, list_model_names, write_csv_to_output
 from plexctl.models import (
     PlexMatch,
     PlexMatchBatchResult,
@@ -78,9 +73,7 @@ def _get_fix_service() -> FixService:
     return FixService(client)
 
 
-def _get_fs_service(
-    path_map: dict[str, str] | None = None,
-) -> FsCompareService:
+def _get_fs_service(path_map: dict[str, str] | None = None) -> FsCompareService:
     """Load config and create a connected FsCompareService."""
     config = load_config()
     client = PlexClient(config)
@@ -179,10 +172,7 @@ def _risk_style(risk: str) -> str:
     return {"low": "green", "medium": "yellow", "high": "red"}.get(risk, "white")
 
 
-def _display_reorg_actions(
-    actions: list[ReorgAction],
-    title: str,
-) -> None:
+def _display_reorg_actions(actions: list[ReorgAction], title: str) -> None:
     """Display filtered reorganization actions in a grouped table format.
 
     Renders actions grouped by type (move, review, remove_empty) with
@@ -234,13 +224,10 @@ def _display_reorg_actions(
     console.print(f"\n[bold]Summary:[/bold] {', '.join(parts)} action(s)")
     if review_count:
         console.print(
-            "  [yellow]Review actions require manual decisions "
-            "before proceeding.[/yellow]"
+            "  [yellow]Review actions require manual decisions " "before proceeding.[/yellow]"
         )
     if cleanup_count:
-        console.print(
-            "  [green]Cleanup actions are safe — empty dirs can be removed.[/green]"
-        )
+        console.print("  [green]Cleanup actions are safe — empty dirs can be removed.[/green]")
 
 
 # ===================================================================
@@ -250,28 +237,21 @@ def _display_reorg_actions(
 
 @triage_app.command("report")
 def report(
-    section: Annotated[
-        str,
-        typer.Option(help="Library section name"),
-    ] = "TV Shows",
+    section: Annotated[str, typer.Option(help="Library section name")] = "TV Shows",
     path_map: Annotated[
         list[str] | None,
         typer.Option(
-            help="Path mapping (e.g. /data=/mnt/nfs/media). "
-            "Can be specified multiple times."
+            help="Path mapping (e.g. /data=/mnt/nfs/media). " "Can be specified multiple times."
         ),
     ] = None,
     filter_severity: Annotated[
-        str | None,
-        typer.Option(
-            help="Filter by severity: error, warning, info",
-        ),
+        str | None, typer.Option(help="Filter by severity: error, warning, info")
     ] = None,
     filter_action: Annotated[
         str | None,
         typer.Option(
             help="Filter by recommended action: analyze, refresh, fix-match, "
-            "link-tmdb, review, reorganize",
+            "link-tmdb, review, reorganize"
         ),
     ] = None,
     csv_output: CsvFlag = False,
@@ -353,8 +333,7 @@ def report(
         )
     if needs_review:
         console.print(
-            f"  [yellow]review[/yellow]: {len(needs_review)} issues need "
-            f"manual inspection"
+            f"  [yellow]review[/yellow]: {len(needs_review)} issues need " f"manual inspection"
         )
     if needs_reorg:
         console.print(
@@ -366,15 +345,9 @@ def report(
 
 @triage_app.command("fix")
 def run_fix(
-    section: Annotated[
-        str,
-        typer.Option(help="Library section name"),
-    ] = "Anime",
+    section: Annotated[str, typer.Option(help="Library section name")] = "Anime",
     action: Annotated[
-        str,
-        typer.Option(
-            help="Only fix issues with this recommended action: analyze, refresh"
-        ),
+        str, typer.Option(help="Only fix issues with this recommended action: analyze, refresh")
     ] = "analyze",
 ) -> None:
     """Execute auto-fixable triage actions.
@@ -420,9 +393,7 @@ def run_fix(
                 console.print(f"  [red]✗[/red] {r.title or r.key}: {r.error}")
 
     else:
-        console.print(
-            f"[red]Unknown action '{action}'. Supported: analyze, refresh[/red]"
-        )
+        console.print(f"[red]Unknown action '{action}'. Supported: analyze, refresh[/red]")
         raise typer.Exit(1)
 
 
@@ -461,9 +432,7 @@ def diagnose_scan(
     # Filter shows if issues_only
     shows = result.shows
     if issues_only:
-        shows = [
-            s for s in shows if s.unanalyzed_episodes > 0 or s.multi_media_episodes > 0
-        ]
+        shows = [s for s in shows if s.unanalyzed_episodes > 0 or s.multi_media_episodes > 0]
 
     if csv_output:
         rows = [show_diagnostics_to_csv(s) for s in shows]
@@ -501,9 +470,7 @@ def diagnose_scan(
     if deep:
         for show in shows:
             problem_episodes = [
-                ep
-                for ep in show.episode_details
-                if ep.has_unanalyzed or ep.media_count > 1
+                ep for ep in show.episode_details if ep.has_unanalyzed or ep.media_count > 1
             ]
             if not problem_episodes:
                 continue
@@ -591,12 +558,8 @@ def diagnose_show(
                 continue
             season_label = f"S{ep.season_number or '?':0>2}"
             episode_label = f"E{ep.episode_number or '?':0>2}"
-            issue_marker = (
-                " [red]⚠[/red]" if (ep.has_unanalyzed or ep.media_count > 1) else ""
-            )
-            ep_branch = tree.add(
-                f"{season_label}{episode_label} {ep.title or '-'}{issue_marker}"
-            )
+            issue_marker = " [red]⚠[/red]" if (ep.has_unanalyzed or ep.media_count > 1) else ""
+            ep_branch = tree.add(f"{season_label}{episode_label} {ep.title or '-'}{issue_marker}")
             for detail in ep.file_details:
                 codec_info = []
                 if detail.video_codec:
@@ -605,9 +568,7 @@ def diagnose_show(
                     codec_info.append(detail.audio_codec)
                 if detail.container:
                     codec_info.append(detail.container)
-                codec_str = (
-                    "/".join(codec_info) if codec_info else "[dim]no codecs[/dim]"
-                )
+                codec_str = "/".join(codec_info) if codec_info else "[dim]no codecs[/dim]"
 
                 missing_marker = ""
                 if detail.exists is False:
@@ -637,8 +598,7 @@ def diagnose_files(
 
     console.print(f"\n[bold]{result.title or 'Episode ' + result.key}[/bold]")
     console.print(
-        f"  Season {result.season_number or '?'}, "
-        f"Episode {result.episode_number or '?'}"
+        f"  Season {result.season_number or '?'}, " f"Episode {result.episode_number or '?'}"
     )
     console.print(f"  Media versions: {result.media_count}")
     console.print(f"  Unanalyzed: {'Yes' if result.has_unanalyzed else 'No'}")
@@ -683,9 +643,7 @@ def diagnose_files(
 
 @triage_app.command("analyze")
 def analyze_item(
-    key: Annotated[
-        str | None, typer.Argument(help="Plex rating key of the item")
-    ] = None,
+    key: Annotated[str | None, typer.Argument(help="Plex rating key of the item")] = None,
     section: Annotated[
         str | None, typer.Option(help="Section name to analyze (instead of item)")
     ] = None,
@@ -744,8 +702,7 @@ def batch_analyze(
 
     if result.succeeded > 0:
         console.print(
-            "\n[dim]Analysis is asynchronous — Plex processes "
-            "items in the background.[/dim]"
+            "\n[dim]Analysis is asynchronous — Plex processes " "items in the background.[/dim]"
         )
 
 
@@ -777,12 +734,8 @@ def batch_refresh(
 
 @triage_app.command("refresh")
 def refresh_item(
-    key: Annotated[
-        str | None, typer.Argument(help="Plex rating key of the item")
-    ] = None,
-    section: Annotated[
-        str | None, typer.Option(help="Section name to refresh all items")
-    ] = None,
+    key: Annotated[str | None, typer.Argument(help="Plex rating key of the item")] = None,
+    section: Annotated[str | None, typer.Option(help="Section name to refresh all items")] = None,
 ) -> None:
     """Refresh metadata for an item or entire section.
 
@@ -803,9 +756,7 @@ def refresh_item(
         raise typer.Exit(1)
 
     if result.success:
-        console.print(
-            f"[green]✓ {result.action}: '{result.title}' (key={result.key})[/green]"
-        )
+        console.print(f"[green]✓ {result.action}: '{result.title}' (key={result.key})[/green]")
     else:
         console.print(
             f"[red]✗ {result.action} failed for '{result.title}' (key={result.key}): "
@@ -831,21 +782,15 @@ def fixes_scan(
 
     if result.success:
         path_info = f" (path: {path})" if path else ""
-        console.print(
-            f"[green]✓ Scan triggered for section '{result.title}'{path_info}[/green]"
-        )
+        console.print(f"[green]✓ Scan triggered for section '{result.title}'{path_info}[/green]")
     else:
-        console.print(
-            f"[red]✗ Scan failed for section '{result.title}': {result.error}[/red]"
-        )
+        console.print(f"[red]✗ Scan failed for section '{result.title}': {result.error}[/red]")
         raise typer.Exit(1)
 
 
 @triage_app.command("split")
 def split_show(
-    key: str = typer.Argument(
-        help="Plex rating key of the multi-location show to split"
-    ),
+    key: str = typer.Argument(help="Plex rating key of the multi-location show to split"),
 ) -> None:
     """Split a multi-location show into separate entries.
 
@@ -859,8 +804,7 @@ def split_show(
     if result.success:
         matched_info = f" → {result.matched_to}" if result.matched_to else ""
         console.print(
-            f"[green]✓ Split show '{result.title}' "
-            f"(key={result.key}){matched_info}[/green]"
+            f"[green]✓ Split show '{result.title}' " f"(key={result.key}){matched_info}[/green]"
         )
     else:
         console.print(
@@ -874,8 +818,7 @@ def split_show(
 def remove_duplicates(
     section: str = typer.Option("Anime", help="Library section name"),
     dry_run: bool = typer.Option(
-        True,
-        help="Only show what would be deleted without actually deleting.",
+        True, help="Only show what would be deleted without actually deleting."
     ),
 ) -> None:
     """Remove duplicate media versions from episodes.
@@ -922,12 +865,8 @@ def find_matches(
     agent: Annotated[
         str | None, typer.Option(help="Metadata agent (e.g. tv.plex.agents.series)")
     ] = None,
-    title: Annotated[
-        str | None, typer.Option(help="Override title for the search")
-    ] = None,
-    year: Annotated[
-        str | None, typer.Option(help="Override year for the search")
-    ] = None,
+    title: Annotated[str | None, typer.Option(help="Override title for the search")] = None,
+    year: Annotated[str | None, typer.Option(help="Override year for the search")] = None,
 ) -> None:
     """Search for metadata matches for an item.
 
@@ -958,9 +897,7 @@ def find_matches(
         )
 
     console.print(table)
-    console.print(
-        "\n[dim]Use 'fix-match' with --match-index to apply a specific match.[/dim]"
-    )
+    console.print("\n[dim]Use 'fix-match' with --match-index to apply a specific match.[/dim]")
 
 
 @triage_app.command("fix-match")
@@ -969,19 +906,12 @@ def fix_match(
     match_index: Annotated[
         int,
         typer.Option(
-            "--match-index",
-            help="Which match to apply (0 = best match, see 'matches' command)",
+            "--match-index", help="Which match to apply (0 = best match, see 'matches' command)"
         ),
     ] = 0,
-    agent: Annotated[
-        str | None, typer.Option(help="Metadata agent for the search")
-    ] = None,
-    title: Annotated[
-        str | None, typer.Option(help="Override title for the search")
-    ] = None,
-    year: Annotated[
-        str | None, typer.Option(help="Override year for the search")
-    ] = None,
+    agent: Annotated[str | None, typer.Option(help="Metadata agent for the search")] = None,
+    title: Annotated[str | None, typer.Option(help="Override title for the search")] = None,
+    year: Annotated[str | None, typer.Option(help="Override year for the search")] = None,
 ) -> None:
     """Fix an incorrect metadata match.
 
@@ -989,13 +919,7 @@ def fix_match(
     Use the 'matches' command first to see available options.
     """
     service = _get_fix_service()
-    result = service.fix_match(
-        key,
-        match_index=match_index,
-        agent=agent,
-        title=title,
-        year=year,
-    )
+    result = service.fix_match(key, match_index=match_index, agent=agent, title=title, year=year)
 
     if result.success:
         matched_to = result.matched_to or ""
@@ -1012,9 +936,7 @@ def fix_match(
 
 
 @triage_app.command("unmatch")
-def unmatch_item(
-    key: str = typer.Argument(help="Plex rating key of the item"),
-) -> None:
+def unmatch_item(key: str = typer.Argument(help="Plex rating key of the item")) -> None:
     """Remove metadata match from an item.
 
     This disconnects the item from its current metadata source,
@@ -1042,8 +964,7 @@ def unmatch_item(
 def fsck_scan(
     section: str = typer.Option("Anime", help="Library section name to scan"),
     path_map: str | None = typer.Option(
-        None,
-        help="Path mapping from Plex to local, e.g. '/data=/mnt/nfs/media'",
+        None, help="Path mapping from Plex to local, e.g. '/data=/mnt/nfs/media'"
     ),
     depth: int = typer.Option(2, help="Maximum directory depth to walk"),
     count_files: bool = typer.Option(
@@ -1117,23 +1038,18 @@ def fsck_scan(
 
         for fs_dir in result.grouped_dirs:
             plex_info = (
-                ", ".join(fs_dir.plex_shows)
-                if fs_dir.plex_shows
-                else "[red]NOT TRACKED[/red]"
+                ", ".join(fs_dir.plex_shows) if fs_dir.plex_shows else "[red]NOT TRACKED[/red]"
             )
             file_display = (
                 str(fs_dir.video_files)
                 if fs_dir.video_files > 0
-                else "yes"
-                if fs_dir.has_files
-                else "0"
+                else "yes" if fs_dir.has_files else "0"
             )
             table.add_row(
                 fs_dir.name,
                 file_display,
                 str(fs_dir.subdir_count),
-                ", ".join(fs_dir.subdirs[:5])
-                + ("..." if len(fs_dir.subdirs) > 5 else ""),
+                ", ".join(fs_dir.subdirs[:5]) + ("..." if len(fs_dir.subdirs) > 5 else ""),
                 plex_info,
             )
 
@@ -1155,36 +1071,25 @@ def fsck_scan(
 
         # Separate: orphans with files vs orphans that are empty.
         with_files = [d for d in result.orphan_dirs if d.video_files > 0 or d.has_files]
-        empty = [
-            d for d in result.orphan_dirs if d.video_files == 0 and not d.has_files
-        ]
+        empty = [d for d in result.orphan_dirs if d.video_files == 0 and not d.has_files]
 
         if with_files:
             console.print("\n[bold]With files (potentially untracked content):[/bold]")
             for fs_dir in with_files:
-                file_display = (
-                    str(fs_dir.video_files) if fs_dir.video_files > 0 else "yes"
-                )
+                file_display = str(fs_dir.video_files) if fs_dir.video_files > 0 else "yes"
                 table.add_row(
                     fs_dir.name,
                     file_display,
                     str(fs_dir.subdir_count),
-                    ", ".join(fs_dir.subdirs[:5])
-                    + ("..." if len(fs_dir.subdirs) > 5 else ""),
+                    ", ".join(fs_dir.subdirs[:5]) + ("..." if len(fs_dir.subdirs) > 5 else ""),
                 )
             console.print(table)
 
         if empty:
-            console.print(
-                f"\n[dim]{len(empty)} empty directories not tracked by Plex.[/dim]"
-            )
+            console.print(f"\n[dim]{len(empty)} empty directories not tracked by Plex.[/dim]")
         console.print()
 
-    if (
-        not result.orphan_dirs
-        and not result.grouped_dirs
-        and not result.multi_location_shows
-    ):
+    if not result.orphan_dirs and not result.grouped_dirs and not result.multi_location_shows:
         console.print(
             "[green]No issues found! All directories match Plex show locations.[/green]"
         )
@@ -1194,15 +1099,11 @@ def fsck_scan(
 def fsck_orphans(
     section: str = typer.Option("Anime", help="Library section name"),
     path_map: str | None = typer.Option(
-        None,
-        help="Path mapping from Plex to local, e.g. '/data=/mnt/nfs/media'",
+        None, help="Path mapping from Plex to local, e.g. '/data=/mnt/nfs/media'"
     ),
-    with_files_only: bool = typer.Option(
-        False, help="Only show orphans that contain files"
-    ),
+    with_files_only: bool = typer.Option(False, help="Only show orphans that contain files"),
     force: bool = typer.Option(
-        False,
-        help="Show reorganization commands (review + cleanup) for orphans",
+        False, help="Show reorganization commands (review + cleanup) for orphans"
     ),
     csv_output: CsvFlag = False,
     output: OutputFile = None,
@@ -1263,12 +1164,10 @@ def fsck_orphans(
 def fsck_grouped(
     section: str = typer.Option("Anime", help="Library section name"),
     path_map: str | None = typer.Option(
-        None,
-        help="Path mapping from Plex to local, e.g. '/data=/mnt/nfs/media'",
+        None, help="Path mapping from Plex to local, e.g. '/data=/mnt/nfs/media'"
     ),
     force: bool = typer.Option(
-        False,
-        help="Show reorganization commands (move actions) for grouped dirs",
+        False, help="Show reorganization commands (move actions) for grouped dirs"
     ),
     csv_output: CsvFlag = False,
     output: OutputFile = None,
@@ -1297,14 +1196,11 @@ def fsck_grouped(
         filtered_actions = [
             a
             for a in plan.actions
-            if a.action == "move"
-            and any(a.source.startswith(p + "/") for p in grouped_paths)
+            if a.action == "move" and any(a.source.startswith(p + "/") for p in grouped_paths)
         ]
         _display_reorg_actions(
             filtered_actions,
-            title=(
-                f"Reorganization Actions for {len(grouped)} Grouping-Risk Directories"
-            ),
+            title=(f"Reorganization Actions for {len(grouped)} Grouping-Risk Directories"),
         )
         return
 
@@ -1318,13 +1214,10 @@ def fsck_grouped(
         file_display = (
             str(fs_dir.video_files)
             if fs_dir.video_files > 0
-            else "files"
-            if fs_dir.has_files
-            else "0"
+            else "files" if fs_dir.has_files else "0"
         )
         branch = tree.add(
-            f"{fs_dir.name}/ ({file_display} files, "
-            f"{fs_dir.subdir_count} subdirs){plex_info}"
+            f"{fs_dir.name}/ ({file_display} files, " f"{fs_dir.subdir_count} subdirs){plex_info}"
         )
         for subdir_name in fs_dir.subdirs:
             branch.add(f"[dim]{subdir_name}/[/dim]")
@@ -1336,14 +1229,10 @@ def fsck_grouped(
 def fsck_reorganize(
     section: str = typer.Option("Anime", help="Library section name to analyze"),
     path_map: str | None = typer.Option(
-        None,
-        help="Path mapping from Plex to local, e.g. '/data=/mnt/nfs/media'",
+        None, help="Path mapping from Plex to local, e.g. '/data=/mnt/nfs/media'"
     ),
     risk: Annotated[
-        str | None,
-        typer.Option(
-            help="Filter by risk level: low, medium, high",
-        ),
+        str | None, typer.Option(help="Filter by risk level: low, medium, high")
     ] = None,
 ) -> None:
     """Generate a reorganization plan to fix Plex parsing issues.
@@ -1427,10 +1316,22 @@ def fsck_reorganize(
 @triage_app.command("plexmatch")
 def plexmatch(
     key: Annotated[str | None, typer.Argument(help="Plex rating key for the show")] = None,
-    section: Annotated[str | None, typer.Option("--section", "-s", help="Library section name")] = None,
-    output: Annotated[FilePath | None, typer.Option("--output", "-o", help="Write .plexmatch to file")] = None,
-    write_to_dir: Annotated[str | None, typer.Option("--write-to-dir", "-w", help="Write .plexmatch into a show directory")] = None,
-    path_map: Annotated[str | None, typer.Option("--path-map", help="Path mapping for relative paths (server_path:local_path)")] = None,
+    section: Annotated[
+        str | None, typer.Option("--section", "-s", help="Library section name")
+    ] = None,
+    output: Annotated[
+        FilePath | None, typer.Option("--output", "-o", help="Write .plexmatch to file")
+    ] = None,
+    write_to_dir: Annotated[
+        str | None,
+        typer.Option("--write-to-dir", "-w", help="Write .plexmatch into a show directory"),
+    ] = None,
+    path_map: Annotated[
+        str | None,
+        typer.Option(
+            "--path-map", help="Path mapping for relative paths (server_path:local_path)"
+        ),
+    ] = None,
     append: Annotated[
         bool,
         typer.Option(
@@ -1475,8 +1376,7 @@ def plexmatch(
 
     try:
         result = service.generate_plexmatch(
-            key, plexmatch_dir=plexmatch_dir, append=append,
-            append_dir=write_to_dir,
+            key, plexmatch_dir=plexmatch_dir, append=append, append_dir=write_to_dir
         )
     except ValueError as e:
         console.print(f"[red]{e}[/red]")
@@ -1503,10 +1403,21 @@ def plexmatch(
 
 @triage_app.command("plexmatch-all")
 def plexmatch_all(
-    section: Annotated[str, typer.Option("--section", "-s", help="Library section name")] = "Anime",
-    path_map: Annotated[str | None, typer.Option("--path-map", help="Path mapping for relative paths")] = None,
-    output_dir: Annotated[str | None, typer.Option("--output-dir", help="Write .plexmatch files into show directories under this root")] = None,
-    dry_run: Annotated[bool, typer.Option("--dry-run", help="Show what would be done without writing")] = False,
+    section: Annotated[
+        str, typer.Option("--section", "-s", help="Library section name")
+    ] = "Anime",
+    path_map: Annotated[
+        str | None, typer.Option("--path-map", help="Path mapping for relative paths")
+    ] = None,
+    output_dir: Annotated[
+        str | None,
+        typer.Option(
+            "--output-dir", help="Write .plexmatch files into show directories under this root"
+        ),
+    ] = None,
+    dry_run: Annotated[
+        bool, typer.Option("--dry-run", help="Show what would be done without writing")
+    ] = False,
     append: Annotated[
         bool,
         typer.Option(
@@ -1543,10 +1454,7 @@ def plexmatch_all(
                 break
 
     result = service.generate_plexmatch_batch(
-        section=section,
-        plexmatch_dir=plexmatch_dir,
-        dry_run=dry_run,
-        append=append,
+        section=section, plexmatch_dir=plexmatch_dir, dry_run=dry_run, append=append
     )
 
     # Display results
@@ -1558,7 +1466,12 @@ def plexmatch_all(
 
     for r in result.results:
         status = "[green]✓[/green]" if r.success else f"[red]✗ {r.error}[/red]"
-        table.add_row(r.show_key or str(r.series_id), r.show_name or r.series_name, str(r.entry_count), status)
+        table.add_row(
+            r.show_key or str(r.series_id),
+            r.show_name or r.series_name,
+            str(r.entry_count),
+            status,
+        )
 
     console.print(table)
     console.print(
@@ -1576,11 +1489,10 @@ def plexmatch_all(
 @triage_app.command("ingest")
 def ingest(
     model: str = typer.Argument(
-        help="Model to ingest (e.g. triage_issue). Use 'list' to see all.",
+        help="Model to ingest (e.g. triage_issue). Use 'list' to see all."
     ),
     file: str | None = typer.Argument(
-        default=None,
-        help="Path to CSV file to ingest. Not needed for 'list'.",
+        default=None, help="Path to CSV file to ingest. Not needed for 'list'."
     ),
 ) -> None:
     """Read CSV data back into validated Pydantic models.
@@ -1672,9 +1584,7 @@ def merge_items(
 
 @triage_app.command("empty-trash")
 def empty_trash(
-    section_key: str = typer.Argument(
-        help="Section key (use 'plexctl library list' to find it)",
-    ),
+    section_key: str = typer.Argument(help="Section key (use 'plexctl library list' to find it)"),
 ) -> None:
     """Empty the trash for a library section.
 

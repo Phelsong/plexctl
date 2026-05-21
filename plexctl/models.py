@@ -1261,7 +1261,6 @@ class CsvUserAccount(BaseModel):
     restricted: str = ""
 
 
-
 class ServerIdentity(BaseModel):
     """Plex server identity information.
 
@@ -1498,9 +1497,7 @@ class PlexMatchEntry(BaseModel):
         """
         import re
 
-        match = re.match(
-            r"Episode:\s*S(\d+)E(\d+)\s*:\s*(.+)", line.strip(), re.IGNORECASE
-        )
+        match = re.match(r"Episode:\s*S(\d+)E(\d+)\s*:\s*(.+)", line.strip(), re.IGNORECASE)
         if match is None:
             return None
 
@@ -1562,19 +1559,19 @@ class PlexMatch(BaseModel):
                 continue
 
             if line.startswith("Title:"):
-                title = line[len("Title:"):].strip()
+                title = line[len("Title:") :].strip()
             elif line.startswith("Year:"):
-                year_str = line[len("Year:"):].strip()
+                year_str = line[len("Year:") :].strip()
                 with contextlib.suppress(ValueError):
                     year = int(year_str)
             elif line.startswith("TvdbId:"):
-                id_str = line[len("TvdbId:"):].strip()
+                id_str = line[len("TvdbId:") :].strip()
                 with contextlib.suppress(ValueError):
                     tvdb_id = int(id_str)
             elif line.startswith("ImdbId:"):
-                imdb_id = line[len("ImdbId:"):].strip() or None
+                imdb_id = line[len("ImdbId:") :].strip() or None
             elif line.startswith("TmdbId:"):
-                id_str = line[len("TmdbId:"):].strip()
+                id_str = line[len("TmdbId:") :].strip()
                 with contextlib.suppress(ValueError):
                     tmdb_id = int(id_str)
             elif line.startswith("Episode:"):
@@ -1614,8 +1611,7 @@ class PlexMatch(BaseModel):
             merged[(entry.season_number, entry.episode_number)] = entry
 
         merged_entries = sorted(
-            merged.values(),
-            key=lambda e: (e.season_number, e.episode_number),
+            merged.values(), key=lambda e: (e.season_number, e.episode_number)
         )
 
         return self.model_copy(update={"entries": merged_entries})
@@ -1757,6 +1753,7 @@ class CsvServerInfo(BaseModel):
     friendly_name: str = ""
     owner: str = ""
     product: str = ""
+
 
 class CsvServerIdentity(BaseModel):
     """Flat CSV row for ServerIdentity."""
@@ -2031,11 +2028,7 @@ class CsvSimilarMedia(BaseModel):
 
 
 # Plex media type codes for the type= query parameter
-PLAYLIST_TYPE_MAP: dict[str, str] = {
-    "video": "1",
-    "audio": "2",
-    "photo": "3",
-}
+PLAYLIST_TYPE_MAP: dict[str, str] = {"video": "1", "audio": "2", "photo": "3"}
 
 
 class PlaylistType(StrEnum):
