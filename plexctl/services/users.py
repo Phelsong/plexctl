@@ -35,7 +35,7 @@ class UserService:
         Raises:
             httpx.HTTPStatusError: If the API request fails.
         """
-        response = self._client.server.get("/identity")
+        response = self._client.server.get("/identity")  # type: ignore[attr-defined]
         data = response.json()
 
         # Parse identity response from MediaContainer wrapper
@@ -59,28 +59,27 @@ class UserService:
         Raises:
             httpx.HTTPStatusError: If the API request fails.
         """
-        response = self._client.server.get(f"/library/metadata/{media_key}/users/top")
+        response = self._client.server.get(f"/library/metadata/{media_key}/users/top")  # type: ignore[attr-defined]
         data = response.json()
 
         # Parse users from MediaContainer wrapper
         container = data.get("MediaContainer", {})
-        users = []
 
-        for item in container.get("Account", []) or []:
-            users.append(
-                UserAccount(
-                    id=int(item.get("id", 0)),
-                    username=item.get("username", ""),
-                    email=item.get("email", ""),
-                    friend=item.get("friend", False),
-                    restricted=item.get("restricted", False),
-                    doh=item.get("doh", False),
-                    anonymous=item.get("anonymous", False),
-                    title=item.get("title", ""),
-                    filtered=item.get("filtered", False),
-                    customAvatar=item.get("customAvatar", ""),
-                    joinedAt=item.get("joinedAt"),
-                )
+        users = [
+            UserAccount(
+                id=int(item.get("id", 0)),
+                username=item.get("username", ""),
+                email=item.get("email", ""),
+                friend=item.get("friend", False),
+                restricted=item.get("restricted", False),
+                doh=item.get("doh", False),
+                anonymous=item.get("anonymous", False),
+                title=item.get("title", ""),
+                filtered=item.get("filtered", False),
+                customAvatar=item.get("customAvatar", ""),
+                joinedAt=item.get("joinedAt"),
             )
+            for item in container.get("Account", []) or []
+        ]
 
         return users

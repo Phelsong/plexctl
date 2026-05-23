@@ -410,9 +410,12 @@ def create_smart_playlist(
     when library content changes.
 
     Examples:
-        plexctl playlists smart create "Recent Sci-Fi" -t video -f "year>=2019" -f "genre=Sci-Fi"
-        plexctl playlists smart create "Action Movies" -t video -f "genre=Action" --sort "year:desc"
-        plexctl playlists smart create "80s Music" -t audio -f "year>=1980" -f "year<=1989"
+        plexctl playlists smart create "Recent Sci-Fi" -t video \\
+            -f "year>=2019" -f "genre=Sci-Fi"
+        plexctl playlists smart create "Action Movies" -t video \\
+            -f "genre=Action" --sort "year:desc"
+        plexctl playlists smart create "80s Music" -t audio \\
+            -f "year>=1980" -f "year<=1989"
     """
     parsed_filters = _parse_filter_strings(filter)
 
@@ -552,7 +555,7 @@ def list_smart_playlists(
 def update_smart_playlist(
     key: str = typer.Argument(help="Smart playlist rating key"),
     name: str | None = typer.Option(None, "--name", "-n", help="New title for the playlist"),
-    filter: list[str] = typer.Option(
+    filter: list[str] = typer.Option(  # noqa: B008
         [],
         "--filter",
         "-f",

@@ -39,7 +39,7 @@ class FsCompareService:
         self._path_map = path_map or {}
 
     def _to_local_path(self, server_path: str) -> str:
-        f"""Convert a Plex/server path to a local filesystem path.
+        """Convert a Plex/server path to a local filesystem path.
 
         Uses the path_map to translate Docker container paths or remote
         paths to local mount points.

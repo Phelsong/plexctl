@@ -56,11 +56,7 @@ from plexctl.models import (
     CsvTriageIssue,
     CsvUpdateInfo,
     CsvWatchHistoryEntry,
-    CsvServerIdentity,
-    CsvUserAccount,
     EpisodeDiagnostics,
-    ServerIdentity,
-    UserAccount,
     FsDir,
     LibraryLocation,
     LibrarySection,
@@ -75,6 +71,7 @@ from plexctl.models import (
     ResourceStats,
     SearchResult,
     SeasonGap,
+    ServerIdentity,
     ServerInfo,
     ServerPreference,
     ShokoEpisode,
@@ -91,6 +88,7 @@ from plexctl.models import (
     TranscodeSessionInfo,
     TriageIssue,
     UpdateInfo,
+    UserAccount,
     WatchHistoryEntry,
 )
 
@@ -334,7 +332,7 @@ def server_info_to_csv(info: ServerInfo) -> CsvServerInfo:
         version=info.version,
         platform=info.platform,
         platform_version=info.platform_version,
-        friendly_name=info.friendly_name,
+        server_name=info.server_name,
         owner=info.owner,
         product=info.product,
     )
@@ -432,8 +430,8 @@ def collection_metadata_to_csv(collection: CollectionMetadata) -> CsvCollectionM
         summary=(collection.summary or "").replace("\n", " ").strip(),
         thumb=collection.thumb or "",
         art=collection.art or "",
-        added_at=collection.added_at or "",
-        updated_at=collection.updated_at or "",
+        added_at=str(collection.added_at or ""),
+        updated_at=str(collection.updated_at or ""),
     )
 
 
@@ -479,8 +477,8 @@ def smart_playlist_to_csv(playlist: SmartPlaylist) -> CsvSmartPlaylist:
         smart=str(playlist.smart),
         item_count=str(playlist.item_count),
         composite=playlist.composite or "",
-        added_at=playlist.added_at or "",
-        updated_at=playlist.updated_at or "",
+        added_at=str(playlist.added_at or ""),
+        updated_at=str(playlist.updated_at or ""),
         filters=filters_summary,
     )
 
@@ -506,8 +504,8 @@ def playlist_to_csv(playlist: Playlist) -> CsvPlaylist:
         smart=str(playlist.smart),
         item_count=str(playlist.item_count),
         composite=playlist.composite or "",
-        added_at=playlist.added_at or "",
-        updated_at=playlist.updated_at or "",
+        added_at=str(playlist.added_at or ""),
+        updated_at=str(playlist.updated_at or ""),
     )
 
 

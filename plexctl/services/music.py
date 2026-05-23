@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def _extract_tag(value: list | object | None) -> str | None:
+def _extract_tag(value: list[object] | object | None) -> str | None:
     """Extract the first tag string from a genre/country attribute.
 
     Plexapi returns genres/countries as lists of tag objects with a
@@ -69,7 +69,7 @@ class MusicService:
         Returns None if the item is not found or is not an artist.
         """
         server = self._client.server
-        item = server.fetchItem(int(rating_key))
+        item = server.fetchItem(int(rating_key))  # type: ignore[no-untyped-call]
         if item and item.type == "artist":
             return self._artist_to_info(item, detailed=True)
         return None
@@ -83,7 +83,7 @@ class MusicService:
         """List albums, optionally filtered by artist."""
         server = self._client.server
         if artist_key:
-            artist = server.fetchItem(int(artist_key))
+            artist = server.fetchItem(int(artist_key))  # type: ignore[no-untyped-call]
             albums = artist.albums()
         else:
             section = server.library.section(section_title)
@@ -97,7 +97,7 @@ class MusicService:
         Returns None if the item is not found or is not an album.
         """
         server = self._client.server
-        item = server.fetchItem(int(rating_key))
+        item = server.fetchItem(int(rating_key))  # type: ignore[no-untyped-call]
         if item and item.type == "album":
             return self._album_to_info(item, detailed=True)
         return None
@@ -112,10 +112,10 @@ class MusicService:
         """List tracks, optionally filtered by album or artist."""
         server = self._client.server
         if album_key:
-            album = server.fetchItem(int(album_key))
+            album = server.fetchItem(int(album_key))  # type: ignore[no-untyped-call]
             tracks = album.tracks()
         elif artist_key:
-            artist = server.fetchItem(int(artist_key))
+            artist = server.fetchItem(int(artist_key))  # type: ignore[no-untyped-call]
             tracks = artist.tracks()
         else:
             section = server.library.section(section_title)
@@ -129,7 +129,7 @@ class MusicService:
         Returns None if the item is not found or is not a track.
         """
         server = self._client.server
-        item = server.fetchItem(int(rating_key))
+        item = server.fetchItem(int(rating_key))  # type: ignore[no-untyped-call]
         if item and item.type == "track":
             return self._track_to_info(item, detailed=True)
         return None
@@ -172,7 +172,7 @@ class MusicService:
             art=getattr(artist, "art", None),
             genre=_extract_tag(genres),
             country=_extract_tag(countries),
-            album_count=len(artist.albums()) if detailed else 0,
+            album_count=len(artist.albums()) if detailed else 0,  # type: ignore[no-untyped-call]
             rating=artist.rating,
             user_rating=getattr(artist, "userRating", None),
         )
@@ -200,7 +200,7 @@ class MusicService:
             thumb=getattr(album, "thumb", None),
             genre=_extract_tag(genres),
             studio=getattr(album, "studio", None),
-            track_count=len(album.tracks()) if detailed else 0,
+            track_count=len(album.tracks()) if detailed else 0,  # type: ignore[no-untyped-call]
             rating=album.rating,
             user_rating=getattr(album, "userRating", None),
             originally_available=getattr(album, "originallyAvailableAt", None),

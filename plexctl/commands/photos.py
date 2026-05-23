@@ -16,6 +16,7 @@ Examples:
 """
 
 import typer
+from pydantic import BaseModel
 from rich.console import Console
 from rich.table import Table
 from rich.tree import Tree
@@ -161,7 +162,7 @@ def photos_default(
         return
 
     if csv_output:
-        rows = [photo_album_to_csv(a) for a in albums[:limit]]
+        rows: list[BaseModel] = [photo_album_to_csv(a) for a in albums[:limit]]  # type: ignore[no-redef]
         write_csv_to_output(rows, output)
         return
 

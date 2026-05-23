@@ -325,7 +325,7 @@ class ServerService:
             version=media_container.get("version", ""),
             platform=media_container.get("platform", ""),
             platform_version=media_container.get("platformVersion", ""),
-            friendly_name=media_container.get("friendlyName", ""),
+            server_name=media_container.get("friendlyName", ""),
             owner=media_container.get("myPlexUsername", ""),
             product=media_container.get("product", ""),
         )
@@ -531,7 +531,7 @@ class ServerService:
         for session in sessions:
             if str(getattr(session, "sessionKey", "")) == str(session_key):
                 try:
-                    session.stop(reason=reason)  # type: ignore[no-untyped-call]
+                    session.stop(reason=reason)
                 except Exception as exc:
                     return FixResult(
                         key=session_key, action="stop-session", success=False, error=str(exc)
@@ -563,7 +563,7 @@ class ServerService:
 
         try:
             item = server.fetchItem(int(key))  # type: ignore[no-untyped-call]
-            item.updateProgress(time_ms, state)  # type: ignore[no-untyped-call]
+            item.updateProgress(time_ms, state)
         except Exception as exc:
             return FixResult(key=key, action="set-progress", success=False, error=str(exc))
 
@@ -585,10 +585,10 @@ class ServerService:
         server = self._client.server
 
         if section_key is not None:
-            section = server.library.sectionByID(section_key)  # type: ignore[no-untyped-call]
-            items = section.onDeck()  # type: ignore[no-untyped-call]
+            section = server.library.sectionByID(section_key)
+            items = section.onDeck()
         else:
-            items = server.library.onDeck()  # type: ignore[no-untyped-call]
+            items = server.library.onDeck()
 
         if not items:
             return []
@@ -611,13 +611,13 @@ class ServerService:
         server = self._client.server
 
         if section_key is not None:
-            section = server.library.sectionByID(section_key)  # type: ignore[no-untyped-call]
+            section = server.library.sectionByID(section_key)
             kwargs: dict[str, Any] = {}
             if libtype:
                 kwargs["libtype"] = libtype
-            items = section.recentlyAdded(maxresults, **kwargs)  # type: ignore[no-untyped-call]
+            items = section.recentlyAdded(maxresults, **kwargs)
         else:
-            items = server.library.recentlyAdded()  # type: ignore[no-untyped-call]
+            items = server.library.recentlyAdded()
 
         if not items:
             return []
@@ -636,8 +636,8 @@ class ServerService:
         server = self._client.server
 
         if section_key is not None:
-            section = server.library.sectionByID(section_key)  # type: ignore[no-untyped-call]
-            items = section.continueWatching()  # type: ignore[no-untyped-call]
+            section = server.library.sectionByID(section_key)
+            items = section.continueWatching()
         else:
             items = server.continueWatching()  # type: ignore[no-untyped-call]
 
@@ -768,7 +768,7 @@ class ServerService:
             at_val = getattr(stat, "at", None)
             at_str = (
                 at_val.strftime("%Y-%m-%d %H:%M:%S")
-                if hasattr(at_val, "strftime")
+                if isinstance(at_val, datetime)
                 else str(at_val) if at_val is not None else ""
             )
             entries.append(
@@ -801,7 +801,7 @@ class ServerService:
             at_val = getattr(stat, "at", None)
             at_str = (
                 at_val.strftime("%Y-%m-%d %H:%M:%S")
-                if hasattr(at_val, "strftime")
+                if isinstance(at_val, datetime)
                 else str(at_val) if at_val is not None else ""
             )
             entries.append(
@@ -828,7 +828,7 @@ class ServerService:
             Path to the downloaded file.
         """
         server = self._client.server
-        return server.downloadLogs(savepath=savepath, unpack=unpack)  # type: ignore[no-untyped-call]
+        return str(server.downloadLogs(savepath=savepath, unpack=unpack))  # type: ignore[no-untyped-call]
 
     def download_databases(self, savepath: str | None = None, unpack: bool = False) -> str:
         """Download Plex Media Server databases for backup.
@@ -841,7 +841,7 @@ class ServerService:
             Path to the downloaded file.
         """
         server = self._client.server
-        return server.downloadDatabases(savepath=savepath, unpack=unpack)  # type: ignore[no-untyped-call]
+        return str(server.downloadDatabases(savepath=savepath, unpack=unpack))  # type: ignore[no-untyped-call]
 
 
 # --- Helpers ----------------------------------------------------------------

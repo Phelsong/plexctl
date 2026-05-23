@@ -26,7 +26,9 @@ from plexctl.client import PlexClient
 from plexctl.config import load_config
 from plexctl.converters import album_info_to_csv, artist_info_to_csv, track_info_to_csv
 from plexctl.csv_utils import write_csv_to_output
-from plexctl.models import AlbumInfo, ArtistInfo, TrackInfo
+from pydantic import BaseModel
+
+from plexctl.models import AlbumInfo, ArtistInfo, MediaTreeItem, TrackInfo
 from plexctl.options import CsvFlag, OutputFile
 from plexctl.services.music import MusicService
 from plexctl.services.tree import TreeService
@@ -61,7 +63,7 @@ def _format_duration(duration_ms: int | None) -> str:
     return f"{minutes}:{seconds:02d}"
 
 
-def _render_artist_tree(items: list) -> Tree:
+def _render_artist_tree(items: list[MediaTreeItem]) -> Tree:
     """Render artists as a rich Tree with (key) labels."""
     tree = Tree("[bold]Artists[/bold]")
     for item in items:
@@ -130,7 +132,7 @@ def music_default(
         return
 
     if csv_output:
-        rows = [artist_info_to_csv(a) for a in artists[:limit]]
+        rows: list[BaseModel] = [artist_info_to_csv(a) for a in artists[:limit]]  # type: ignore[no-redef]
         write_csv_to_output(rows, output)
         return
 
@@ -352,7 +354,7 @@ def music_recently_added(
         return
 
     if csv_output:
-        rows = []
+        rows: list[BaseModel] = []
         for item in items:
             if isinstance(item, ArtistInfo):
                 rows.append(artist_info_to_csv(item))

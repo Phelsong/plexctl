@@ -15,9 +15,8 @@ File format (ordering_preferences.toml):
 from __future__ import annotations
 
 import logging
-from pathlib import Path
-
 import tomllib
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -82,8 +81,7 @@ def save_ordering_preference(tmdb_show_id: int, ordering_id: str) -> Path:
 
     # Build TOML content manually (simple format, no external writer needed)
     lines = ["[preferences]"]
-    for show_id in sorted(current):
-        lines.append(f'{show_id} = "{current[show_id]}"')
+    lines.extend(f'{show_id} = "{current[show_id]}"' for show_id in sorted(current))
     content = "\n".join(lines) + "\n"
 
     # Ensure parent directory exists
@@ -112,8 +110,7 @@ def remove_ordering_preference(tmdb_show_id: int) -> bool:
 
     if current:
         lines = ["[preferences]"]
-        for show_id in sorted(current):
-            lines.append(f'{show_id} = "{current[show_id]}"')
+        lines.extend(f'{show_id} = "{current[show_id]}"' for show_id in sorted(current))
         content = "\n".join(lines) + "\n"
     else:
         content = ""

@@ -14,7 +14,7 @@ from plexctl.client import PlexClient
 from plexctl.commands.collections import collections_app
 from plexctl.commands.playlists import playlists_app
 from plexctl.config import load_config
-from plexctl.converters import library_location_to_csv, library_section_to_csv
+from plexctl.converters import library_section_to_csv
 from plexctl.csv_utils import write_csv_to_output
 from plexctl.options import CsvFlag, OutputFile
 from plexctl.services.library import LibraryService

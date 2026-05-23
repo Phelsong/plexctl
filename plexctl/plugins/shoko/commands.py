@@ -1007,11 +1007,7 @@ def plexmatch_prefer(
         plexctl shoko plexmatch-prefer 42 --ordering 641eb9d6b234b9007ac67063
         plexctl shoko plexmatch-prefer 42 --remove
     """
-    from plexctl.ordering_cache import (
-        get_ordering_preference,
-        remove_ordering_preference,
-        save_ordering_preference,
-    )
+    from plexctl.ordering_cache import remove_ordering_preference, save_ordering_preference
 
     service = _get_service()
 

@@ -6,10 +6,11 @@ without requiring any external metadata source.
 
 from __future__ import annotations
 
+import contextlib
 import logging
 import re
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from plexctl.models import PlexMatch, PlexMatchBatchResult, PlexMatchEntry, PlexMatchResult
 
@@ -57,7 +58,7 @@ class PlexMatchService:
             PlexMatch model with show metadata and episode mappings.
         """
         server = self._client.server
-        show = server.fetchItem(int(rating_key))
+        show = server.fetchItem(int(rating_key))  # type: ignore[no-untyped-call]
 
         if show.type != "show":
             msg = f"Rating key {rating_key} is not a show (type: {show.type})"
@@ -74,9 +75,9 @@ class PlexMatchService:
         plexmatch = PlexMatch(
             title=title,
             year=year,
-            tmdb_id=guids.get("tmdb"),
-            tvdb_id=guids.get("tvdb"),
-            imdb_id=guids.get("imdb"),
+            tmdb_id=guids.get("tmdb"),  # type: ignore[arg-type]
+            tvdb_id=guids.get("tvdb"),  # type: ignore[arg-type]
+            imdb_id=guids.get("imdb"),  # type: ignore[arg-type]
             entries=entries,
         )
 
@@ -156,7 +157,7 @@ class PlexMatchService:
         return result
 
     @staticmethod
-    def _parse_guids(show) -> dict[str, int | str | None]:
+    def _parse_guids(show: Any) -> dict[str, int | str | None]:
         """Extract external IDs from Plex GUIDs.
 
         Plex stores GUIDs like:
@@ -169,7 +170,7 @@ class PlexMatchService:
 
         # Also check the main guid field
         main_guid = getattr(show, "guid", "") or ""
-        all_guids = list(guids) + [main_guid] if main_guid else list(guids)
+        all_guids = [*list(guids), main_guid] if main_guid else list(guids)
 
         for guid_obj in all_guids:
             guid_str = str(
@@ -184,7 +185,7 @@ class PlexMatchService:
         return result
 
     @staticmethod
-    def _build_entries(show, plexmatch_dir: str | None = None) -> list[PlexMatchEntry]:
+    def _build_entries(show: Any, plexmatch_dir: str | None = None) -> list[PlexMatchEntry]:
         """Build episode entries from Plex show data.
 
         Walks show.seasons() → season.episodes() → episode.media → parts
@@ -207,11 +208,8 @@ class PlexMatchService:
                     for part in media.parts:
                         file_path = part.file
                         if file_path and plexmatch_dir:
-                            try:
+                            with contextlib.suppress(ValueError):
                                 file_path = str(Path(file_path).relative_to(plexmatch_dir))
-                            except ValueError:
-                                # File is not under plexmatch_dir, use as-is
-                                pass
 
                         entries.append(
                             PlexMatchEntry(

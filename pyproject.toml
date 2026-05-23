@@ -68,7 +68,7 @@ line-length = 98
 target_version = ["py312"]
 
 [tool.bandit]
-exclude_dirs = ['/.git', '/.vscode', '/.pixi', '__pycache__', '/__pycache__', '/.mypy_cache']
+exclude_dirs = ['/.*', '__pycache__']
 targets = '.'
 recursive = true
 

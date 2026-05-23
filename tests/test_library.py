@@ -501,7 +501,7 @@ class TestSectionLocations:
         with patch("plexctl.client.PlexHTTPClient", return_value=mock_http):
             service = LibraryService(mock_client)
             service.section_locations(5)
-        mock_http.get.assert_called_once_with("/library/sections/5/locations")
+        mock_http.get.assert_called_once_with("/library/sections/5")
 
 
 # --- Collection tests ----------------------------------------------------------

@@ -1246,8 +1246,8 @@ class UserAccount(BaseModel):
     anonymous: bool = False
     title: str = ""
     filtered: bool = False
-    customAvatar: str = ""
-    joinedAt: str | None = None
+    customAvatar: str = ""  # noqa: N815
+    joinedAt: str | None = None  # noqa: N815
 
 
 class CsvUserAccount(BaseModel):
@@ -1271,7 +1271,7 @@ class ServerIdentity(BaseModel):
         size: Container size.
     """
 
-    machineIdentifier: str = ""
+    machineIdentifier: str = ""  # noqa: N815
     version: str = ""
     claimed: bool = False
     size: int = 0
@@ -1305,7 +1305,7 @@ class ServerInfo(BaseModel):
         version: Server version string.
         platform: Server platform (e.g. 'Linux').
         platform_version: Platform version details.
-        friendly_name: Display name of the server.
+        server_name: Display name of the server.
         owner: Plex account email of the server owner.
         product: Product name (e.g. 'Plex Media Server').
     """
@@ -1314,7 +1314,7 @@ class ServerInfo(BaseModel):
     version: str = ""
     platform: str = ""
     platform_version: str = ""
-    friendly_name: str = ""
+    server_name: str = ""
     owner: str = ""
     product: str = ""
 
@@ -1750,7 +1750,7 @@ class CsvServerInfo(BaseModel):
     version: str = ""
     platform: str = ""
     platform_version: str = ""
-    friendly_name: str = ""
+    server_name: str = ""
     owner: str = ""
     product: str = ""
 
@@ -1758,7 +1758,7 @@ class CsvServerInfo(BaseModel):
 class CsvServerIdentity(BaseModel):
     """Flat CSV row for ServerIdentity."""
 
-    machineIdentifier: str = ""
+    machineIdentifier: str = ""  # noqa: N815
     version: str = ""
     claimed: str = ""
     size: str = ""

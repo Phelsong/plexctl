@@ -186,13 +186,7 @@ def load_config(env_path: Path | None = None) -> PlexConfig:
     _check_permissions(conf_file)
     toml_data = _read_toml_config(conf_file)
 
-    # Pass TOML values as init kwargs ONLY when the correspondingfrom __future__ import annotations
-
-    from datetime import datetime  # noqa: TC003
-    from enum import StrEnum
-
-    from pydantic import BaseModel, Field
-
+    # Pass TOML values as init kwargs ONLY when the corresponding
     # env var is not set. This preserves the env > dotenv > TOML
     # priority order.
     overrides = _load_toml_overrides(
@@ -209,7 +203,7 @@ def load_config(env_path: Path | None = None) -> PlexConfig:
 # Use lazy imports to avoid circular dependencies at module load time.
 
 
-def __getattr__(name):
+def __getattr__(name: str) -> object:
     if name == "ShokoConfig":
         from plexctl.plugins.shoko.config import ShokoConfig
 

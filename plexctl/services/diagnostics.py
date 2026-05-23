@@ -8,9 +8,9 @@ from __future__ import annotations
 
 import logging
 from typing import TYPE_CHECKING
-from rich.progress import track
 
 from plexapi.video import Show
+from rich.progress import track
 
 if TYPE_CHECKING:
     from plexctl.client import PlexClient

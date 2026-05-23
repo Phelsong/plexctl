@@ -181,7 +181,7 @@ def delete_collection(
 @collections_app.command("add")
 def add_to_collection(
     key: str = typer.Argument(help="Rating key of the collection"),
-    items: list[str] = typer.Argument(..., help="Rating keys of items to add"),
+    items: list[str] = typer.Argument(..., help="Rating keys of items to add"),  # noqa: B008
 ) -> None:
     """Add items to a collection.
 
@@ -197,7 +197,7 @@ def add_to_collection(
         result = service.add_to_collection(key, items)
     except ValueError as exc:
         console.print(f"[red]{exc}[/red]")
-        raise typer.Exit(code=1)
+        raise typer.Exit(code=1) from None
 
     if result is None:
         console.print(f"[red]Collection not found: {key}[/red]")
@@ -215,7 +215,7 @@ def add_to_collection(
 @collections_app.command("remove")
 def remove_from_collection(
     key: str = typer.Argument(help="Rating key of the collection"),
-    items: list[str] = typer.Argument(..., help="Rating keys of items to remove"),
+    items: list[str] = typer.Argument(..., help="Rating keys of items to remove"),  # noqa: B008
     confirm: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation prompt."),
 ) -> None:
     """Remove items from a collection.
@@ -223,10 +223,6 @@ def remove_from_collection(
     Example:
         plexctl library collections remove 12345 56789 --yes
     """
-    if not items:
-        console.print("[yellow]No items specified.[/yellow]")
-        raise typer.Exit(code=1)
-
     if not confirm:
         console.print(
             f"[yellow]Will remove {len(items)} item(s) from "
@@ -239,6 +235,6 @@ def remove_from_collection(
         service.remove_from_collection(key, items)
     except ValueError as exc:
         console.print(f"[red]{exc}[/red]")
-        raise typer.Exit(code=1)
+        raise typer.Exit(code=1) from None
 
     console.print(f"[green]✓ Removed {len(items)} item(s) from collection {key}[/green]")

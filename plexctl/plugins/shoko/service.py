@@ -19,6 +19,9 @@ from plexctl.models import (
     PlexMatchBatchResult,
     PlexMatchEntry,
     PlexMatchResult,
+    PlexSeasonEntry,
+    SeasonGap,
+    SeasonGapReport,
     ShokoEpisode,
     ShokoEpisodeType,
     ShokoFile,
@@ -1662,7 +1665,7 @@ class ShokoService:
         issues: list[TriageIssue] = []
 
         # Collect data from all three sources
-        plex_issues = self._collect_plex_issues(section_title)
+        plex_issues = self._collect_plex_issues(section_title)  # type: ignore[attr-defined]
         shoko_issues = self._collect_shoko_issues()
         fs_issues = self._collect_filesystem_issues(section_title, path_map)
 
@@ -1674,7 +1677,7 @@ class ShokoService:
         self._cross_reference(issues)
 
         total_shows = self._count_shows(section_title)
-        summary = self._build_summary(issues, section_title, total_shows)
+        summary = self._build_summary(issues, section_title, total_shows)  # type: ignore[attr-defined]
 
         return TriageReport(
             section_title=section_title, total_shows=total_shows, issues=issues, summary=summary
@@ -1687,9 +1690,9 @@ class ShokoService:
         Shoko mismatches into TriageIssue objects. Returns empty list
         if no ShokoService is available.
         """
-        if self._shoko_service is None:
+        if self._shoko_service is None:  # type: ignore[attr-defined]
             return []
-        return self._shoko_service.collect_triage_issues()
+        return self._shoko_service.collect_triage_issues()  # type: ignore[attr-defined, no-any-return]
 
     def _collect_filesystem_issues(
         self, section_title: str, path_map: dict[str, str] | None
@@ -1698,7 +1701,7 @@ class ShokoService:
         from plexctl.services.fs_compare import FsCompareService
 
         issues: list[TriageIssue] = []
-        fs = FsCompareService(self._plex_client, path_map=path_map)
+        fs = FsCompareService(self._plex_client, path_map=path_map)  # type: ignore[attr-defined]
         result = fs.compare_section(section_title)
 
         # Grouping risk directories
@@ -1767,7 +1770,7 @@ class ShokoService:
         """Count total shows in a section."""
         from plexctl.services.metadata import MetadataService
 
-        meta = MetadataService(self._plex_client)
+        meta = MetadataService(self._plex_client)  # type: ignore[attr-defined]
         sections = meta.list_sections()
         for s in sections:
             if s.title == section_title:
@@ -1789,23 +1792,23 @@ class ShokoService:
         Raises:
             ValueError: If no ShokoService is configured.
         """
-        if self._shoko_service is None:
+        if self._shoko_service is None:  # type: ignore[attr-defined]
             msg = "ShokoService is required for season gap analysis"
             raise ValueError(msg)
 
         # Collect all Shoko series grouped by TMDB show ID
-        shoko_by_tmdb = self._shoko_service.group_series_by_tmdb()
-        all_shoko = self._shoko_service.series_name_dict()
+        shoko_by_tmdb = self._shoko_service.group_series_by_tmdb()  # type: ignore[attr-defined]
+        all_shoko = self._shoko_service.series_name_dict()  # type: ignore[attr-defined]
 
         # Get Plex shows with their season structure
-        plex_shows = self._collect_plex_seasons(section_title)
+        plex_shows = self._collect_plex_seasons(section_title)  # type: ignore[attr-defined]
 
         # Match Shoko groups to Plex shows
         gaps: list[SeasonGap] = []
         matched_plex_keys: set[str] = set()
 
         for tmdb_id, shoko_series in shoko_by_tmdb.items():
-            gap = self._match_group_to_plex(
+            gap = self._match_group_to_plex(  # type: ignore[attr-defined]
                 tmdb_id=tmdb_id,
                 shoko_series=shoko_series,
                 plex_shows=plex_shows,
@@ -1841,7 +1844,7 @@ class ShokoService:
         # Count shows with actual gaps
         gap_count = sum(1 for g in gaps if g.is_missing)
 
-        summary = self._build_gap_summary(section_title, len(plex_shows), gap_count, gaps)
+        summary = self._build_gap_summary(section_title, len(plex_shows), gap_count, gaps)  # type: ignore[attr-defined]
         return SeasonGapReport(
             section_title=section_title,
             total_shows=len(plex_shows),

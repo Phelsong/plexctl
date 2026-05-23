@@ -159,7 +159,7 @@ class LibraryService:
 
         return sections
 
-    @lru_cache(maxsize=1)
+    @lru_cache(maxsize=1)  # noqa: B019
     def get_section(self, section_key: str | int) -> LibrarySection | None:
         """Get a single library section by key.
 
@@ -282,6 +282,19 @@ class LibraryService:
 
         key = str(section_key)
         http = PlexHTTPClient(self._client)
+        data = http.get(f"/library/sections/{key}")
+        if data is None:
+            return []
+
+        container = data.get("MediaContainer", data)
+        locations = container.get("Location", [])
+        if isinstance(locations, dict):
+            locations = [locations]
+
+        return [
+            LibraryLocation(id=int(loc.get("id", 0)), path=loc.get("path", ""))
+            for loc in locations
+        ]
 
     # --- Collections --------------------------------------------------------
 
@@ -336,16 +349,16 @@ class LibraryService:
             raw_metadata = container.get("Metadata", [])
             if isinstance(raw_metadata, dict):
                 raw_metadata = [raw_metadata]
-            for item in raw_metadata:
-                all_collections.append(
-                    CollectionInfo(
-                        key=str(item.get("ratingKey", item.get("key", ""))),
-                        title=item.get("title", ""),
-                        smart=_safe_bool(item.get("smart")),
-                        content_count=_safe_int_or(item.get("childCount", 0)),
-                        section_title=section.title,
-                    )
+            all_collections.extend(
+                CollectionInfo(
+                    key=str(item.get("ratingKey", item.get("key", ""))),
+                    title=item.get("title", ""),
+                    smart=_safe_bool(item.get("smart")),
+                    content_count=_safe_int_or(item.get("childCount", 0)),
+                    section_title=section.title,
                 )
+                for item in raw_metadata
+            )
         return all_collections
 
     def get_collection(self, collection_key: str | int) -> CollectionMetadata | None:

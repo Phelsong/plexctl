@@ -60,7 +60,7 @@ class PhotoService:
             PhotoAlbumInfo if found, None otherwise.
         """
         server = self._client.server
-        item = server.fetchItem(int(rating_key))
+        item = server.fetchItem(int(rating_key))  # type: ignore[no-untyped-call]
         if item is None:
             return None
         # plexapi photo albums have type='photoalbum'
@@ -87,7 +87,7 @@ class PhotoService:
         """
         server = self._client.server
         if album_key is not None:
-            album = server.fetchItem(int(album_key))
+            album = server.fetchItem(int(album_key))  # type: ignore[no-untyped-call]
             photos = album.photos()
         else:
             section = server.library.section(section_title)
@@ -104,7 +104,7 @@ class PhotoService:
             PhotoInfo if found, None otherwise.
         """
         server = self._client.server
-        item = server.fetchItem(int(rating_key))
+        item = server.fetchItem(int(rating_key))  # type: ignore[no-untyped-call]
         if item is None:
             return None
         item_type = getattr(item, "type", None)
@@ -224,7 +224,7 @@ def _safe_int(value: object) -> int | None:
     if value is None or value == "":
         return None
     try:
-        return int(value)  # type: ignore[arg-type]
+        return int(str(value))
     except (ValueError, TypeError):
         return None
 

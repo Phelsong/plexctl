@@ -47,7 +47,7 @@ class ShokoConfig(BaseSettings):
         return bool(self.url and self.apikey)
 
 
-def load_shoko_config(env_path=None):
+def load_shoko_config(env_path: str | None = None) -> ShokoConfig:
     """Load Shoko configuration from plexctl.toml, env vars, or .env file.
 
     Configuration is loaded in priority order:
@@ -83,7 +83,7 @@ def load_shoko_config(env_path=None):
             )
 
     # Read TOML
-    toml_data: dict = {}
+    toml_data: dict[str, object] = {}
     if conf_file.exists():
         import tomllib
 

@@ -879,7 +879,7 @@ def _make_tag_commands(tag_type: str, display_name: str) -> None:
     @item_app.command(f"add-{tag_type}")
     def add_tag_cmd(
         key: str = typer.Argument(help="Rating key of the item"),
-        values: list[str] = typer.Argument(help=add_help),
+        values: list[str] = typer.Argument(help=add_help),  # noqa: B008
         locked: bool = typer.Option(
             True, "--locked/--no-locked", help="Lock the field after adding"
         ),
@@ -901,7 +901,7 @@ def _make_tag_commands(tag_type: str, display_name: str) -> None:
     @item_app.command(f"remove-{tag_type}")
     def remove_tag_cmd(
         key: str = typer.Argument(help="Rating key of the item"),
-        values: list[str] = typer.Argument(help=remove_help),
+        values: list[str] = typer.Argument(help=remove_help),  # noqa: B008
         locked: bool = typer.Option(
             True, "--locked/--no-locked", help="Lock the field after removing"
         ),
@@ -938,7 +938,9 @@ _make_tag_commands("country", "country")
 @item_app.command("lock")
 def lock_fields(
     key: str = typer.Argument(help="Rating key of the item"),
-    fields: list[str] = typer.Argument(help="Field name(s) to lock (e.g. title, summary, year)"),
+    fields: list[str] = typer.Argument(  # noqa: B008
+        help="Field name(s) to lock (e.g. title, summary, year)"
+    ),
 ) -> None:
     """Lock metadata field(s) to prevent automatic changes.
 
@@ -960,7 +962,7 @@ def lock_fields(
 @item_app.command("unlock")
 def unlock_fields(
     key: str = typer.Argument(help="Rating key of the item"),
-    fields: list[str] = typer.Argument(
+    fields: list[str] = typer.Argument(  # noqa: B008
         help="Field name(s) to unlock (e.g. title, summary, year)"
     ),
 ) -> None:
@@ -1171,7 +1173,9 @@ def set_item_progress(
 @item_app.command(name="merge")
 def merge_items(
     target: str = typer.Argument(help="Rating key of the target item"),
-    sources: list[str] = typer.Argument(..., help="Rating keys of items to merge into target"),
+    sources: list[str] = typer.Argument(  # noqa: B008
+        ..., help="Rating keys of items to merge into target"
+    ),
     confirm: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation prompt."),
 ) -> None:
     """Merge multiple media items into one.

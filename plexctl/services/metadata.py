@@ -452,7 +452,7 @@ class MetadataService:
     def _subtitle_stream_to_info(stream: object) -> SubtitleStreamInfo:
         """Convert a plexapi SubtitleStream to our SubtitleStreamInfo model."""
         return SubtitleStreamInfo(
-            id=stream.id,
+            id=getattr(stream, "id", 0),
             language=getattr(stream, "language", "") or "",
             language_code=getattr(stream, "languageCode", "") or "",
             language_tag=getattr(stream, "languageTag", "") or "",

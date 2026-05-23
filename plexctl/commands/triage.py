@@ -18,7 +18,6 @@ from typing import Annotated
 
 import typer
 from rich.console import Console
-from rich.live import Live
 from rich.table import Table
 from rich.tree import Tree
 
@@ -31,13 +30,7 @@ from plexctl.converters import (
     triage_issue_to_csv,
 )
 from plexctl.csv_utils import from_csv, get_model_class, list_model_names, write_csv_to_output
-from plexctl.models import (
-    PlexMatch,
-    PlexMatchBatchResult,
-    ReorgAction,
-    TriageAction,
-    TriageSeverity,
-)
+from plexctl.models import ReorgAction, TriageAction, TriageSeverity
 from plexctl.options import CsvFlag, OutputFile  # noqa: TC001
 from plexctl.services.diagnostics import DiagnosticService
 from plexctl.services.fixes import FixService
@@ -1380,7 +1373,7 @@ def plexmatch(
         )
     except ValueError as e:
         console.print(f"[red]{e}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
 
     content = result.render()
 

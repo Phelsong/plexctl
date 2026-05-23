@@ -30,9 +30,9 @@ from plexctl.converters import (
     resource_stats_to_csv,
     server_info_to_csv,
     server_preference_to_csv,
-    server_identity_to_table,
     transcode_session_to_csv,
     update_info_to_csv,
+    user_account_to_table,
     watch_history_entry_to_csv,
 )
 from plexctl.csv_utils import write_csv_to_output
@@ -274,7 +274,7 @@ def server_info(csv_output: CsvFlag = False, output: OutputFile = None) -> None:
         return
 
     console.print("\n[bold]Plex Media Server[/bold]")
-    console.print(f"  Name:        {info.friendly_name}")
+    console.print(f"  Name:        {info.server_name}")
     console.print(f"  Version:     {info.version}")
     console.print(f"  Platform:    {info.platform} {info.platform_version}")
     console.print(f"  Machine ID:  {info.machine_id}")
@@ -913,7 +913,8 @@ def list_accounts(
             "[yellow]Note: Full account list endpoint requires authentication.[/yellow]"
         )
         console.print(
-            "[yellow]Use --media with a rating key to find users who interacted with items.[/yellow]"
+            "[yellow]Use --media with a rating key to find "
+            "users who interacted with items.[/yellow]"
         )
         return
 
@@ -935,7 +936,7 @@ def list_accounts(
 
     console.print(table)
 
-    if csv_output := typer.confirm("Show user details for each user?"):
+    if typer.confirm("Show user details for each user?"):
         for user in users:
             console.print()
             user_table = user_account_to_table(user)

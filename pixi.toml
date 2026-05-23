@@ -31,6 +31,7 @@ pydantic = ">=2.0"
 pydantic-settings = ">=2.0"
 httpx = ">=0.27"
 defusedxml = ">=0.7.1, <0.8"
+types-defusedxml = ">=0.7.0.20260504, <0.8"
 
 [feature.dev.pypi-dependencies]
 black = ">=26.1.0,<27"
@@ -39,6 +40,7 @@ mypy = ">=1.0"
 pytest = ">=8.0"
 pytest-cov = ">=5.0"
 bandit = ">=1.9.4,<2"
+types-defusedxml = ">=0.7.0.20260504, <0.8"
 
 [environments]
 dev = ["dev"]

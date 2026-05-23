@@ -11,6 +11,7 @@ Examples:
 """
 
 import typer
+from pydantic import BaseModel
 from rich.console import Console
 from rich.table import Table
 from rich.tree import Tree
@@ -106,7 +107,7 @@ def movies_default(
         return
 
     if csv_output:
-        rows = [media_metadata_to_csv(m) for m in all_movies[:limit]]
+        rows: list[BaseModel] = [media_metadata_to_csv(m) for m in all_movies[:limit]]  # type: ignore[no-redef]
         write_csv_to_output(rows, output)
         return
 
