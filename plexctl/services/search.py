@@ -46,7 +46,7 @@ _SORT_MAP: dict[str, str] = {
 }
 
 
-def _parse_search_result(item: dict[str, Any]) -> SearchResult:
+def _parse_search_result(item: dict[str, Any], *, debug: bool = False) -> SearchResult:
     """Parse a raw Plex API metadata dict into a SearchResult.
 
     Args:
@@ -57,6 +57,9 @@ def _parse_search_result(item: dict[str, Any]) -> SearchResult:
     """
     media_type = MediaType.from_plex_type(item.get("type", ""))
 
+    if debug:
+        for k, v in item.items():
+            print(k, v)
     return SearchResult(
         key=str(item.get("ratingKey", item.get("key", ""))),
         title=item.get("title", ""),

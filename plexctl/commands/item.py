@@ -64,13 +64,14 @@ def _get_search_service() -> SearchService:
 # --- Search (from cli.py inline) ------------------------------------------
 
 
-@item_app.command(name="search")
+@item_app.command(name="search", no_args_is_help=True)
 def search_items(
     query: str = typer.Argument(help="Search query"),
     section: Annotated[str | None, typer.Option(help="Limit to library section")] = None,
     type: Annotated[MediaType | None, typer.Option(help="Media type filter")] = None,
     csv_output: CsvFlag = False,
     output: OutputFile = None,
+    debug: bool = False,
 ) -> None:
     """Search for media by title."""
     service = _get_metadata_service()
@@ -106,7 +107,7 @@ def search_items(
 # --- Edit (from cli.py inline) --------------------------------------------
 
 
-@item_app.command(name="edit")
+@item_app.command(name="edit", no_args_is_help=True)
 def edit_item(
     key: str = typer.Argument(help="Plex rating key of the item"),
     field: str = typer.Argument(help="Metadata field to edit (e.g. title, summary)"),
@@ -197,7 +198,7 @@ def ingest_csv(
 # --- Info (from cli.py inline) --------------------------------------------
 
 
-@item_app.command(name="info")
+@item_app.command(name="info", no_args_is_help=True)
 def item_info(
     key: str = typer.Argument(help="Plex rating key of the item"),
     csv_output: CsvFlag = False,

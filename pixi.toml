@@ -9,11 +9,12 @@ version = "0.1.0"
 # Development (run with pixi run -e dev <task>)
 dev = {cmd="python -m plexctl", default-environment = "dev"}
 lint = {cmd="ruff check plexctl tests", default-environment = "dev"}
-format = {cmd="black -C plexctl tests", default-environment = "dev"}
+sort = {cmd="isort plexctl --py 314", default-environment = "dev"}
+format = {cmd="black -C plexctl tests", default-environment = "dev", depends-on = ["sort"]}
 typecheck = {cmd="mypy plexctl", default-environment = "dev"}
 test = {cmd="pytest tests -v", default-environment = "dev"}
 scan = {cmd="bandit plexctl -r", default-environment = "dev"}
-pre-commit = {depends-on = ["format","typecheck","test","scan"]}
+pre-commit = {depends-on = ["sort","format","typecheck","test","scan"]}
 # CLI entry points
 plexctl = "python -m plexctl"
 # Install / uninstall symlink

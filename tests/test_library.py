@@ -5,6 +5,7 @@ from __future__ import annotations
 from unittest.mock import MagicMock, patch
 
 import pytest
+
 from plexctl.models import (
     CollectionInfo,
     CollectionMetadata,

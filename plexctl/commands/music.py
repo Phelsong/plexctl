@@ -18,6 +18,7 @@ Examples:
 """
 
 import typer
+from pydantic import BaseModel
 from rich.console import Console
 from rich.table import Table
 from rich.tree import Tree
@@ -26,8 +27,6 @@ from plexctl.client import PlexClient
 from plexctl.config import load_config
 from plexctl.converters import album_info_to_csv, artist_info_to_csv, track_info_to_csv
 from plexctl.csv_utils import write_csv_to_output
-from pydantic import BaseModel
-
 from plexctl.models import AlbumInfo, ArtistInfo, MediaTreeItem, TrackInfo
 from plexctl.options import CsvFlag, OutputFile
 from plexctl.services.music import MusicService

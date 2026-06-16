@@ -17,6 +17,7 @@ from plexctl.commands.server import server_app
 from plexctl.commands.shows import shows_app
 from plexctl.commands.triage import triage_app
 from plexctl.plugins.registry import register_plugins
+from plexctl.utils.types_helper import types_app
 
 app = typer.Typer(
     name="plexctl",
@@ -35,6 +36,7 @@ app.add_typer(playlists_app, name="playlists")
 app.add_typer(triage_app, name="triage")
 app.add_typer(server_app, name="server")
 app.add_typer(collections_app, name="collections")
+app.add_typer(types_app, name="types")
 
 # Discover and register all plugins (shoko, future integrations, etc.)
 register_plugins(app)

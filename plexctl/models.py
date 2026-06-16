@@ -8,8 +8,14 @@ from __future__ import annotations
 
 import contextlib
 from datetime import datetime  # noqa: TC003
-from enum import StrEnum
+from enum import IntEnum, StrEnum
 
+from plexapi.audio import Audio
+from plexapi.collection import Collection
+from plexapi.media import MediaTag
+from plexapi.photo import Photo
+from plexapi.playlist import Playlist as Plex_Playlist
+from plexapi.video import Video
 from pydantic import BaseModel, Field
 
 
@@ -23,7 +29,32 @@ class MediaType(StrEnum):
     ARTIST = "artist"
     ALBUM = "album"
     TRACK = "track"
+    COLLECTION = "collection"
+    PLAYLIST = "playlist"
+    MEDIATAG = "mediaTag"
+    # List of Metadata Subtypes
     PHOTO = "photo"
+    PODCAST = "podcast"
+    WEBSHOW = "webshow"
+    NEWS = "news"
+    # Collection Subtypes
+    # movie
+    # show
+    # artist
+    # album
+    # Extras Subtypes
+    TRAILER = "trailer"
+    # deletedScene
+    INTERVIEW = "interview"
+    MUSICVIDEO = "musicVideo"
+    # behindTheScenes
+    # sceneOrSample
+    # liveMusicVideo
+    # lyricMusicVideo
+    CONCERT = "concert"
+    # featurette
+    SHORT = "short"
+    # other
 
     @classmethod
     def from_plex_type(cls, value: str) -> MediaType | None:
@@ -35,6 +66,31 @@ class MediaType(StrEnum):
             return cls(value)
         except ValueError:
             return None
+
+
+class MetadataType(IntEnum):
+    movie = 1
+    show = 2
+    season = 3
+    episode = 4
+    trailer = 5
+    person = 7
+    artist = 8
+    album = 9
+    track = 0
+    clip = 12
+    photo = 13
+    photoalbum = 14
+    playlist = 15
+    playlistfolder = 16
+    collection = 18
+
+    # def __getitem__(self, key):
+    #     self[key], self[key].value
+
+
+PLEX_MEDIA = Video | Audio | Photo | Collection | Plex_Playlist
+# | Tag
 
 
 class MetadataEdit(BaseModel):

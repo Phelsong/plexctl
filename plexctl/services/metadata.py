@@ -1,6 +1,4 @@
-"""Metadata service layer.
-
-Provides high-level operations for reading and writing Plex metadata,
+"""Metadata service layer.Provides high-level operations for reading and writing Plex metadata,
 collections, and library information. All plexapi interactions are
 encapsulated here so the CLI layer stays thin.
 """
@@ -11,14 +9,13 @@ import logging
 from contextlib import contextmanager
 from typing import TYPE_CHECKING, Any
 
-from plexapi.video import Episode, Movie, Season, Show
-
 if TYPE_CHECKING:
     from collections.abc import Generator
 
     from plexctl.client import PlexClient
 
 from plexctl.models import (
+    PLEX_MEDIA,
     BatchEditResult,
     CollectionInfo,
     LibrarySection,
@@ -27,6 +24,8 @@ from plexctl.models import (
     MetadataEdit,
     SubtitleStreamInfo,
 )
+
+logger = logging.getLogger(__name__)
 
 # Maps tag_type strings to the corresponding plexapi method names.
 _TAG_ADD_METHODS: dict[str, str] = {
@@ -53,11 +52,9 @@ _TAG_REMOVE_METHODS: dict[str, str] = {
     "similar_artist": "removeSimilarArtist",
 }
 
-logger = logging.getLogger(__name__)
-
 
 @contextmanager
-def _batch_edits(item: Movie | Show) -> Generator[None, None, None]:
+def _batch_edits(item: PLEX_MEDIA) -> Generator[None, None, None]:
     """Context manager that applies edits in a single batch on exit."""
     try:
         with item.batchEdits():  # type: ignore[no-untyped-call]
@@ -72,7 +69,6 @@ class MetadataService:
 
     Provides typed, high-level methods for:
     - Browsing libraries and sections
-    - Reading metadata for movies and shows
     - Editing metadata (titles, summaries, ratings, etc.)
     - Managing collections
 
@@ -111,13 +107,13 @@ class MetadataService:
         """Retrieve all movies from a library section."""
         section = self._client.server.library.section(section_title)
         movies = section.all()
-        return [self._movie_to_metadata(m) for m in movies]
+        return [self._to_metadata(m) for m in movies]
 
     def get_all_shows(self, section_title: str = "TV Shows") -> list[MediaMetadata]:
         """Retrieve all shows from a library section."""
         section = self._client.server.library.section(section_title)
         shows = section.all()
-        return [self._show_to_metadata(s) for s in shows]
+        return [self._to_metadata(s) for s in shows]
 
     def search(
         self, query: str, section_title: str | None = None, media_type: MediaType | None = None
@@ -143,10 +139,9 @@ class MetadataService:
         results = self._client.server.search(**kwargs)  # type: ignore[no-untyped-call]
         metadata: list[MediaMetadata] = []
         for item in results:
-            if isinstance(item, Movie):
-                metadata.append(self._movie_to_metadata(item))
-            elif isinstance(item, Show):
-                metadata.append(self._show_to_metadata(item))
+            data = self._to_metadata(item)
+            if data is not None:
+                metadata.append(data)
         return metadata
 
     def get_metadata(self, rating_key: str | int) -> MediaMetadata | None:
@@ -160,14 +155,8 @@ class MetadataService:
         """
         key = int(rating_key)
         item = self._client.server.fetchItem(key)  # type: ignore[no-untyped-call]
-        if isinstance(item, Movie):
-            return self._movie_to_metadata(item)
-        if isinstance(item, Show):
-            return self._show_to_metadata(item)
-        if isinstance(item, Episode):
-            return self._episode_to_metadata(item)
-        if isinstance(item, Season):
-            return self._season_to_metadata(item)
+        if isinstance(item, PLEX_MEDIA):
+            return self._to_metadata(item)
         return None
 
     # --- Metadata writing --------------------------------------------------
@@ -187,12 +176,11 @@ class MetadataService:
         edit_dict = {e.field: e.value for e in edits}
         item.edit(**edit_dict)
         item.reload()
-        if isinstance(item, Movie):
-            return self._movie_to_metadata(item)
-        if isinstance(item, Show):
-            return self._show_to_metadata(item)
-        msg = f"Unsupported media type: {type(item).__name__}"
-        raise ValueError(msg)
+        try:
+            return self._to_metadata(item)
+        except Exception:
+            msg = f"Unsupported media type: {type(item).__name__}"
+            raise ValueError(msg)
 
     def batch_edit(
         self, rating_keys: list[str | int], edits: list[MetadataEdit]
@@ -472,81 +460,39 @@ class MetadataService:
             user_id=getattr(stream, "userID", None),
         )
 
-    def _to_metadata(self, item: Movie | Show | Episode | Season) -> MediaMetadata | None:
+    def _to_metadata(self, item: PLEX_MEDIA, *, debug: bool = False) -> MediaMetadata:
         """Convert a plexapi item to MediaMetadata based on its type.
 
         Delegates to the appropriate type-specific converter.
         Returns None for unsupported types.
         """
-        if isinstance(item, Movie):
-            return self._movie_to_metadata(item)
-        if isinstance(item, Show):
-            return self._show_to_metadata(item)
-        if isinstance(item, Episode):
-            return self._episode_to_metadata(item)
-        if isinstance(item, Season):
-            return self._season_to_metadata(item)
-        return None
-
-    @staticmethod
-    def _movie_to_metadata(movie: Movie) -> MediaMetadata:
-        """Convert a plexapi Movie to our MediaMetadata model."""
-        return MediaMetadata(
-            key=str(movie.ratingKey),
-            title=movie.title,
-            original_title=getattr(movie, "originalTitle", None),
-            sort_title=getattr(movie, "titleSort", None),
-            summary=movie.summary or None,
-            year=int(movie.year) if movie.year else None,
-            originally_available=getattr(movie, "originallyAvailableAt", None),
-            rating=movie.rating,
-            audience_rating=movie.audienceRating,
-            content_rating=movie.contentRating,
-            studio=getattr(movie, "studio", None),
-            tagline=getattr(movie, "tagline", None),
-            media_type=MediaType.MOVIE,
-        )
-
-    @staticmethod
-    def _show_to_metadata(show: Show) -> MediaMetadata:
-        """Convert a plexapi Show to our MediaMetadata model."""
-        return MediaMetadata(
-            key=str(show.ratingKey),
-            title=show.title,
-            original_title=getattr(show, "originalTitle", None),
-            sort_title=getattr(show, "titleSort", None),
-            summary=show.summary or None,
-            year=int(show.year) if show.year else None,
-            originally_available=getattr(show, "originallyAvailableAt", None),
-            rating=show.rating,
-            audience_rating=show.audienceRating,
-            content_rating=show.contentRating,
-            studio=getattr(show, "studio", None),
-            tagline=None,
-            media_type=MediaType.SHOW,
-        )
-
-    @staticmethod
-    def _episode_to_metadata(episode: Episode) -> MediaMetadata:
-        """Convert a plexapi Episode to our MediaMetadata model."""
-        return MediaMetadata(
-            key=str(episode.ratingKey),
-            title=episode.title,
-            sort_title=getattr(episode, "titleSort", None),
-            summary=episode.summary or None,
-            year=int(episode.year) if episode.year else None,
-            originally_available=getattr(episode, "originallyAvailableAt", None),
-            media_type=MediaType.EPISODE,
-        )
-
-    @staticmethod
-    def _season_to_metadata(season: Season) -> MediaMetadata:
-        """Convert a plexapi Season to our MediaMetadata model."""
-        return MediaMetadata(
-            key=str(season.ratingKey),
-            title=season.title,
-            summary=season.summary or None,
-            year=int(season.year) if season.year else None,
-            originally_available=getattr(season, "originallyAvailableAt", None),
-            media_type=MediaType.SEASON,
-        )
+        if debug:
+            for k, v in item.__dict__.items():
+                print(k, v)
+                print(type(v))
+        year = None
+        content_rating = None
+        try:
+            year = int(item.year) if item.year is not None else None
+            content_rating = item.contentRating if item.contentRating is not None else None
+        except Exception:
+            logger.debug(f"data type {item}")
+        if isinstance(item, PLEX_MEDIA):
+            return MediaMetadata(
+                key=str(item.ratingKey),
+                title=item.title if item.title else item.tag,
+                original_title=getattr(item, "originalTitle", None),
+                sort_title=getattr(item, "titleSort", None),
+                summary=item.summary or None,
+                year=year,
+                originally_available=getattr(item, "originallyAvailableAt", None),
+                rating=item.rating,
+                audience_rating=item.audienceRating,
+                content_rating=content_rating,
+                studio=getattr(item, "studio", None),
+                tagline=getattr(item, "tagline", None),
+                media_type=item.type,
+            )
+        else:
+            logger.debug(f"Error parsing item {item}, {item.type}")
+            return None

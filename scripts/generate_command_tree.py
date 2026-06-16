@@ -16,6 +16,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from typing import Any
 
 import typer.models
+
 from plexctl.cli import app
 
 # Groups that appear at the top level but are canonical aliases of

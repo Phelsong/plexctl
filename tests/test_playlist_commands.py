@@ -4,11 +4,12 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
+from typer.testing import CliRunner
+
 from plexctl.cli import app
 from plexctl.config import PlexConfig
 from plexctl.models import MediaType, Playlist, PlaylistItem, PlaylistType
 from plexctl.services.playlists import PlaylistService
-from typer.testing import CliRunner
 
 runner = CliRunner()
 

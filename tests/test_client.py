@@ -1,6 +1,7 @@
 """Test client module for plexctl."""
 
 import httpx
+
 from plexctl.client import (
     PlexClient,
     PlexHTTPClient,

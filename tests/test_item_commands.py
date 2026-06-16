@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
+from typer.testing import CliRunner
+
 from plexctl.cli import app
 from plexctl.config import PlexConfig
 from plexctl.models import FixResult, MatchResult, MediaMetadata, MediaType, SearchResult
@@ -11,7 +13,6 @@ from plexctl.services.fixes import FixService
 from plexctl.services.metadata import MetadataService
 from plexctl.services.search import SearchService
 from plexctl.services.server import ServerService
-from typer.testing import CliRunner
 
 runner = CliRunner()
 

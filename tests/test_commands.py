@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-from plexctl.cli import app
 from typer.testing import CliRunner
+
+from plexctl.cli import app
 
 runner = CliRunner()
 

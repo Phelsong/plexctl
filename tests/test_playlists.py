@@ -5,6 +5,7 @@ from __future__ import annotations
 from unittest.mock import MagicMock, patch
 
 import pytest
+
 from plexctl.models import CsvPlaylist, MediaType, Playlist, PlaylistItem, PlaylistType
 from plexctl.services.playlists import PlaylistService, _parse_playlist, _safe_bool, _safe_int
 
