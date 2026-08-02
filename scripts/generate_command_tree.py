@@ -240,6 +240,19 @@ def generate_tree() -> str:
 
         lines.append("")
 
+    # Top-level commands registered directly on the root app (e.g. `repl`,
+    # `help`) rather than under a sub-group.  These appear after the groups.
+    top_level_commands = [c for c in app.registered_commands if c.name is not None and not c.deprecated]
+    if top_level_commands:
+        lines.append("## `plexctl`")
+        lines.append("")
+        cmd_lines = _format_commands(top_level_commands, "", "")
+        # Strip the leading "{group} " from each line since these are top-level.
+        for line in cmd_lines:
+            lines.append(line.replace("- **` ", "- **`", 1))
+        command_count += len(top_level_commands)
+        lines.append("")
+
     lines.append("---")
     lines.append(f"*Total active commands: {command_count}*")
     lines.append("")

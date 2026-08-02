@@ -597,8 +597,13 @@ Query Shoko Server for anime metadata and file information.
 - **`shoko plexmatch-prefer`** — Set or remove a preferred TMDB ordering for a series.
 - **`shoko plexmatch-all`** — Generate .plexmatch files for all series in a library directory.
 
+## `plexctl`
+
+- **`repl`** — Start an interactive REPL for running plexctl commands.
+- **`help`** — Show help for plexctl or a specific command.
+
 ---
-*Total active commands: 137*
+*Total active commands: 139*
 
 
 <!-- END COMMAND TREE -->
