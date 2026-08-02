@@ -17,8 +17,10 @@ from urllib.parse import parse_qs, urlparse
 
 from plexctl.models import (
     PLAYLIST_TYPE_MAP,
+    M3UEntry,
     MediaType,
     Playlist,
+    PlaylistImportResult,
     PlaylistItem,
     PlaylistType,
     SmartPlaylist,
@@ -577,10 +579,262 @@ class PlaylistService:
 
         return [_parse_playlist_item(item) for item in raw_metadata]
 
+    # --- M3U import -----------------------------------------------------------
+
+    @staticmethod
+    def parse_m3u(path: str) -> list[M3UEntry]:
+        """Parse an M3U file into a list of entries.
+
+        Supports both simple filename lists (``NN.Artist-Title.ext``)
+        and extended M3U (``#EXTINF`` lines). Blank lines and lines
+        starting with ``#`` (except ``#EXTINF``) are skipped.
+
+        Args:
+            path: Filesystem path to the ``.m3u`` file.
+
+        Returns:
+            List of M3UEntry in file order.
+
+        Raises:
+            FileNotFoundError: If the file does not exist.
+            OSError: If the file cannot be read.
+        """
+        from pathlib import Path
+
+        entries: list[M3UEntry] = []
+        pending_title: str | None = None  # from #EXTINF
+
+        for line in Path(path).read_text(encoding="utf-8").splitlines():
+            stripped = line.strip()
+            if not stripped:
+                continue
+            if stripped.upper().startswith("#EXTM3U"):
+                continue
+            if stripped.upper().startswith("#EXTINF:"):
+                # Format: #EXTINF:<duration>,<artist> - <title>
+                after_colon = stripped.split(":", 1)[1] if ":" in stripped else ""
+                info = after_colon.split(",", 1)[1].strip() if "," in after_colon else ""
+                # Split "Artist - Title" on " - " if present
+                if " - " in info:
+                    parts = info.split(" - ", 1)
+                    pending_title = parts[1].strip()
+                else:
+                    pending_title = info
+                continue
+            if stripped.startswith("#"):
+                continue
+
+            entry = _parse_m3u_filename(stripped)
+            if pending_title:
+                entry.title = pending_title
+            pending_title = None
+            entries.append(entry)
+
+        return entries
+
+    def import_m3u(
+        self, path: str, playlist_title: str, *, section: str = "Music"
+    ) -> PlaylistImportResult:
+        """Import an M3U file into a new Plex audio playlist.
+
+        Parses the M3U, searches the Music section for each track by title,
+        creates an audio playlist, and adds all matched tracks.
+
+        Uses plexapi for both search and playlist creation — the Plex HTTP
+        API's ``POST /playlists`` endpoint returns 400 for audio playlists
+        without item URIs, while plexapi's ``createPlaylist`` handles the
+        correct creation flow.
+
+        Args:
+            path: Filesystem path to the ``.m3u`` file.
+            playlist_title: Title for the new Plex playlist.
+            section: Library section title to search within (default "Music").
+
+        Returns:
+            PlaylistImportResult with match statistics and unmatched entries.
+        """
+        entries = self.parse_m3u(path)
+        if not entries:
+            return PlaylistImportResult(playlist_title=playlist_title, total=0)
+
+        server = self._client.server
+        music_section = server.library.section(section)
+
+        matched_tracks: list[object] = []
+        unmatched: list[str] = []
+
+        for entry in entries:
+            track = _search_track_plexapi(music_section, entry.title, entry.artists)
+            if track is not None:
+                matched_tracks.append(track)
+            else:
+                unmatched.append(entry.raw)
+
+        result = PlaylistImportResult(
+            playlist_title=playlist_title,
+            total=len(entries),
+            matched=len(matched_tracks),
+            unmatched=len(unmatched),
+            unmatched_entries=unmatched,
+        )
+
+        if not matched_tracks:
+            return result
+
+        playlist = server.createPlaylist(playlist_title, items=matched_tracks)  # type: ignore[no-untyped-call]
+        result.playlist_key = str(getattr(playlist, "ratingKey", ""))
+        return result
+
+    @staticmethod
+    def generate_m3u(directory: str, output: str, *, sort: bool = True) -> int:
+        """Generate an M3U file from audio files in a directory.
+
+        Scans ``directory`` for audio files (mp3, flac, m4a, wav, ogg, opus,
+        aac, wma), writes an M3U playlist to ``output`` with one filename
+        per line (simple format, compatible with :meth:`parse_m3u`).
+
+        Args:
+            directory: Filesystem path to scan for audio files.
+            output: Filesystem path for the output ``.m3u`` file.
+            sort: If True, sort entries by filename (natural order for
+                numeric prefixes like ``01.``, ``02.``). If False, use
+                filesystem order.
+
+        Returns:
+            Number of entries written to the M3U file.
+
+        Raises:
+            FileNotFoundError: If the directory does not exist.
+            OSError: If the output file cannot be written.
+        """
+        from pathlib import Path
+
+        audio_exts = {".mp3", ".flac", ".m4a", ".wav", ".ogg", ".opus", ".aac", ".wma"}
+        dir_path = Path(directory)
+
+        files = [f for f in dir_path.iterdir() if f.is_file() and f.suffix.lower() in audio_exts]
+
+        if sort:
+            files.sort(key=_natural_sort_key)
+
+        lines = ["#EXTM3U"]
+        lines.extend(f.name for f in files)
+
+        Path(output).write_text("\n".join(lines) + "\n", encoding="utf-8")
+        return len(files)
+
 
 # ============================================================
-#  SmartPlaylistService — smart playlists (filter-based)
+#  M3U parsing helpers
 # ============================================================
+
+# Translation table that strips punctuation/symbols from filenames for
+# better Plex search matching. Preserves alphanumerics, spaces, and commas
+# (commas separate artists in multi-artist entries).
+# e.g. "#DiesisLive [Episode 01 @Milazzo, Sicily]" → "DiesisLive Episode 01 Milazzo, Sicily"
+_FILENAME_STRIP = str.maketrans("", "", "\"'`.:!?@#$%^&*<>/-_)(+=;\\|][}{‘")
+
+
+def _natural_sort_key(path: object) -> tuple[int, str]:
+    """Sort key for natural ordering of filenames (``01`` before ``10``).
+
+    Splits the filename into numeric and non-numeric chunks so that
+    ``02.track`` sorts before ``10.track`` lexicographically would fail.
+    """
+    import re
+
+    name = getattr(path, "name", str(path))
+    return (
+        0,
+        ".".join(
+            chunk.zfill(4) if chunk.isdigit() else chunk for chunk in re.split(r"(\d+)", name)
+        ),
+    )
+
+
+def _parse_m3u_filename(line: str) -> M3UEntry:
+    """Parse a single M3U filename line into an M3UEntry.
+
+    Expected format: ``NN.Artist-Title.ext`` where ``NN`` is an optional
+    track number, ``Artist`` is a comma-separated list, and ``Title``
+    is the track title. The file extension is discarded.
+
+    Falls back to using the whole stem as ``title`` with no artist if
+    the line doesn't match the expected pattern.
+
+    Args:
+        line: A single non-comment line from an M3U file.
+
+    Returns:
+        M3UEntry with parsed fields.
+    """
+    from pathlib import Path
+
+    raw = line
+    stem = Path(line).stem
+
+    track_number: int | None = None
+    work = stem
+
+    # Strip leading track number: "01.Title" or "01 - Title" or "01. Title"
+    dot_pos = work.find(".")
+    if dot_pos > 0 and work[:dot_pos].isdigit():
+        track_number = int(work[:dot_pos])
+        work = work[dot_pos + 1 :].lstrip(" -")
+
+    # Split on first hyphen: "Artist-Title" → ("Artist", "Title")
+    # Use the LAST hyphen to avoid splitting "Artist - Title (feat. X)"
+    # Actually use first hyphen after artist names — "Rema, Selena Gomez-Calm Down"
+    # The artists are before the first "-" that separates artists from title.
+    hyphen_pos = work.find("-")
+    if hyphen_pos > 0:
+        artists = work[:hyphen_pos].strip()
+        title = work[hyphen_pos + 1 :].strip()
+    else:
+        artists = ""
+        title = work.strip()
+
+    # Clean special characters from artist/title for better Plex search matching.
+    # Strips punctuation/symbols that interfere with title search (e.g. "#DiesisLive",
+    # "[Episode 01]", "@Milazzo") while preserving alphanumerics, spaces, and commas.
+    artists = artists.translate(_FILENAME_STRIP)
+    title = title.translate(_FILENAME_STRIP)
+
+    return M3UEntry(raw=raw, track_number=track_number, artists=artists, title=title)
+
+
+def _search_track_plexapi(music_section: object, title: str, artists: str) -> object | None:
+    """Search the Music section for a track matching the title.
+
+    Uses plexapi's ``section.search(title=..., libtype="track")`` which
+    performs a server-side title search. If ``artists`` is provided,
+    prefers results whose ``grandparentTitle`` (artist) contains the
+    first artist name.
+
+    Args:
+        music_section: A plexapi LibrarySection for the Music library.
+        title: Track title to search for.
+        artists: Comma-separated artist names (first is used for filtering).
+
+    Returns:
+        The plexapi Track object of the best match, or ``None`` if no match.
+    """
+    if not title:
+        return None
+
+    results = music_section.search(title=title, libtype="track")  # type: ignore[attr-defined]
+    if not results:
+        return None
+
+    first_artist = artists.split(",")[0].strip().lower() if artists else ""
+
+    for track in results:
+        if first_artist:
+            grandparent = str(getattr(track, "grandparentTitle", "")).lower()
+            if first_artist in grandparent or grandparent in first_artist:
+                return track  # type: ignore[no-any-return]
+    # Fall back to first result if no artist match
+    return results[0]  # type: ignore[no-any-return]
 
 
 class SmartPlaylistService:

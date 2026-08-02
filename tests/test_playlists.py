@@ -2,12 +2,22 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 from plexctl.models import CsvPlaylist, MediaType, Playlist, PlaylistItem, PlaylistType
-from plexctl.services.playlists import PlaylistService, _parse_playlist, _safe_bool, _safe_int
+from plexctl.services.playlists import (
+    PlaylistService,
+    _parse_m3u_filename,
+    _parse_playlist,
+    _safe_bool,
+    _safe_int,
+)
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 # --- Helper function tests -----------------------------------------------------
 
@@ -695,3 +705,315 @@ class TestPlaylistCsvModelRegistry:
         cls = get_model_class("playlist_item")
         assert cls is not None
         assert cls is CsvPlaylistItem
+
+
+# --- M3U parsing tests --------------------------------------------------------
+
+
+class TestParseM3UFilename:
+    """Tests for _parse_m3u_filename."""
+
+    def test_standard_format(self) -> None:
+        entry = _parse_m3u_filename("01.Rema, Selena Gomez-Calm Down.flac")
+        assert entry.track_number == 1
+        assert entry.artists == "Rema, Selena Gomez"
+        assert entry.title == "Calm Down"
+
+    def test_single_artist(self) -> None:
+        entry = _parse_m3u_filename("02.Selena Gomez-My Mind & Me.flac")
+        assert entry.track_number == 2
+        assert entry.artists == "Selena Gomez"
+        assert entry.title == "My Mind  Me"
+
+    def test_no_track_number(self) -> None:
+        entry = _parse_m3u_filename("Selena Gomez-Rare.flac")
+        assert entry.track_number is None
+        assert entry.artists == "Selena Gomez"
+        assert entry.title == "Rare"
+
+    def test_no_hyphen(self) -> None:
+        entry = _parse_m3u_filename("UnknownTrack.flac")
+        assert entry.track_number is None
+        assert entry.artists == ""
+        assert entry.title == "UnknownTrack"
+
+    def test_double_digit_track(self) -> None:
+        entry = _parse_m3u_filename("25.Selena Gomez, The Scene-Love You Like A Love Song.flac")
+        assert entry.track_number == 25
+        assert entry.artists == "Selena Gomez, The Scene"
+        assert entry.title == "Love You Like A Love Song"
+
+    def test_extension_stripped(self) -> None:
+        entry = _parse_m3u_filename("01.Artist-Title.mp3")
+        assert entry.title == "Title"
+        assert ".mp3" not in entry.title
+
+    def test_raw_preserved(self) -> None:
+        line = "01.Rema, Selena Gomez-Calm Down.flac"
+        entry = _parse_m3u_filename(line)
+        assert entry.raw == line
+
+    def test_strips_special_chars(self) -> None:
+        entry = _parse_m3u_filename(
+            "#DiesisLive_Giolì & Assia - #DiesisLive [Episode 01 @Milazzo, Sicily].mp3"
+        )
+        assert entry.artists == "DiesisLiveGiolì  Assia"
+        assert entry.title == "DiesisLive Episode 01 Milazzo, Sicily"
+
+
+class TestParseM3U:
+    """Tests for PlaylistService.parse_m3u."""
+
+    def test_simple_file(self, tmp_path: Path) -> None:
+        m3u = tmp_path / "test.m3u"
+        m3u.write_text(
+            "01.Artist A-Song One.flac\n"
+            "02.Artist B-Song Two.flac\n"
+            "03.Artist C-Song Three.flac\n",
+            encoding="utf-8",
+        )
+        entries = PlaylistService.parse_m3u(str(m3u))
+        assert len(entries) == 3
+        assert entries[0].track_number == 1
+        assert entries[0].title == "Song One"
+        assert entries[2].track_number == 3
+
+    def test_skips_blank_lines(self, tmp_path: Path) -> None:
+        m3u = tmp_path / "test.m3u"
+        m3u.write_text("\n01.Artist-Song.flac\n\n", encoding="utf-8")
+        entries = PlaylistService.parse_m3u(str(m3u))
+        assert len(entries) == 1
+
+    def test_skips_comments(self, tmp_path: Path) -> None:
+        m3u = tmp_path / "test.m3u"
+        m3u.write_text("# This is a comment\n01.Artist-Song.flac\n# Another\n", encoding="utf-8")
+        entries = PlaylistService.parse_m3u(str(m3u))
+        assert len(entries) == 1
+        assert entries[0].title == "Song"
+
+    def test_extm3u_header_skipped(self, tmp_path: Path) -> None:
+        m3u = tmp_path / "test.m3u"
+        m3u.write_text("#EXTM3U\n01.Artist-Song.flac\n", encoding="utf-8")
+        entries = PlaylistService.parse_m3u(str(m3u))
+        assert len(entries) == 1
+
+    def test_extinf_provides_title(self, tmp_path: Path) -> None:
+        m3u = tmp_path / "test.m3u"
+        m3u.write_text(
+            "#EXTINF:180,Selena Gomez - Lose You To Love Me\n" "/music/selena/03.flac\n",
+            encoding="utf-8",
+        )
+        entries = PlaylistService.parse_m3u(str(m3u))
+        assert len(entries) == 1
+        assert entries[0].title == "Lose You To Love Me"
+
+    def test_empty_file(self, tmp_path: Path) -> None:
+        m3u = tmp_path / "empty.m3u"
+        m3u.write_text("", encoding="utf-8")
+        entries = PlaylistService.parse_m3u(str(m3u))
+        assert len(entries) == 0
+
+    def test_file_not_found(self) -> None:
+        with pytest.raises(FileNotFoundError):
+            PlaylistService.parse_m3u("/nonexistent/path/file.m3u")
+
+
+class TestImportM3U:
+    """Tests for PlaylistService.import_m3u."""
+
+    def test_empty_file_returns_empty_result(self, tmp_path: Path) -> None:
+        m3u = tmp_path / "empty.m3u"
+        m3u.write_text("", encoding="utf-8")
+
+        client = MagicMock()
+        service = PlaylistService(client)
+        result = service.import_m3u(str(m3u), "Empty Playlist")
+        assert result.total == 0
+        assert result.matched == 0
+        assert result.unmatched == 0
+        assert result.playlist_key == ""
+
+    def test_no_matches(self, tmp_path: Path) -> None:
+        m3u = tmp_path / "test.m3u"
+        m3u.write_text("01.Unknown Artist-Unknown Song.flac\n", encoding="utf-8")
+
+        client = MagicMock()
+        mock_section = MagicMock()
+        mock_section.search.return_value = []
+        client.server.library.section.return_value = mock_section
+
+        service = PlaylistService(client)
+        result = service.import_m3u(str(m3u), "Test Playlist")
+        assert result.total == 1
+        assert result.matched == 0
+        assert result.unmatched == 1
+        assert result.unmatched_entries == ["01.Unknown Artist-Unknown Song.flac"]
+        assert result.playlist_key == ""
+
+    def test_successful_import(self, tmp_path: Path) -> None:
+        m3u = tmp_path / "test.m3u"
+        m3u.write_text("01.Artist A-Song One.flac\n02.Artist B-Song Two.flac\n", encoding="utf-8")
+
+        mock_track1 = MagicMock()
+        mock_track1.ratingKey = 101
+        mock_track1.grandparentTitle = "Artist A"
+        mock_track2 = MagicMock()
+        mock_track2.ratingKey = 102
+        mock_track2.grandparentTitle = "Artist B"
+
+        client = MagicMock()
+        mock_section = MagicMock()
+        mock_section.search.side_effect = [[mock_track1], [mock_track2]]
+        client.server.library.section.return_value = mock_section
+
+        mock_playlist = MagicMock()
+        mock_playlist.ratingKey = 999
+        client.server.createPlaylist.return_value = mock_playlist
+
+        service = PlaylistService(client)
+        result = service.import_m3u(str(m3u), "My Playlist")
+        assert result.total == 2
+        assert result.matched == 2
+        assert result.unmatched == 0
+        assert result.playlist_key == "999"
+        client.server.createPlaylist.assert_called_once()
+
+    def test_partial_match(self, tmp_path: Path) -> None:
+        m3u = tmp_path / "test.m3u"
+        m3u.write_text("01.Artist A-Song One.flac\n02.Artist B-Unknown.flac\n", encoding="utf-8")
+
+        mock_track = MagicMock()
+        mock_track.ratingKey = 101
+        mock_track.grandparentTitle = "Artist A"
+
+        client = MagicMock()
+        mock_section = MagicMock()
+        mock_section.search.side_effect = [[mock_track], []]
+        client.server.library.section.return_value = mock_section
+
+        mock_playlist = MagicMock()
+        mock_playlist.ratingKey = 888
+        client.server.createPlaylist.return_value = mock_playlist
+
+        service = PlaylistService(client)
+        result = service.import_m3u(str(m3u), "Partial")
+        assert result.total == 2
+        assert result.matched == 1
+        assert result.unmatched == 1
+        assert result.unmatched_entries == ["02.Artist B-Unknown.flac"]
+        assert result.playlist_key == "888"
+
+
+# --- generate_m3u tests -------------------------------------------------------
+
+
+class TestGenerateM3U:
+    """Tests for PlaylistService.generate_m3u."""
+
+    def test_generates_m3u_from_audio_files(self, tmp_path: Path) -> None:
+        """Audio files in a directory are written to an M3U file."""
+        music_dir = tmp_path / "album"
+        music_dir.mkdir()
+        (music_dir / "01.Artist A-Song One.flac").write_bytes(b"")
+        (music_dir / "02.Artist B-Song Two.mp3").write_bytes(b"")
+
+        out = tmp_path / "output.m3u"
+        count = PlaylistService.generate_m3u(str(music_dir), str(out))
+
+        assert count == 2
+        lines = out.read_text(encoding="utf-8").splitlines()
+        assert lines[0] == "#EXTM3U"
+        assert "01.Artist A-Song One.flac" in lines
+        assert "02.Artist B-Song Two.mp3" in lines
+
+    def test_skips_non_audio_files(self, tmp_path: Path) -> None:
+        """Non-audio files (txt, jpg, etc.) are excluded."""
+        music_dir = tmp_path / "album"
+        music_dir.mkdir()
+        (music_dir / "01.Track.mp3").write_bytes(b"")
+        (music_dir / "cover.jpg").write_bytes(b"")
+        (music_dir / "notes.txt").write_bytes(b"")
+        (music_dir / "readme.md").write_bytes(b"")
+
+        out = tmp_path / "output.m3u"
+        count = PlaylistService.generate_m3u(str(music_dir), str(out))
+
+        assert count == 1
+        lines = out.read_text(encoding="utf-8").splitlines()
+        assert lines == ["#EXTM3U", "01.Track.mp3"]
+
+    def test_sorts_naturally(self, tmp_path: Path) -> None:
+        """Files are sorted by natural order (01 before 10)."""
+        music_dir = tmp_path / "album"
+        music_dir.mkdir()
+        # Create out of order so filesystem order differs from sorted order
+        (music_dir / "10.Tenth Track.mp3").write_bytes(b"")
+        (music_dir / "02.Second Track.mp3").write_bytes(b"")
+        (music_dir / "01.First Track.mp3").write_bytes(b"")
+
+        out = tmp_path / "output.m3u"
+        PlaylistService.generate_m3u(str(music_dir), str(out), sort=True)
+
+        lines = out.read_text(encoding="utf-8").splitlines()
+        assert lines[1] == "01.First Track.mp3"
+        assert lines[2] == "02.Second Track.mp3"
+        assert lines[3] == "10.Tenth Track.mp3"
+
+    def test_no_sort_keeps_filesystem_order(self, tmp_path: Path) -> None:
+        """With sort=False, files are not reordered."""
+        music_dir = tmp_path / "album"
+        music_dir.mkdir()
+        (music_dir / "01.First.mp3").write_bytes(b"")
+        (music_dir / "10.Tenth.mp3").write_bytes(b"")
+        (music_dir / "02.Second.mp3").write_bytes(b"")
+
+        out = tmp_path / "output.m3u"
+        PlaylistService.generate_m3u(str(music_dir), str(out), sort=False)
+
+        lines = out.read_text(encoding="utf-8").splitlines()
+        # All 3 files present, order is filesystem order (not guaranteed but
+        # all entries must be there)
+        assert len(lines) == 4  # header + 3 files
+        assert lines[0] == "#EXTM3U"
+
+    def test_empty_directory(self, tmp_path: Path) -> None:
+        """An empty directory produces an M3U with just the header."""
+        music_dir = tmp_path / "empty"
+        music_dir.mkdir()
+
+        out = tmp_path / "output.m3u"
+        count = PlaylistService.generate_m3u(str(music_dir), str(out))
+
+        assert count == 0
+        content = out.read_text(encoding="utf-8")
+        assert content.strip() == "#EXTM3U"
+
+    def test_supports_all_audio_extensions(self, tmp_path: Path) -> None:
+        """All supported audio extensions are included."""
+        music_dir = tmp_path / "album"
+        music_dir.mkdir()
+        for ext in [".mp3", ".flac", ".m4a", ".wav", ".ogg", ".opus", ".aac", ".wma"]:
+            (music_dir / f"track{ext}").write_bytes(b"")
+
+        out = tmp_path / "output.m3u"
+        count = PlaylistService.generate_m3u(str(music_dir), str(out))
+
+        assert count == 8
+
+    def test_case_insensitive_extensions(self, tmp_path: Path) -> None:
+        """Uppercase extensions (e.g. .MP3, .FLAC) are recognized."""
+        music_dir = tmp_path / "album"
+        music_dir.mkdir()
+        (music_dir / "track1.MP3").write_bytes(b"")
+        (music_dir / "track2.FLAC").write_bytes(b"")
+
+        out = tmp_path / "output.m3u"
+        count = PlaylistService.generate_m3u(str(music_dir), str(out))
+
+        assert count == 2
+
+    def test_directory_not_found_raises(self, tmp_path: Path) -> None:
+        """A nonexistent directory raises FileNotFoundError."""
+        out = tmp_path / "output.m3u"
+        with pytest.raises(FileNotFoundError):
+            PlaylistService.generate_m3u(str(tmp_path / "nonexistent"), str(out))

@@ -33,6 +33,7 @@ htmlcov/
 .env
 .env.local
 bin
+*.m3u
 
 # Scanner bundle (external dependency)
 ShokoRelay.bundle/

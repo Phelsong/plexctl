@@ -2134,6 +2134,42 @@ class PlaylistItem(BaseModel):
     thumb: str | None = None
 
 
+class M3UEntry(BaseModel):
+    """A single parsed entry from an M3U file.
+
+    Attributes:
+        raw: The original line from the file (without extension).
+        track_number: Optional track number prefix (e.g. ``01``).
+        artists: Comma-separated artist names parsed from the filename.
+        title: Track title parsed from the filename.
+    """
+
+    raw: str
+    track_number: int | None = None
+    artists: str = ""
+    title: str = ""
+
+
+class PlaylistImportResult(BaseModel):
+    """Result of importing an M3U file into a Plex playlist.
+
+    Attributes:
+        playlist_key: Rating key of the created playlist (empty on failure).
+        playlist_title: Title of the created playlist.
+        total: Total entries parsed from the M3U file.
+        matched: Entries that matched a Plex track.
+        unmatched: Entries that found no matching Plex track.
+        unmatched_entries: The raw lines that could not be matched.
+    """
+
+    playlist_key: str = ""
+    playlist_title: str = ""
+    total: int = 0
+    matched: int = 0
+    unmatched: int = 0
+    unmatched_entries: list[str] = Field(default_factory=list)
+
+
 class CsvSmartPlaylistFilter(BaseModel):
     """Flat CSV row for SmartPlaylistFilter."""
 

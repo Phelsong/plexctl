@@ -9,6 +9,8 @@ Commands:
     plexctl playlists items KEY     List items in a playlist
     plexctl playlists add KEY ITEMS Add items to a playlist
     plexctl playlists remove KEY ITEMS  Remove items from a playlist
+    plexctl playlists import FILE   Import M3U file as a playlist
+    plexctl playlists generate-m3u DIR  Generate M3U from a directory
     plexctl playlists smart ...     Smart playlist sub-commands
 """
 
@@ -365,8 +367,123 @@ def remove_from_playlist(
     console.print(f"[green]✓ Removed {count} item(s) from playlist {key}[/green]")
 
 
-# ===================================================================
-# Smart playlist commands (registered under smart_app sub-group)
+# --- Import M3U ---------------------------------------------------------------
+
+
+@playlists_app.command("import")
+def import_m3u(
+    file: str = typer.Argument(help="Path to .m3u file to import"),
+    name: str = typer.Option(
+        None, "--name", "-n", help="Playlist title (default: M3U filename stem)"
+    ),
+    section: str = typer.Option(
+        "Music", "--section", "-s", help="Music library section title to search"
+    ),
+) -> None:
+    """Import an M3U file into a new Plex audio playlist.
+
+    Parses the M3U file, searches the Music section for each track by
+    title (and artist when available), creates a new audio playlist,
+    and adds all matched tracks. Unmatched entries are reported.
+
+    Examples:
+        plexctl playlists import "playlist.m3u"
+        plexctl playlists import "playlist.m3u" --name "My Playlist"
+        plexctl playlists import "playlist.m3u" -s "My Music"
+    """
+    from pathlib import Path
+
+    m3u_path = Path(file)
+    if not m3u_path.is_file():
+        console.print(f"[red]File not found: {file}[/red]")
+        raise typer.Exit(code=1)
+
+    playlist_title = name or m3u_path.stem
+
+    service = _get_service()
+    try:
+        result = service.import_m3u(str(m3u_path), playlist_title, section=section)
+    except Exception as exc:
+        console.print(f"[red]✗ Import failed: {exc}[/red]")
+        raise typer.Exit(code=1) from exc
+
+    if result.total == 0:
+        console.print("[yellow]No entries found in M3U file.[/yellow]")
+        return
+
+    console.print(
+        f"\n[bold]M3U Import: {m3u_path.name}[/bold]\n"
+        f"  Total entries:  {result.total}\n"
+        f"  Matched:        [green]{result.matched}[/green]\n"
+        f"  Unmatched:      [red]{result.unmatched}[/red]"
+    )
+
+    if result.playlist_key:
+        console.print(
+            f"\n[green]✓ Created playlist '{result.playlist_title}' "
+            f"(key={result.playlist_key}) with {result.matched} track(s)[/green]"
+        )
+    else:
+        console.print("\n[yellow]No tracks matched — playlist not created.[/yellow]")
+
+    if result.unmatched_entries:
+        console.print("\n[bold]Unmatched entries:[/bold]")
+        for entry in result.unmatched_entries:
+            console.print(f"  [red]✗[/red] {entry}")
+
+    console.print()
+
+
+# --- Generate M3U from directory ------------------------------------------
+
+
+@playlists_app.command("generate-m3u")
+def generate_m3u(
+    directory: str = typer.Argument(help="Directory containing audio files"),
+    output: str = typer.Option(
+        None, "--output", "-o", help="Output .m3u file path (default: <directory>.m3u)"
+    ),
+    no_sort: bool = typer.Option(
+        False, "--no-sort", help="Keep filesystem order instead of sorting by filename."
+    ),
+) -> None:
+    """Generate an M3U playlist from audio files in a directory.
+
+    Scans the directory for audio files (mp3, flac, m4a, wav, ogg, opus,
+    aac, wma) and writes a simple M3U file that can be imported with
+    ``plexctl playlists import``.
+
+    Examples:
+        plexctl playlists generate-m3u "/music/Album"
+        plexctl playlists generate-m3u "/music/Album" -o album.m3u
+        plexctl playlists generate-m3u "/music/Album" --no-sort
+    """
+    from pathlib import Path
+
+    dir_path = Path(directory)
+    if not dir_path.is_dir():
+        console.print(f"[red]Directory not found: {directory}[/red]")
+        raise typer.Exit(code=1)
+
+    out_path = Path(output) if output else dir_path.with_suffix(".m3u")
+
+    service = _get_service()
+    try:
+        count = service.generate_m3u(str(dir_path), str(out_path), sort=not no_sort)
+    except Exception as exc:
+        console.print(f"[red]✗ Generate failed: {exc}[/red]")
+        raise typer.Exit(code=1) from exc
+
+    if count == 0:
+        console.print(f"[yellow]No audio files found in {directory}[/yellow]")
+        return
+
+    console.print(
+        f"[green]✓ Wrote {count} track(s) to {out_path}[/green]\n"
+        f'[dim]Import with: plexctl playlists import "{out_path}"[/dim]'
+    )
+
+
 # ===================================================================
 
 # --- Create smart playlist ---------------------------------------------------
