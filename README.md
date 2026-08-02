@@ -1,6 +1,7 @@
 # plexctl
 
 A CLI toolkit for managing Plex Media Server.
+NOTE: Github is a push-only mirror
 
 ## Features
 
