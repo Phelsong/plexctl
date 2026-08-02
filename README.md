@@ -1,6 +1,6 @@
 # plexctl
 
-A CLI toolkit for managing Plex Media Server.
+A CLI toolkit for managing Plex Media Server. 
 NOTE: Github is a push-only mirror
 
 ## Features
@@ -94,16 +94,6 @@ chmod 400 ~/.config/plexctl/plexctl.toml
 ### Item Commands
 
 ```bash
-# List library sections
-plexctl library list
-
-# List movies (default: Movies section, 25 results)
-plexctl movies
-plexctl movies --section "Anime Movies" --limit 50
-
-# List TV shows
-plexctl shows --section Anime --limit 10
-
 # Search by title (item search)
 plexctl item search "One Piece" --section Anime
 
@@ -119,23 +109,6 @@ plexctl item rate 32272
 plexctl item watch 32272
 plexctl item unwatch 32272
 
-# Ingest items (import from CSV)
-plexctl item ingest list
-plexctl item ingest --file items.csv
-plexctl item ingest triage_issue items.csv
-
-# Actor, director, genre lookup
-plexctl item actor 32272
-plexctl item director 32272
-plexctl item genre 32272
-
-# Additional search options
-plexctl get 32272                     # Get by id
-plexctl matches 32272                 # Show matches
-plexctl fix-match 32272               # Fix a match
-plexctl unmatch 32272                 # Unmatch
-plexctl similar 32272                 # Similar items
-plexctl tmdb 32272                    # Show TMDB details
 ```
 
 ### Library Commands
@@ -143,30 +116,14 @@ plexctl tmdb 32272                    # Show TMDB details
 ```bash
 # Library management
 plexctl library list
-plexctl library get --id 1
 plexctl library create --name "Anime"
-plexctl library delete --name "Anime"
-plexctl library update --name "Movies" --name "New Name"
 plexctl library locations --name "Movies"
 
 # Collections (sub-group)
 plexctl library collections list --section Anime
-plexctl library collections get --section Anime --collection-name "Best Anime"
 plexctl library collections create --section Anime --title "Best Anime" --items 32272,61464
-plexctl library collections update --section Anime --collection-name "Best Anime" --title "Updated Title"
-plexctl library collections delete --section Anime --collection-name "Best Anime"
 plexctl library collections add --section Anime --collection-name "Best Anime" --item 61464
-plexctl library collections remove --section Anime --collection-name "Best Anime" --item 61464
 
-# Playlists (sub-group)
-plexctl library playlists list --section Anime
-plexctl library playlists get --section Anime --playlist-name "Favorites"
-plexctl library playlists create --section Anime --title "Favorites"
-plexctl library playlists update --section Anime --playlist-name "Favorites" --title "Updated"
-plexctl library playlists delete --section Anime --playlist-name "Favorites"
-plexctl library playlists items --section Anime --playlist-name "Favorites"
-plexctl library playlists add --section Anime --playlist-name "Favorites" --item 32272
-plexctl library playlists remove --section Anime --playlist-name "Favorites" --item 32272
 ```
 
 ### Server Commands
@@ -186,8 +143,6 @@ plexctl server butler-run --action "Back up section"
 ```bash
 # Browse movies
 plexctl movies                                    # List 25 movies
-plexctl movies --section "anime" --limit 50       # List 50 anime movies
-plexctl movies --tree                           # Show tree view
 plexctl movies --tree --section "Anime Movies"   # Tree view of anime
 ```
 
@@ -200,11 +155,6 @@ plexctl shows --section "Anime" --limit 10       # List anime shows
 
 # Navigate with tree
 plexctl shows tree --section Anime               # Show tree of series
-plexctl shows tree --section Anime --tree-id 42  # Navigate into series
-
-# Show details and seasons
-plexctl shows show --section Anime --show-id 42  # Show series details
-plexctl shows season --section Anime --show-id 42 --season-id 1  # Show season details
 ```
 
 ### Triage Commands
@@ -221,13 +171,11 @@ plexctl triage report --section Anime --path-map /data=/mnt/nfs/media
 plexctl triage report --section Anime --filter-severity error
 plexctl triage report --section Anime --filter-action analyze
 
-# Season gap analysis
-plexctl triage seasons --section Anime
-plexctl triage seasons --section Anime --missing-only
-
 # Triage fixes
 plexctl triage fix --section Anime --action analyze
 plexctl triage seasons --section Anime
+plexctl triage matches --show-id 61464
+plexctl triage fix-match --show-id 61464 --search-result-id 12345
 
 # Diagnostics
 plexctl triage diagnose scan --section Anime
@@ -238,16 +186,10 @@ plexctl triage analyze --show-id 61464
 # Batch operations
 plexctl triage batch-analyze --section Anime
 plexctl triage batch-refresh --section Anime
-plexctl triage refresh --show-id 61464 --section Anime
-plexctl triage scan --section Anime
 plexctl triage split --show-id 61464
 plexctl triage remove-duplicates --section Anime
-plexctl triage remove-duplicates --section Anime --no-dry-run
 
 # Matches
-plexctl triage matches --show-id 61464
-plexctl triage fix-match --show-id 61464 --search-result-id 12345
-plexctl triage unmatch --show-id 61464
 
 # Filesystem comparison (fsck)
 plexctl triage fsck-scan --section Anime --path-map /data=/mnt/nfs/media
@@ -269,25 +211,19 @@ plexctl triage ingest triage_issue triage_report.csv
 plexctl playlists create --name "Anime Classics"
 plexctl playlists get --name "Anime Classics"
 plexctl playlists smart list
-plexctl playlists smart update --name "Anime Classics"
-plexctl playlists smart delete --name "Anime Classics"
-plexctl playlists smart items --name "Anime Classics"
 plexctl playlists smart add --name "Anime Classics" --item 32272
-plexctl playlists smart remove --name "Anime Classics" --item 32272
 ```
 
 ### Shoko Server Commands (Core Plugin)
 
 ```bash
 # List series
-plexctl shoko series --limit 10
-plexctl shoko series --search "One Piece"
+plexctl shoko series 
 
 # List episodes for a series
 plexctl shoko episodes 1
 
 # List or search files
-plexctl shoko files --limit 20
 plexctl shoko files --search "One_Piece"
 
 # Find unlinked files (not associated with any series)
@@ -296,25 +232,9 @@ plexctl shoko unlinked --limit 10
 # Find series with problems
 plexctl shoko problems --limit 20
 
-# TMDB linking
-plexctl shoko search-tmdb "One Piece"
-plexctl shoko link-tmdb 1 12345                # link TMDB show
-plexctl shoko link-tmdb 1 12345 --movie        # link TMDB movie
-plexctl shoko unlink-tmdb 1 12345
-plexctl shoko refresh-tmdb 1
-
 # CRC hash audit
 plexctl shoko crc-audit                        # audit all files for CRC completeness
 plexctl shoko batch-rehash                     # rehash ALL files missing CRC32 hashes
-
-# PlexMatch TMDB orderings
-plexctl shoko plexmatch-orderings 75            # list TMDB episode orderings for a series
-
-# File actions
-plexctl shoko rehash 12345                     # trigger CRC rehash for one file
-plexctl shoko rescan 12345                     # trigger AniDB rescan
-plexctl shoko trigger-import                   # import new files from disk
-plexctl shoko update-media-info                # update all media info
 ```
 
 ### PlexMatch Generation
@@ -328,15 +248,8 @@ plexctl shoko plexmatch 42
 # Write to a specific file
 plexctl shoko plexmatch 42 -o .plexmatch
 
-# Write directly into the series directory
-plexctl shoko plexmatch 42 --write-to-dir "/<plexroot>/anime/One Piece"
-
 # Generate .plexmatch for ALL series in a library directory
-plexctl shoko plexmatch-all
-
-# Specify a different library or media root
 plexctl shoko plexmatch-all --library tv
-plexctl shoko plexmatch-all --media-root /mnt/nfs/media
 
 # Preview what would be done without writing files
 plexctl shoko plexmatch-all --dry-run
@@ -385,38 +298,9 @@ plexctl shoko plexmatch-orderings 75
 
 # Use a specific ordering when generating .plexmatch
 plexctl shoko plexmatch 75 --ordering 62f98314175051007c594bdf
-
-# Apply an ordering to all series in a library
-plexctl shoko plexmatch-all --ordering 62f98314175051007c594bdf
 ```
 
 When `--ordering` is specified, plexctl fetches the alternate season structure from TMDB via the Shoko API and remaps episode season/episode numbers accordingly. The ordering is applied by matching TMDB episode IDs — episodes not found in the alternate ordering fall back to their default season/episode assignment.
-
-## Deprecated Commands
-
-**Note:** The following commands still work for backward compatibility but will show deprecation warnings. For new projects, use the updated command structure:
-
-| Old Command                          | New Command                     |
-|-------------------------------------|---------------------------------|
-| `plexctl diagnose`                  | `plexctl triage`                |
-| `plexctl fix`                       | `plexctl triage`                |
-| `plexctl fsck`                      | `plexctl triage`                |
-| `plexctl search`                    | `plexctl item search`           |
-| `plexctl collections` [standalone]  | `plexctl library collections`   |
-| `plexctl tree`                      | `plexctl shows tree`            |
-
-**Migration path example:**
-```bash
-# Old (deprecated)
-plexctl diagnose scan --section Anime
-plexctl fix matches 61464
-plexctl fsck scan --section Anime
-
-# New (recommended)
-plexctl triage diagnose scan --section Anime
-plexctl triage matches --show-id 61464
-plexctl triage fsck-scan --section Anime
-```
 
 ### CSV Output
 
@@ -430,10 +314,7 @@ plexctl library list --csv
 plexctl library list --csv --output sections.csv
 
 # All major commands support --csv and --output
-plexctl movies --section Anime --csv --output anime_movies.csv
-plexctl shoko series --csv --output shoko_series.csv
 plexctl triage report --section Anime --csv --output triage_report.csv
-plexctl item search "One Piece" --csv --output search_results.csv
 ```
 
 ### Ingest
@@ -449,8 +330,6 @@ plexctl item ingest triage_issue triage_report.csv
 plexctl item ingest shoko_series shoko_series.csv
 ```
 
-Available models: `media_metadata`, `library_section`, `collection_info`, `show_diagnostics`, `triage_issue`, `season_gap`, `shoko_series`, `shoko_file`, `shoko_mismatch`, `shoko_episode`, `episode_diagnostics`, `media_part_detail`, `tmdb_search_result`, `fs_dir`, `crc_audit_result`
-
 ## Architecture
 
 ### Commands
@@ -461,7 +340,7 @@ logic layer
 
 ### Models
 
-- **30+ Pydantic models** for all data types (media_metadata, triage_issue, show_diagnostics, shoko_series, shoko_file, tmdb_search_result, etc.)
+- **Pydantic models** for all data types (media_metadata, triage_issue, show_diagnostics, shoko_series, shoko_file, tmdb_search_result, etc.)
 - **Rich model → CSV model** converters for all export formats
 - **Config models** (PlexConfig, ShokoConfig) with validation
 
@@ -484,21 +363,245 @@ All services accept a client instance and return validated Pydantic models. Comm
 pixi install
 pixi run -e dev pytest
 
-# Lint
-pixi run lint
-
 # Format
 pixi run format
-
-# Type check
-pixi run typecheck
 
 # Run tests
 pixi run test
 
 # Run all checks
-pixi run lint && pixi run format --check && pixi run typecheck && pixi run test
+pixi run pre-commit
 ```
+
+<!-- BEGIN COMMAND TREE -->
+
+## `item`
+
+Operations on individual media items.
+
+- **`item search`** — Search for media by title.
+- **`item edit`** — Edit a metadata field for a media item.
+- **`item ingest`** — Read CSV data back into validated Pydantic models.
+- **`item info`** — Show detailed metadata for a media item.
+- **`item rate`** — Set the user rating for a media item.
+- **`item watch`** — Mark a media item as watched.
+- **`item unwatch`** — Mark a media item as unwatched.
+- **`item delete`** — Delete a media item from the library.
+- **`item matches`** — Search for metadata matches for an item.
+- **`item fix-match`** — Fix an incorrect metadata match.
+- **`item unmatch`** — Remove metadata match from an item.
+- **`item get`** — Find a media item by its Plex rating key.
+- **`item advanced`** — Advanced search with multiple filters.
+- **`item actor`** — Search for media featuring a specific actor.
+- **`item director`** — Search for media directed by a specific director.
+- **`item genre`** — Search for media by genre.
+- **`item title`** — Search for media by title.
+- **`item year`** — Search for media by release year.
+- **`item similar`** — Find media similar to a given item.
+- **`item tmdb`** — Search for media using TMDB-integrated search.
+- **`item add-genre`** — Add genre
+- **`item remove-genre`** — Remove genre
+- **`item add-collection`** — Add collection
+- **`item remove-collection`** — Remove collection
+- **`item add-label`** — Add label
+- **`item remove-label`** — Remove label
+- **`item add-director`** — Add director
+- **`item remove-director`** — Remove director
+- **`item add-writer`** — Add writer
+- **`item remove-writer`** — Remove writer
+- **`item add-mood`** — Add mood
+- **`item remove-mood`** — Remove mood
+- **`item add-style`** — Add style
+- **`item remove-style`** — Remove style
+- **`item add-country`** — Add country
+- **`item remove-country`** — Remove country
+- **`item lock`** — Lock metadata field(s) to prevent automatic changes.
+- **`item unlock`** — Unlock metadata field(s) to allow automatic changes.
+- **`item search-subs`** — Search for available subtitles for a media item.
+- **`item download-sub`** — Download (apply) a subtitle to a media item.
+- **`item upload-sub`** — Upload a subtitle file for a media item.
+- **`item remove-sub`** — Remove a subtitle from a media item.
+- **`item set-progress`** — Set playback progress for a media item.
+- **`item merge`** — Merge multiple media items into one.
+
+## `library`
+
+Manage Plex library sections and collections.
+
+- **`library list`** — List all library sections on the server.
+- **`library get`** — Get details for a specific library section.
+- **`library create`** — Create a new library section.
+- **`library delete`** — Delete a library section permanently.
+- **`library update`** — Update a library section's settings.
+- **`library collections`** — Manage Plex collections.
+  - **`library collections list`** — List all collections, optionally filtered by section.
+  - **`library collections get`** — Get detailed metadata for a collection.
+  - **`library collections create`** — Create a new collection in a library section.
+  - **`library collections update`** — Update a collection's metadata.
+  - **`library collections delete`** — Delete a collection permanently.
+  - **`library collections add`** — Add items to a collection.
+  - **`library collections remove`** — Remove items from a collection.
+- **`library playlists`** — Manage Plex playlists (regular and smart).
+  - **`library playlists list`** — List all regular (non-smart) playlists.
+  - **`library playlists get`** — Get detailed metadata for a regular playlist.
+  - **`library playlists create`** — Create a new regular playlist.
+  - **`library playlists update`** — Update a playlist's title.
+  - **`library playlists delete`** — Delete a playlist permanently.
+  - **`library playlists items`** — List items contained in a playlist.
+  - **`library playlists add`** — Add items to a playlist.
+  - **`library playlists remove`** — Remove items from a playlist.
+  - **`library playlists import`** — Import an M3U file into a new Plex audio playlist.
+  - **`library playlists generate-m3u`** — Generate an M3U playlist from audio files in a directory.
+  - **`library playlists smart`** — Manage smart playlists with dynamic filters.
+    - **`library playlists smart create`** — Create a new smart playlist with dynamic query filters.
+    - **`library playlists smart get`** — Get detailed metadata for a smart playlist.
+    - **`library playlists smart list`** — List all smart playlists, optionally filtered by section.
+    - **`library playlists smart update`** — Update a smart playlist's title, filters, or sort order.
+    - **`library playlists smart delete`** — Delete a smart playlist permanently.
+    - **`library playlists smart items`** — List items contained in a smart playlist.
+
+## `movies`
+
+Browse movies in your library.
+
+- **`movies`** — Browse movies in your library.
+
+## `music`
+
+Browse and manage music libraries.
+
+- **`music`** *(default)* — Browse and manage music libraries.
+- **`music albums`** — List albums, optionally filtered by artist.
+- **`music tracks`** — List tracks, optionally filtered by album or artist.
+- **`music tree`** — Browse a music library section as a hierarchical tree.
+- **`music recently-added`** — Show recently added music.
+
+## `photos`
+
+Browse and manage photo libraries.
+
+- **`photos`** *(default)* — Browse photo albums in your library.
+- **`photos list`** — List photos, optionally filtered by album.
+- **`photos tree`** — Browse a photo library section as a hierarchical tree.
+- **`photos recently-added`** — List recently added photo albums.
+
+## `shows`
+
+Browse TV shows in your library.
+
+- **`shows`** *(default)* — Browse TV shows in your library.
+- **`shows tree`** — Browse a library section as a hierarchical tree.
+- **`shows show`** — Show seasons and episodes for a show as a tree.
+- **`shows season`** — Show episodes in a season as a tree.
+
+## `playlists`
+
+Manage Plex playlists (regular and smart).
+
+- **`playlists list`** — List all regular (non-smart) playlists.
+- **`playlists get`** — Get detailed metadata for a regular playlist.
+- **`playlists create`** — Create a new regular playlist.
+- **`playlists update`** — Update a playlist's title.
+- **`playlists delete`** — Delete a playlist permanently.
+- **`playlists items`** — List items contained in a playlist.
+- **`playlists add`** — Add items to a playlist.
+- **`playlists remove`** — Remove items from a playlist.
+- **`playlists import`** — Import an M3U file into a new Plex audio playlist.
+- **`playlists generate-m3u`** — Generate an M3U playlist from audio files in a directory.
+- **`playlists smart`** — Manage smart playlists with dynamic filters.
+  - **`playlists smart create`** — Create a new smart playlist with dynamic query filters.
+  - **`playlists smart get`** — Get detailed metadata for a smart playlist.
+  - **`playlists smart list`** — List all smart playlists, optionally filtered by section.
+  - **`playlists smart update`** — Update a smart playlist's title, filters, or sort order.
+  - **`playlists smart delete`** — Delete a smart playlist permanently.
+  - **`playlists smart items`** — List items contained in a smart playlist.
+
+## `triage`
+
+Unified diagnostics, fixes, and filesystem checks for Plex.
+
+- **`triage report`** — Generate a unified triage report combining all data sources.
+- **`triage fix`** — Execute auto-fixable triage actions.
+- **`triage diagnose`** — Scan a library section for shows with file parsing issues.
+- **`triage diagnose-show`** — Diagnose a single show by rating key.
+- **`triage diagnose-files`** — Show detailed file information for a specific episode.
+- **`triage analyze`** — Trigger Plex to re-analyze a media item or section.
+- **`triage batch-analyze`** — Re-analyze all shows with problems in a section.
+- **`triage batch-refresh`** — Refresh metadata for all shows with problems in a section.
+- **`triage refresh`** — Refresh metadata for an item or entire section.
+- **`triage scan`** — Scan a library section for new or changed files.
+- **`triage split`** — Split a multi-location show into separate entries.
+- **`triage remove-duplicates`** — Remove duplicate media versions from episodes.
+- **`triage matches`** — Search for metadata matches for an item.
+- **`triage fix-match`** — Fix an incorrect metadata match.
+- **`triage unmatch`** — Remove metadata match from an item.
+- **`triage fsck-scan`** — Compare a section's filesystem with Plex's show locations.
+- **`triage fsck-orphans`** — List directories on disk that Plex doesn't track.
+- **`triage fsck-grouped`** — List directories with both files+subdirectories (grouping risk).
+- **`triage fsck-reorganize`** — Generate a reorganization plan to fix Plex parsing issues.
+- **`triage plexmatch`** — Generate a .plexmatch file for a Plex show using metadata only.
+- **`triage plexmatch-all`** — Generate .plexmatch files for all shows in a section.
+- **`triage ingest`** — Read CSV data back into validated Pydantic models.
+- **`triage merge`** — Merge multiple media items into one.
+- **`triage empty-trash`** — Empty the trash for a library section.
+
+## `server`
+
+Plex server administration and playback commands.
+
+- **`server sessions`** — List active playback sessions on the server.
+- **`server merge`** — Merge multiple media items into one.
+- **`server empty-trash`** — Empty the trash for a library section.
+- **`server info`** — Display Plex server identity and version information.
+- **`server prefs`** — List Plex server preference settings.
+- **`server set-pref`** — Set a server preference value.
+- **`server butler`** — List all butler (background maintenance) tasks.
+- **`server butler-run`** — Run a butler task immediately.
+- **`server history`** — Display watch history for the server.
+- **`server stop-session`** — Stop an active playback session.
+- **`server on-deck`** — Show On Deck items.
+- **`server recently-added`** — Show recently added items.
+- **`server continue-watching`** — Show Continue Watching items.
+- **`server get-transcodes`** — List active transcode sessions.
+- **`server check-update`** — Check for available Plex Media Server updates.
+- **`server install-update`** — Install the latest available Plex Media Server update.
+- **`server bandwidth`** — Show server bandwidth statistics.
+- **`server resources`** — Show server resource utilization (CPU/memory).
+- **`server download-logs`** — Download Plex Media Server logs.
+- **`server download-dbs`** — Download Plex Media Server databases for backup.
+- **`server accounts`** — List Plex account users.
+
+## `types`
+
+get plex types
+
+- **`types types`** — print reference types to the console
+
+## `shoko`
+
+Query Shoko Server for anime metadata and file information.
+
+- **`shoko search-tmdb`** — Search TMDB for shows/movies to link to Shoko series.
+- **`shoko link-tmdb`** — Link a TMDB show/movie to a Shoko series.
+- **`shoko unlink-tmdb`** — Remove a TMDB show link from a Shoko series.
+- **`shoko refresh-tmdb`** — Refresh TMDB show metadata for a Shoko series.
+- **`shoko crc-audit`** — Audit all Shoko files for CRC hash completeness.
+- **`shoko rehash`** — Trigger a CRC rehash for a single file in Shoko.
+- **`shoko rescan`** — Trigger an AniDB rescan for a single file in Shoko.
+- **`shoko trigger-import`** — Trigger Shoko to import new files from disk.
+- **`shoko batch-rehash`** — Trigger CRC rehash for all files missing CRC32 hashes.
+- **`shoko season-gaps`** — Cross-reference Shoko series with Plex to find missing seasons.
+- **`shoko update-media-info`** — Trigger Shoko to update all media info (codec analysis etc).
+- **`shoko plexmatch`** — Generate a .plexmatch file for a series using Shoko data.
+- **`shoko orderings`** — List available TMDB episode orderings for a series.
+- **`shoko plexmatch-prefer`** — Set or remove a preferred TMDB ordering for a series.
+- **`shoko plexmatch-all`** — Generate .plexmatch files for all series in a library directory.
+
+---
+*Total active commands: 137*
+
+
+<!-- END COMMAND TREE -->
 
 ## License
 

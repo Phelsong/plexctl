@@ -247,8 +247,51 @@ def generate_tree() -> str:
     return "\n".join(lines)
 
 
+_README_BEGIN = "<!-- BEGIN COMMAND TREE -->"
+_README_END = "<!-- END COMMAND TREE -->"
+
+
+def generate_tree_section() -> str:
+    """Generate the command tree markdown for embedding in README.
+
+    Returns the tree without the top-level ``# plexctl Command Reference``
+    heading — the README provides its own ``## Command Reference`` heading.
+    """
+    tree = generate_tree()
+    # Strip the standalone-document header (title + description lines)
+    # so we can embed under a README section heading.
+    lines = tree.split("\n")
+    # Remove the first 4 lines: "# plexctl Command Reference", "", "Auto-generated...", "This document...", ""
+    while lines and not lines[0].startswith("## "):
+        lines.pop(0)
+    return "\n".join(lines)
+
+
+def update_readme(tree_section: str) -> None:
+    """Update the command tree section in README.md between markers.
+
+    Preserves everything before ``<!-- BEGIN COMMAND TREE -->`` and after
+    ``<!-- END COMMAND TREE -->``, replacing only the content between them.
+    """
+    readme_path = Path(__file__).resolve().parent.parent / "README.md"
+    content = readme_path.read_text(encoding="utf-8")
+
+    begin_idx = content.find(_README_BEGIN)
+    end_idx = content.find(_README_END)
+    if begin_idx == -1 or end_idx == -1 or end_idx < begin_idx:
+        # No markers — append at end
+        print("Warning: README.md missing command tree markers; skipping README update.")
+        return
+
+    before = content[:begin_idx + len(_README_BEGIN)]
+    after = content[end_idx:]
+    new_content = f"{before}\n\n{tree_section}\n\n{after}"
+    readme_path.write_text(new_content, encoding="utf-8")
+    print(f"Updated README.md command tree section → {readme_path}")
+
+
 def main() -> None:
-    """Write the generated command tree to the docs directory."""
+    """Write the generated command tree to docs/ and update README.md."""
     output_path = Path(__file__).resolve().parent.parent / "docs" / "command_tree.md"
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -258,6 +301,9 @@ def main() -> None:
     # Count command entries (lines starting with "- **`")
     count = sum(1 for line in tree.split("\n") if line.startswith("- **`"))
     print(f"Generated command tree with {count} commands → {output_path}")
+
+    # Update README.md between markers
+    update_readme(generate_tree_section())
 
 
 if __name__ == "__main__":

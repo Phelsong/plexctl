@@ -49,6 +49,8 @@ Operations on individual media items.
 - **`item download-sub`** — Download (apply) a subtitle to a media item.
 - **`item upload-sub`** — Upload a subtitle file for a media item.
 - **`item remove-sub`** — Remove a subtitle from a media item.
+- **`item set-progress`** — Set playback progress for a media item.
+- **`item merge`** — Merge multiple media items into one.
 
 ## `library`
 
@@ -59,7 +61,6 @@ Manage Plex library sections and collections.
 - **`library create`** — Create a new library section.
 - **`library delete`** — Delete a library section permanently.
 - **`library update`** — Update a library section's settings.
-- **`library locations`** — List filesystem locations for a library section.
 - **`library collections`** — Manage Plex collections.
   - **`library collections list`** — List all collections, optionally filtered by section.
   - **`library collections get`** — Get detailed metadata for a collection.
@@ -77,6 +78,8 @@ Manage Plex library sections and collections.
   - **`library playlists items`** — List items contained in a playlist.
   - **`library playlists add`** — Add items to a playlist.
   - **`library playlists remove`** — Remove items from a playlist.
+  - **`library playlists import`** — Import an M3U file into a new Plex audio playlist.
+  - **`library playlists generate-m3u`** — Generate an M3U playlist from audio files in a directory.
   - **`library playlists smart`** — Manage smart playlists with dynamic filters.
     - **`library playlists smart create`** — Create a new smart playlist with dynamic query filters.
     - **`library playlists smart get`** — Get detailed metadata for a smart playlist.
@@ -131,6 +134,8 @@ Manage Plex playlists (regular and smart).
 - **`playlists items`** — List items contained in a playlist.
 - **`playlists add`** — Add items to a playlist.
 - **`playlists remove`** — Remove items from a playlist.
+- **`playlists import`** — Import an M3U file into a new Plex audio playlist.
+- **`playlists generate-m3u`** — Generate an M3U playlist from audio files in a directory.
 - **`playlists smart`** — Manage smart playlists with dynamic filters.
   - **`playlists smart create`** — Create a new smart playlist with dynamic query filters.
   - **`playlists smart get`** — Get detailed metadata for a smart playlist.
@@ -173,6 +178,8 @@ Unified diagnostics, fixes, and filesystem checks for Plex.
 Plex server administration and playback commands.
 
 - **`server sessions`** — List active playback sessions on the server.
+- **`server merge`** — Merge multiple media items into one.
+- **`server empty-trash`** — Empty the trash for a library section.
 - **`server info`** — Display Plex server identity and version information.
 - **`server prefs`** — List Plex server preference settings.
 - **`server set-pref`** — Set a server preference value.
@@ -180,7 +187,6 @@ Plex server administration and playback commands.
 - **`server butler-run`** — Run a butler task immediately.
 - **`server history`** — Display watch history for the server.
 - **`server stop-session`** — Stop an active playback session.
-- **`server set-progress`** — Set playback progress for a media item.
 - **`server on-deck`** — Show On Deck items.
 - **`server recently-added`** — Show recently added items.
 - **`server continue-watching`** — Show Continue Watching items.
@@ -191,6 +197,13 @@ Plex server administration and playback commands.
 - **`server resources`** — Show server resource utilization (CPU/memory).
 - **`server download-logs`** — Download Plex Media Server logs.
 - **`server download-dbs`** — Download Plex Media Server databases for backup.
+- **`server accounts`** — List Plex account users.
+
+## `types`
+
+get plex types
+
+- **`types types`** — print reference types to the console
 
 ## `shoko`
 
@@ -208,8 +221,9 @@ Query Shoko Server for anime metadata and file information.
 - **`shoko season-gaps`** — Cross-reference Shoko series with Plex to find missing seasons.
 - **`shoko update-media-info`** — Trigger Shoko to update all media info (codec analysis etc).
 - **`shoko plexmatch`** — Generate a .plexmatch file for a series using Shoko data.
-- **`shoko plexmatch-orderings`** — List available TMDB episode orderings for a series.
+- **`shoko orderings`** — List available TMDB episode orderings for a series.
+- **`shoko plexmatch-prefer`** — Set or remove a preferred TMDB ordering for a series.
 - **`shoko plexmatch-all`** — Generate .plexmatch files for all series in a library directory.
 
 ---
-*Total active commands: 130*
+*Total active commands: 137*
