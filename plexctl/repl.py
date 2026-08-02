@@ -29,6 +29,45 @@ from rich.console import Console
 if TYPE_CHECKING:
     from click import Command
 
+_HISTORY_LIMIT = 100
+
+
+def _enable_readline_history() -> None:
+    """Enable readline-backed line editing and history (Up/Down arrows).
+
+    Uses the stdlib ``readline`` module when available (Linux/macOS via
+    GNU readline). No-op on platforms without readline (e.g. Windows
+    without pyreadline3) — the REPL still works, just without history.
+    """
+    try:
+        import readline  # noqa: F401 — import side effect enables line editing
+    except ImportError:
+        return
+
+
+def _load_history(path: str) -> None:
+    """Load readline history from ``path`` if it exists."""
+    try:
+        import readline
+
+        try:
+            readline.read_history_file(path)
+        except FileNotFoundError:
+            pass
+    except ImportError:
+        pass
+
+
+def _save_history(path: str) -> None:
+    """Persist readline history to ``path``."""
+    try:
+        import readline
+
+        readline.set_history_length(_HISTORY_LIMIT)
+        readline.write_history_file(path)
+    except (ImportError, OSError):
+        pass
+
 
 _PROMPT = "plexctl> "
 _BANNER = (
@@ -78,25 +117,40 @@ def _run_line(runner: Command, line: str) -> None:
         console.print(f"[red]Error: {exc}[/red]")
 
 
+def _history_path() -> str:
+    """Return the path to the REPL history file."""
+    from plexctl.config import config_dir
+
+    return str(config_dir() / "repl_history")
+
+
 def repl_loop(app: typer.Typer) -> None:
     """Run the interactive REPL loop for the given Typer app."""
     runner = _make_runner(app)
     console.print(_BANNER)
 
-    while True:
-        try:
-            line = input(_PROMPT)
-        except EOFError:
-            console.print()
-            break
-        except KeyboardInterrupt:
-            console.print()  # newline after ^C, stay in REPL
-            continue
+    # Enable readline line editing + Up/Down history navigation
+    _enable_readline_history()
+    hist_path = _history_path()
+    _load_history(hist_path)
 
-        if line.strip().lower() in _EXIT_WORDS:
-            break
+    try:
+        while True:
+            try:
+                line = input(_PROMPT)
+            except EOFError:
+                console.print()
+                break
+            except KeyboardInterrupt:
+                console.print()  # newline after ^C, stay in REPL
+                continue
 
-        _run_line(runner, line)
+            if line.strip().lower() in _EXIT_WORDS:
+                break
+
+            _run_line(runner, line)
+    finally:
+        _save_history(hist_path)
 
     console.print(_FAREWELL)
 
