@@ -7,21 +7,22 @@ from __future__ import annotations
 
 import logging
 from contextlib import contextmanager
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 if TYPE_CHECKING:
     from collections.abc import Generator
 
     from plexctl.client import PlexClient
+    from plexctl.models import PLEX_MEDIA
 
 from plexctl.models import (
-    PLEX_MEDIA,
     CollectionInfo,
     LibrarySection,
     MediaMetadata,
     MediaType,
     MetadataEdit,
     SubtitleStreamInfo,
+    plex_media_types,
 )
 
 logger = logging.getLogger(__name__)
@@ -106,13 +107,13 @@ class MetadataService:
         """Retrieve all movies from a library section."""
         section = self._client.server.library.section(section_title)
         movies = section.all()
-        return [self._to_metadata(m) for m in movies]
+        return [m for m in (self._to_metadata(x) for x in movies) if m is not None]
 
     def get_all_shows(self, section_title: str = "TV Shows") -> list[MediaMetadata]:
         """Retrieve all shows from a library section."""
         section = self._client.server.library.section(section_title)
         shows = section.all()
-        return [self._to_metadata(s) for s in shows]
+        return [s for s in (self._to_metadata(x) for x in shows) if s is not None]
 
     def search(
         self, query: str, section_title: str | None = None, media_type: MediaType | None = None
@@ -154,8 +155,8 @@ class MetadataService:
         """
         key = int(rating_key)
         item = self._client.server.fetchItem(key)  # type: ignore[no-untyped-call]
-        if isinstance(item, PLEX_MEDIA):
-            return self._to_metadata(item)
+        if isinstance(item, plex_media_types()):
+            return self._to_metadata(cast("PLEX_MEDIA", item))
         return None
 
     # --- Metadata writing --------------------------------------------------
@@ -175,11 +176,11 @@ class MetadataService:
         edit_dict = {e.field: e.value for e in edits}
         item.edit(**edit_dict)
         item.reload()
-        try:
-            return self._to_metadata(item)
-        except Exception:
+        result = self._to_metadata(item)
+        if result is None:
             msg = f"Unsupported media type: {type(item).__name__}"
             raise ValueError(msg)
+        return result
 
     # --- Tag operations -----------------------------------------------------
 
@@ -436,7 +437,7 @@ class MetadataService:
             user_id=getattr(stream, "userID", None),
         )
 
-    def _to_metadata(self, item: PLEX_MEDIA, *, debug: bool = False) -> MediaMetadata:
+    def _to_metadata(self, item: PLEX_MEDIA, *, debug: bool = False) -> MediaMetadata | None:
         """Convert a plexapi item to MediaMetadata based on its type.
 
         Delegates to the appropriate type-specific converter.
@@ -453,7 +454,7 @@ class MetadataService:
             content_rating = item.contentRating if item.contentRating is not None else None
         except Exception:
             logger.debug(f"data type {item}")
-        if isinstance(item, PLEX_MEDIA):
+        if isinstance(item, plex_media_types()):
             return MediaMetadata(
                 key=str(item.ratingKey),
                 title=item.title if item.title else item.tag,
@@ -469,6 +470,5 @@ class MetadataService:
                 tagline=getattr(item, "tagline", None),
                 media_type=item.type,
             )
-        else:
-            logger.debug(f"Error parsing item {item}, {item.type}")
-            return None
+        logger.debug(f"Error parsing item {item}, {item.type}")
+        return None

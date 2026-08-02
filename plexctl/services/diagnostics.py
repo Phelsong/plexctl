@@ -9,10 +9,11 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from plexapi.video import Show
 from rich.progress import track
 
 if TYPE_CHECKING:
+    from plexapi.video import Show
+
     from plexctl.client import PlexClient
 
 from plexctl.models import (
@@ -22,6 +23,14 @@ from plexctl.models import (
     SectionDiagnostics,
     ShowDiagnostics,
 )
+
+
+def _plex_show_type() -> type[object]:
+    """Return the plexapi Show class lazily for isinstance checks."""
+    from plexapi.video import Show
+
+    return Show
+
 
 logger = logging.getLogger(__name__)
 
@@ -95,10 +104,10 @@ class DiagnosticService:
         """
         key = int(rating_key)
         show = self._client.server.fetchItem(key)  # type: ignore[no-untyped-call]
-        if not isinstance(show, Show):
+        if not isinstance(show, _plex_show_type()):
             msg = f"Rating key {key} is a {type(show).__name__}, not a Show"
             raise ValueError(msg)
-        return self._diagnose_show(show, deep=deep)
+        return self._diagnose_show(show, deep=deep)  # type: ignore[arg-type]
 
     def get_episode_details(self, rating_key: str | int) -> EpisodeDiagnostics:
         """Get detailed file information for a single episode.

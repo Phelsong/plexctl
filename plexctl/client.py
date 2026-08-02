@@ -9,14 +9,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-import httpx
 from defusedxml.ElementTree import fromstring as _safe_xml_fromstring
-from plexapi.server import PlexServer
 
 if TYPE_CHECKING:
     # ET is used only for type annotations; all actual XML parsing uses
     # defusedxml to prevent XML bomb and entity-expansion attacks.
     import xml.etree.ElementTree as ET  # nosec B405
+
+    import httpx
+    from plexapi.server import PlexServer
 
     from plexctl.config import PlexConfig
 
@@ -63,6 +64,8 @@ class PlexClient:
             ConnectionError: If the server is unreachable.
         """
         if self._server is None:
+            from plexapi.server import PlexServer
+
             try:
                 self._server = PlexServer(  # type: ignore[no-untyped-call]
                     self._config.url, self._config.token, timeout=self._config.timeout
@@ -86,6 +89,8 @@ class PlexClient:
             ConnectionError: If the server is unreachable.
         """
         if self._http_client is None:
+            import httpx
+
             self._http_client = httpx.Client(
                 base_url=self._config.url,
                 headers={"X-Plex-Token": self._config.token, "Accept": "application/json"},

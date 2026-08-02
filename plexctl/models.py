@@ -9,13 +9,16 @@ from __future__ import annotations
 import contextlib
 from datetime import datetime  # noqa: TC003
 from enum import IntEnum, StrEnum
+from typing import TYPE_CHECKING
 
-from plexapi.audio import Audio
-from plexapi.collection import Collection
-from plexapi.photo import Photo
-from plexapi.playlist import Playlist as Plex_Playlist
-from plexapi.video import Video
 from pydantic import BaseModel, Field
+
+if TYPE_CHECKING:
+    from plexapi.audio import Audio
+    from plexapi.collection import Collection
+    from plexapi.photo import Photo
+    from plexapi.playlist import Playlist as Plex_Playlist
+    from plexapi.video import Video
 
 
 class MediaType(StrEnum):
@@ -88,7 +91,25 @@ class MetadataType(IntEnum):
     #     self[key], self[key].value
 
 
-PLEX_MEDIA = Video | Audio | Photo | Collection | Plex_Playlist
+def plex_media_types() -> tuple[type[object], ...]:
+    """Return the tuple of plexapi media types for isinstance checks.
+
+    Imported lazily to avoid loading plexapi (and its transitive deps:
+    requests/urllib3/httpx) at import time. Cached after first call.
+    """
+    from plexapi.audio import Audio
+    from plexapi.collection import Collection
+    from plexapi.photo import Photo
+    from plexapi.playlist import Playlist
+    from plexapi.video import Video
+
+    types = (Video, Audio, Photo, Collection, Playlist)
+    plex_media_types.__wrapped__ = types  # type: ignore[attr-defined]
+    return types
+
+
+if TYPE_CHECKING:
+    PLEX_MEDIA = Video | Audio | Photo | Collection | Plex_Playlist
 # | Tag
 
 
