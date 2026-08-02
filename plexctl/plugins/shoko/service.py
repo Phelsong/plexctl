@@ -91,16 +91,29 @@ class ShokoService:
         return self._parse_series(raw)
 
     def search_series(self, query: str) -> list[ShokoSeries]:
-        """Search series by name.
+        """Search series by name (client-side filtering).
+
+        The Shoko API's ``search`` parameter does not reliably filter by
+        title, so we fetch all series and filter locally with a
+        case-insensitive substring match.
 
         Args:
             query: Search string to match against series names.
 
         Returns:
-            List of matching series.
+            List of matching series (empty if no matches).
         """
-        items, _ = self._client.get_list("/Series", {"search": query, "pageSize": 50})
-        return [self._parse_series(s) for s in items]
+        query_lower = query.lower()
+        results: list[ShokoSeries] = []
+        page = 1
+        total: int | None = None
+        while total is None or len(results) < total:
+            batch, total = self.list_series(page=page, page_size=_DEFAULT_PAGE_SIZE)
+            if not batch:
+                break
+            results.extend(s for s in batch if query_lower in s.name.lower())
+            page += 1
+        return results
 
     # --- Episode operations -------------------------------------------------
 

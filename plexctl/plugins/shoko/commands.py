@@ -44,6 +44,48 @@ def _get_service() -> ShokoService:
     return ShokoService(client)
 
 
+def _default_series_dir(series_name: str, library: str = "anime") -> str:
+    """Return the default .plexmatch target directory for a series.
+
+    Uses ``media_root`` from the Shoko config and the given ``library``
+    subdirectory (e.g. "anime", "tv"). Scans ``media_root/library/`` for
+    a directory that fuzzy-matches the series name (using the same
+    normalization as ``plexmatch-all``). Falls back to
+    ``media_root/library/series_name`` if no match is found.
+    """
+    from plexctl.plugins.shoko.config import load_shoko_config
+    from plexctl.plugins.shoko.service import ShokoService
+
+    config = load_shoko_config()
+    scan_root = Path(config.media_root) / library
+
+    # Exact match first (fast path)
+    exact = scan_root / series_name
+    if exact.is_dir():
+        return str(exact)
+
+    # Fuzzy match against existing subdirectories
+    if scan_root.is_dir():
+        target_key = ShokoService._normalize_name(series_name)
+        best_match: Path | None = None
+        for entry in scan_root.iterdir():
+            if not entry.is_dir() or entry.name.startswith("."):
+                continue
+            dir_key = ShokoService._normalize_name(entry.name)
+            if dir_key == target_key:
+                return str(entry)
+            # Substring fallback (matches plexmatch-all logic)
+            if target_key and dir_key and (target_key in dir_key or dir_key in target_key):
+                best_match = entry
+
+        if best_match:
+            return str(best_match)
+
+    # Fall back to the naive path (will fail on write if dir doesn't exist,
+    # giving the user a clear error to use --write-to-dir explicitly)
+    return str(exact)
+
+
 def _format_episode_type(ep_type: str) -> str:
     """Format episode type for display."""
     type_labels = {
@@ -781,13 +823,28 @@ def plexmatch(
         str | None,
         typer.Option(
             "--write-to-dir",
-            "-w",
             help=(
-                "Write .plexmatch directly into this directory "
-                "(uses media_root + series name by default)"
+                "Write .plexmatch into this directory. "
+                "Use -w alone to default to media_root/series_name from config."
             ),
         ),
     ] = None,
+    write: Annotated[
+        bool,
+        typer.Option(
+            "-w",
+            "--write",
+            help="Write .plexmatch into media_root/library/series_name (from Shoko config).",
+        ),
+    ] = False,
+    library: Annotated[
+        str,
+        typer.Option(
+            "--library",
+            "-l",
+            help="Library subdirectory within media root (e.g. 'anime', 'tv'). Used with -w.",
+        ),
+    ] = "anime",
     ordering: Annotated[
         str | None,
         typer.Option(
@@ -827,10 +884,12 @@ def plexmatch(
 
     Examples:
         plexctl shoko plexmatch 42
-        plexctl shoko plexmatch 42 --write-to-dir /mnt/nfs/media/anime/Witch\\ watch
+        plexctl shoko plexmatch 42 -w
+        plexctl shoko plexmatch 42 -w --library tv
+        plexctl shoko plexmatch 42 --write-to-dir /mnt/nfs/media/anime/Witch\\ Watch
         plexctl shoko plexmatch 42 -o .plexmatch
         plexctl shoko plexmatch 75 --ordering 62f98314175051007c594bdf
-        plexctl shoko plexmatch 42 -w /mnt/nfs/media/anime/Witch\\ Watch --append
+        plexctl shoko plexmatch 42 -w --append
     """
     service = _get_service()
 
@@ -853,22 +912,29 @@ def plexmatch(
         resolved_ordering = get_ordering_preference(series_data.ids.tmdb_show[0])
 
     # Determine plexmatch_dir for relative path computation
-    plexmatch_dir = None
-    if write_to_dir:
-        plexmatch_dir = Path(write_to_dir).name
+    effective_dir = write_to_dir or (
+        _default_series_dir(series_data.name, library) if write else None
+    )
+    plexmatch_dir = Path(effective_dir).name if effective_dir else None
 
     plexmatch_result = service.generate_plexmatch(
         series_id,
         plexmatch_dir=plexmatch_dir,
         ordering_id=resolved_ordering,
         append=append,
-        append_dir=write_to_dir,
+        append_dir=effective_dir,
     )
     content = plexmatch_result.render()
 
     # Determine output destination
-    if write_to_dir:
-        target_dir = Path(write_to_dir)
+    if effective_dir:
+        target_dir = Path(effective_dir)
+        if not target_dir.is_dir():
+            console.print(
+                f"[red]Directory not found: {target_dir}[/red]\n"
+                f"[dim]Use --write-to-dir to specify the correct path.[/dim]"
+            )
+            raise typer.Exit(code=1)
         target_file = target_dir / ".plexmatch"
         target_file.write_text(content, encoding="utf-8")
         console.print(f"[green].plexmatch written to {target_file}[/green]")
