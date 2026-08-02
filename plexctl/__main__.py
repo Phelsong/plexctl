@@ -1,8 +1,6 @@
-"""CLI entry point for plexctl."""
-
-from asyncio import run
+"""Entry point for python -m plexctl."""
 
 from plexctl.cli import app
 
-# __all__ = ["app"]
-run(app())
+if __name__ == "__main__":
+    app()

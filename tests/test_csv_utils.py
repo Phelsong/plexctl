@@ -142,7 +142,6 @@ class TestModelRegistry:
             "shoko_file",
             "shoko_mismatch",
             "shoko_episode",
-            "episode_diagnostics",
             "media_part_detail",
             "tmdb_search_result",
             "fs_dir",

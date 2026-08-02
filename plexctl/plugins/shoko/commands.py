@@ -13,7 +13,7 @@ from rich.console import Console
 from rich.live import Live
 from rich.table import Table
 
-from plexctl.csv_utils import write_csv_to_output
+from plexctl.commands._helpers import output_csv
 from plexctl.models import PlexMatchBatchResult, PlexMatchResult, ShokoSeries
 from plexctl.options import CsvFlag, OutputFile
 from plexctl.plugins.shoko.converters import (
@@ -85,9 +85,8 @@ def series(
                     break
                 all_series.extend(batch)
                 page += 1
-        rows = [shoko_series_to_csv(s) for s in all_series]
-        write_csv_to_output(rows, output)
-        return
+        if output_csv(all_series, shoko_series_to_csv, csv_output, output):
+            return
 
     # Build live table
     table = Table(title="Shoko Series")
@@ -159,9 +158,7 @@ def episodes(
         console.print(f"[yellow]No episodes found for series {series_id}[/yellow]")
         return
 
-    if csv_output:
-        rows = [shoko_episode_to_csv(ep) for ep in results]
-        write_csv_to_output(rows, output)
+    if output_csv(results, shoko_episode_to_csv, csv_output, output):
         return
 
     table = Table(title=f"Episodes for Series {series_id} ({total} total)")
@@ -207,9 +204,7 @@ def files(
         console.print("[yellow]No files found[/yellow]")
         return
 
-    if csv_output:
-        rows = [shoko_file_to_csv(f) for f in results[:limit]]
-        write_csv_to_output(rows, output)
+    if output_csv(results[:limit], shoko_file_to_csv, csv_output, output):
         return
 
     table = Table(title=f"Shoko Files ({total} total)")
@@ -248,9 +243,7 @@ def unlinked(csv_output: CsvFlag = False, output: OutputFile = None) -> None:
         console.print("[green]All files are properly linked to series.[/green]")
         return
 
-    if csv_output:
-        rows = [shoko_file_to_csv(f) for f in results]
-        write_csv_to_output(rows, output)
+    if output_csv(results, shoko_file_to_csv, csv_output, output):
         return
 
     table = Table(title=f"Unlinked Files ({len(results)} found)")
@@ -282,9 +275,7 @@ def problems(csv_output: CsvFlag = False, output: OutputFile = None) -> None:
         console.print("[green]No problems found in Shoko data.[/green]")
         return
 
-    if csv_output:
-        rows = [shoko_mismatch_to_csv(m) for m in results]
-        write_csv_to_output(rows, output)
+    if output_csv(results, shoko_mismatch_to_csv, csv_output, output):
         return
 
     table = Table(title=f"Shoko Problem Series ({len(results)} found)")
@@ -333,9 +324,7 @@ def search_tmdb(
         console.print(f"[yellow]No TMDB {label.lower()} found for '{query}'[/yellow]")
         return
 
-    if csv_output:
-        rows = [tmdb_search_result_to_csv(r) for r in results]
-        write_csv_to_output(rows, output)
+    if output_csv(results, tmdb_search_result_to_csv, csv_output, output):
         return
 
     table = Table(title=f"TMDB {label} Search: '{query}' ({len(results)} results)")
@@ -516,9 +505,7 @@ def crc_audit(csv_output: CsvFlag = False, output: OutputFile = None) -> None:
     console.print("[bold]Auditing CRC hashes across all Shoko files...[/bold]")
     _, report = service.audit_crc_hashes()
 
-    if csv_output:
-        rows = [crc_audit_to_csv(r) for r in report.series_missing_crc]
-        write_csv_to_output(rows, output)
+    if output_csv(report.series_missing_crc, crc_audit_to_csv, csv_output, output):
         return
 
     # Print summary
@@ -708,9 +695,7 @@ def season_gaps(
         return
 
     # CSV output
-    if csv_output:
-        rows = [season_gap_to_csv(g) for g in gaps]
-        write_csv_to_output(rows, output)
+    if output_csv(gaps, season_gap_to_csv, csv_output, output):
         return
 
     # Print summary

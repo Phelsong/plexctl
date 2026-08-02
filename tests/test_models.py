@@ -1,7 +1,6 @@
 """Test models for plexctl."""
 
 from plexctl.models import (
-    BatchEditResult,
     BatchFixResult,
     CollectionInfo,
     EpisodeDiagnostics,
@@ -56,15 +55,6 @@ def test_media_metadata_full() -> None:
     assert metadata.year == 2024
     assert metadata.rating == 8.5
     assert metadata.media_type == MediaType.MOVIE
-
-
-def test_batch_edit_result_defaults() -> None:
-    """BatchEditResult should default to zero counts."""
-    result = BatchEditResult()
-    assert result.total == 0
-    assert result.updated == 0
-    assert result.failed == 0
-    assert result.errors == {}
 
 
 def test_collection_info_model() -> None:

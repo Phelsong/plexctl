@@ -196,21 +196,3 @@ def load_config(env_path: Path | None = None) -> PlexConfig:
     if env_path is not None:
         return PlexConfig(_env_file=env_path, **overrides)  # type: ignore[call-arg]
     return PlexConfig(**overrides)
-
-
-# --- Shoko backward-compat imports -------------------------------------------
-# ShokoConfig and load_shoko_config live in plexctl.plugins.shoko.config.
-# Use lazy imports to avoid circular dependencies at module load time.
-
-
-def __getattr__(name: str) -> object:
-    if name == "ShokoConfig":
-        from plexctl.plugins.shoko.config import ShokoConfig
-
-        return ShokoConfig
-    if name == "load_shoko_config":
-        from plexctl.plugins.shoko.config import load_shoko_config
-
-        return load_shoko_config
-    msg = f"module {__name__!r} has no attribute {name!r}"
-    raise AttributeError(msg)

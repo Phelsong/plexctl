@@ -13,8 +13,6 @@ from plexctl.models import (
     ShokoSeriesSizes,
     TmdbLinkResult,
     TmdbOrdering,
-    TmdbOrderingEpisode,
-    TmdbOrderingSeason,
     TmdbSearchResult,
 )
 from plexctl.plugins.shoko.service import ShokoService
@@ -309,26 +307,6 @@ class TestShokoServiceParseFile:
         assert result.crc32 is None
         assert result.ed2k == "ed2khash"
         assert result.sha1 == "sha1hash"
-
-
-class TestShokoServiceParseGroup:
-    """Test ShokoService._parse_group method."""
-
-    def setup_method(self) -> None:
-        mock_client = MagicMock()
-        self.service = ShokoService(mock_client)
-
-    def test_parse_group(self) -> None:
-        raw = {
-            "IDs": {"ID": 50, "SeriesIDs": [1, 2, 3]},
-            "Name": "Arifureta franchise",
-            "Sizes": {"Series": 3},
-        }
-        result = self.service._parse_group(raw)
-        assert result.id == 50
-        assert result.name == "Arifureta franchise"
-        assert result.series_count == 3
-        assert result.series_ids == [1, 2, 3]
 
 
 class TestTmdbSearchResult:
@@ -1624,26 +1602,6 @@ class TestTmdbOrderingModels:
         assert not o.is_default
         assert not o.is_preferred
         assert not o.in_use
-
-    def test_tmdb_ordering_season(self) -> None:
-        s = TmdbOrderingSeason(
-            season_id="abc123", ordering_id="37854", season_number=1, title="East Blue"
-        )
-        assert s.season_number == 1
-        assert s.title == "East Blue"
-
-    def test_tmdb_ordering_season_no_number(self) -> None:
-        """Arc-based orderings may have season_number=None."""
-        s = TmdbOrderingSeason(season_id="abc123", ordering_id="sagas", title="East Blue Saga")
-        assert s.season_number is None
-
-    def test_tmdb_ordering_episode(self) -> None:
-        e = TmdbOrderingEpisode(
-            episode_id=852692, season_id="s01", season_number=1, episode_number=1
-        )
-        assert e.episode_id == 852692
-        assert e.season_number == 1
-        assert e.episode_number == 1
 
 
 class TestTmdbOrderingService:

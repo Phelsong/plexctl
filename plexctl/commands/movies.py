@@ -11,15 +11,14 @@ Examples:
 """
 
 import typer
-from pydantic import BaseModel
 from rich.console import Console
 from rich.table import Table
 from rich.tree import Tree
 
 from plexctl.client import PlexClient
+from plexctl.commands._helpers import if_empty_print, output_csv, require_section_key
 from plexctl.config import load_config
 from plexctl.converters import media_metadata_to_csv, media_tree_item_to_csv
-from plexctl.csv_utils import write_csv_to_output
 from plexctl.models import MediaTreeItem
 from plexctl.options import CsvFlag, OutputFile
 from plexctl.services.metadata import MetadataService
@@ -80,35 +79,25 @@ def movies_default(
     service = _get_metadata_service()
     all_movies = service.get_all_movies(section)
 
-    if not all_movies:
-        console.print(f"[dim]No movies found in section '{section}'[/dim]")
+    if if_empty_print(all_movies, f"No movies found in section '{section}'"):
         return
 
     if tree:
         tree_service = _get_tree_service()
-        section_key = tree_service.resolve_section_key(section)
-        if section_key is None:
-            console.print(f"[red]Section not found: {section}[/red]")
-            console.print("[dim]Use 'plexctl library list' to see available sections.[/dim]")
-            raise typer.Exit(code=1)
+        section_key = require_section_key(tree_service, section)
 
         items = tree_service.get_section_tree(section_key, media_type="movie")
-        if not items:
-            console.print(f"[dim]No movies found in section '{section}'[/dim]")
+        if if_empty_print(items, f"No movies found in section '{section}'"):
             return
 
-        if csv_output:
-            rows = [media_tree_item_to_csv(i) for i in items]
-            write_csv_to_output(rows, output)
+        if output_csv(items, media_tree_item_to_csv, csv_output, output):
             return
 
         rich_tree = _render_movie_tree(items)
         console.print(rich_tree)
         return
 
-    if csv_output:
-        rows: list[BaseModel] = [media_metadata_to_csv(m) for m in all_movies[:limit]]  # type: ignore[no-redef]
-        write_csv_to_output(rows, output)
+    if output_csv(all_movies[:limit], media_metadata_to_csv, csv_output, output):
         return
 
     table = Table(title=f"Movies in {section}")

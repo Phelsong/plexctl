@@ -19,14 +19,10 @@ from plexctl.models import (
     PlexMatchBatchResult,
     PlexMatchEntry,
     PlexMatchResult,
-    PlexSeasonEntry,
-    SeasonGap,
-    SeasonGapReport,
     ShokoEpisode,
     ShokoEpisodeType,
     ShokoFile,
     ShokoFileLocation,
-    ShokoGroup,
     ShokoMismatch,
     ShokoSeasonEntry,
     ShokoSeries,
@@ -38,7 +34,6 @@ from plexctl.models import (
     TriageAction,
     TriageIssue,
     TriageIssueType,
-    TriageReport,
     TriageSeverity,
 )
 
@@ -128,18 +123,6 @@ class ShokoService:
         )
         return [self._parse_episode(e) for e in items], total
 
-    def get_episode(self, episode_id: int) -> ShokoEpisode:
-        """Get full details for a single episode.
-
-        Args:
-            episode_id: Shoko episode ID.
-
-        Returns:
-            ShokoEpisode with AniDB/TMDB cross-references.
-        """
-        raw = self._client.get(f"/Episode/{episode_id}", {"includeDataFrom": "AniDB,TMDB"})
-        return self._parse_episode(raw)
-
     # --- File operations ----------------------------------------------------
 
     def list_files(
@@ -177,18 +160,6 @@ class ShokoService:
         )
         return [self._parse_file(f) for f in items], total
 
-    def get_file(self, file_id: int) -> ShokoFile:
-        """Get full details for a single file.
-
-        Args:
-            file_id: Shoko file ID.
-
-        Returns:
-            ShokoFile with cross-references.
-        """
-        raw = self._client.get(f"/File/{file_id}", {"include": "MediaInfo,XRefs"})
-        return self._parse_file(raw)
-
     def search_file_by_path(self, path_suffix: str) -> list[ShokoFile]:
         """Search for files by path suffix (path-param endpoint).
 
@@ -210,45 +181,6 @@ class ShokoService:
         if not isinstance(raw_items, list):
             return []
         return [self._parse_file(item) for item in raw_items if isinstance(item, dict)]
-
-    def search_file_by_path_query(self, path_suffix: str) -> list[ShokoFile]:
-        """Search for files by path suffix (query-param endpoint).
-
-        Uses Shoko's PathEndsWith query-param endpoint which correctly handles
-        special characters like %CRC in filenames. This is the preferred method
-        when filenames may contain percent-encoded placeholders.
-
-        Args:
-            path_suffix: Path suffix to search for.
-
-        Returns:
-            List of matching ShokoFile objects.
-        """
-        raw_items = self._client.get(
-            "/File/PathEndsWith", {"path": path_suffix, "include": "XRefs"}
-        )
-        if not isinstance(raw_items, list):
-            return []
-        return [self._parse_file(item) for item in raw_items if isinstance(item, dict)]
-
-    # --- Group operations ---------------------------------------------------
-
-    def list_groups(
-        self, page: int = 1, page_size: int = _DEFAULT_PAGE_SIZE
-    ) -> tuple[list[ShokoGroup], int]:
-        """List all groups from Shoko.
-
-        Groups organize related series (e.g. all seasons of a franchise).
-
-        Args:
-            page: Page number (1-indexed).
-            page_size: Items per page.
-
-        Returns:
-            Tuple of (group_list, total_count).
-        """
-        items, total = self._client.get_list("/Group", {"pageSize": page_size, "page": page})
-        return [self._parse_group(g) for g in items], total
 
     # --- Triage operations --------------------------------------------------
 
@@ -676,19 +608,6 @@ class ShokoService:
             crc32=crc32,
             ed2k=ed2k,
             sha1=sha1,
-        )
-
-    def _parse_group(self, raw: dict[str, Any]) -> ShokoGroup:
-        """Parse a Shoko API group response into a ShokoGroup model."""
-        return ShokoGroup(
-            id=raw.get("IDs", {}).get("ID", 0),
-            name=raw.get("Name", "Unknown"),
-            series_count=raw.get("Sizes", {}).get("Series", 0),
-            series_ids=(
-                raw.get("IDs", {}).get("SeriesIDs", [])
-                if isinstance(raw.get("IDs", {}).get("SeriesIDs"), list)
-                else []
-            ),
         )
 
     def _parse_tmdb_search(self, raw: dict[str, Any]) -> TmdbSearchResult:
@@ -1645,212 +1564,6 @@ class ShokoService:
             failed=failed,
             skipped=skipped,
             results=results,
-        )
-
-    # --- Triage helpers ------------------------------------------------------
-
-    def triage_section(
-        self, section_title: str = "Anime", path_map: dict[str, str] | None = None
-    ) -> TriageReport:
-        """Cross-reference all data sources for a library section.
-
-        Args:
-            section_title: Name of the Plex library section to triage.
-            path_map: Mapping of server paths to local paths
-                (e.g. {"/data": "/mnt/nfs/media"}).
-
-        Returns:
-            TriageReport with all detected issues and recommendations.
-        """
-        issues: list[TriageIssue] = []
-
-        # Collect data from all three sources
-        plex_issues = self._collect_plex_issues(section_title)  # type: ignore[attr-defined]
-        shoko_issues = self._collect_shoko_issues()
-        fs_issues = self._collect_filesystem_issues(section_title, path_map)
-
-        issues.extend(plex_issues)
-        issues.extend(shoko_issues)
-        issues.extend(fs_issues)
-
-        # Cross-reference: match Shoko series to Plex shows
-        self._cross_reference(issues)
-
-        total_shows = self._count_shows(section_title)
-        summary = self._build_summary(issues, section_title, total_shows)  # type: ignore[attr-defined]
-
-        return TriageReport(
-            section_title=section_title, total_shows=total_shows, issues=issues, summary=summary
-        )
-
-    def _collect_shoko_issues(self) -> list[TriageIssue]:
-        """Collect issues from Shoko data.
-
-        Delegates to ShokoService.collect_triage_issues() which converts
-        Shoko mismatches into TriageIssue objects. Returns empty list
-        if no ShokoService is available.
-        """
-        if self._shoko_service is None:  # type: ignore[attr-defined]
-            return []
-        return self._shoko_service.collect_triage_issues()  # type: ignore[attr-defined, no-any-return]
-
-    def _collect_filesystem_issues(
-        self, section_title: str, path_map: dict[str, str] | None
-    ) -> list[TriageIssue]:
-        """Collect issues from filesystem comparison."""
-        from plexctl.services.fs_compare import FsCompareService
-
-        issues: list[TriageIssue] = []
-        fs = FsCompareService(self._plex_client, path_map=path_map)  # type: ignore[attr-defined]
-        result = fs.compare_section(section_title)
-
-        # Grouping risk directories
-        for d in result.grouped_dirs:
-            plex_shows = ", ".join(d.plex_shows) if d.plex_shows else "none"
-            issues.append(
-                TriageIssue(
-                    issue_type=TriageIssueType.GROUPING_RISK,
-                    severity=TriageSeverity.WARNING,
-                    action=TriageAction.REORGANIZE,
-                    detail=(
-                        f"Directory has both files and {d.subdir_count} subdirs "
-                        f"(ShokoRelay will split): {d.subdirs}"
-                    ),
-                    paths=[d.path],
-                    plex_title=plex_shows if d.plex_shows else None,
-                )
-            )
-
-        # Multi-location shows
-        for show_title, locations in result.multi_location_shows:
-            issues.append(
-                TriageIssue(
-                    issue_type=TriageIssueType.MULTI_LOCATION,
-                    severity=TriageSeverity.WARNING,
-                    action=TriageAction.SHOKO_CONFIG,
-                    detail=(
-                        f"Plex show references {len(locations)} filesystem directories "
-                        f"(Shoko merged multiple AniDB entries)"
-                    ),
-                    paths=locations,
-                    plex_title=show_title,
-                )
-            )
-
-        return issues
-
-    def _cross_reference(self, issues: list[TriageIssue]) -> None:
-        """Match Shoko series to Plex shows by name for cross-reference.
-
-        Enriches Shoko issues with plex_key when a matching Plex show
-        is found in the issue list.
-        """
-        plex_by_title: dict[str, str] = {}
-        for issue in issues:
-            if issue.plex_title and issue.plex_key:
-                plex_by_title[issue.plex_title.lower()] = issue.plex_key
-
-        for issue in issues:
-            if issue.shoko_name and not issue.plex_key:
-                # Try exact match first
-                lower_name = issue.shoko_name.lower()
-                if lower_name in plex_by_title:
-                    issue.plex_key = plex_by_title[lower_name]
-                    issue.plex_title = issue.shoko_name
-                    continue
-
-                # Try partial match (Shoko names are often shorter)
-                for plex_title_lower, plex_key in plex_by_title.items():
-                    if lower_name in plex_title_lower or plex_title_lower in lower_name:
-                        issue.plex_key = plex_key
-                        issue.plex_title = plex_title_lower.title()
-                        break
-
-    def _count_shows(self, section_title: str) -> int:
-        """Count total shows in a section."""
-        from plexctl.services.metadata import MetadataService
-
-        meta = MetadataService(self._plex_client)  # type: ignore[attr-defined]
-        sections = meta.list_sections()
-        for s in sections:
-            if s.title == section_title:
-                return s.count
-        return 0
-
-    def find_season_gaps(self, section_title: str = "Anime") -> SeasonGapReport:
-        """Cross-reference Shoko series with Plex to find missing seasons.
-
-        Groups Shoko series by TMDB show ID, then matches each group to
-        a Plex show and compares expected episodes vs actual.
-
-        Args:
-            section_title: Name of the Plex library section to analyze.
-
-        Returns:
-            SeasonGapReport with all detected gaps.
-
-        Raises:
-            ValueError: If no ShokoService is configured.
-        """
-        if self._shoko_service is None:  # type: ignore[attr-defined]
-            msg = "ShokoService is required for season gap analysis"
-            raise ValueError(msg)
-
-        # Collect all Shoko series grouped by TMDB show ID
-        shoko_by_tmdb = self._shoko_service.group_series_by_tmdb()  # type: ignore[attr-defined]
-        all_shoko = self._shoko_service.series_name_dict()  # type: ignore[attr-defined]
-
-        # Get Plex shows with their season structure
-        plex_shows = self._collect_plex_seasons(section_title)  # type: ignore[attr-defined]
-
-        # Match Shoko groups to Plex shows
-        gaps: list[SeasonGap] = []
-        matched_plex_keys: set[str] = set()
-
-        for tmdb_id, shoko_series in shoko_by_tmdb.items():
-            gap = self._match_group_to_plex(  # type: ignore[attr-defined]
-                tmdb_id=tmdb_id,
-                shoko_series=shoko_series,
-                plex_shows=plex_shows,
-                all_shoko=all_shoko,
-            )
-            if gap is not None:
-                gaps.append(gap)
-                if gap.plex_key:
-                    matched_plex_keys.add(gap.plex_key)
-
-        # Add Plex shows not matched to any Shoko TMDB group
-        for key, show_data in plex_shows.items():
-            if key not in matched_plex_keys:
-                gap = SeasonGap(
-                    plex_title=show_data["title"],
-                    plex_key=key,
-                    plex_seasons=[
-                        PlexSeasonEntry(
-                            season_number=s["number"],
-                            title=s["title"],
-                            episode_count=s["episodes"],
-                        )
-                        for s in show_data["seasons"]
-                    ],
-                    actual_episode_count=show_data["total_episodes"],
-                    is_missing=False,
-                )
-                gaps.append(gap)
-
-        # Sort by episode deficit (largest gap first)
-        gaps.sort(key=lambda g: g.expected_episode_count - g.actual_episode_count, reverse=True)
-
-        # Count shows with actual gaps
-        gap_count = sum(1 for g in gaps if g.is_missing)
-
-        summary = self._build_gap_summary(section_title, len(plex_shows), gap_count, gaps)  # type: ignore[attr-defined]
-        return SeasonGapReport(
-            section_title=section_title,
-            total_shows=len(plex_shows),
-            gap_count=gap_count,
-            gaps=gaps,
-            summary=summary,
         )
 
     def collect_triage_issues(self) -> list[TriageIssue]:

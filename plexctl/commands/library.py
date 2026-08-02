@@ -11,11 +11,11 @@ from rich.console import Console
 from rich.table import Table
 
 from plexctl.client import PlexClient
+from plexctl.commands._helpers import if_empty_print, output_csv, require_confirm
 from plexctl.commands.collections import collections_app
 from plexctl.commands.playlists import playlists_app
 from plexctl.config import load_config
 from plexctl.converters import library_section_to_csv
-from plexctl.csv_utils import write_csv_to_output
 from plexctl.options import CsvFlag, OutputFile
 from plexctl.services.library import LibraryService
 
@@ -41,13 +41,10 @@ def list_sections(csv_output: CsvFlag = False, output: OutputFile = None) -> Non
     service = _get_service()
     sections = service.list_sections()
 
-    if not sections:
-        console.print("[dim]No library sections found.[/dim]")
+    if if_empty_print(sections, "No library sections found."):
         return
 
-    if csv_output:
-        rows = [library_section_to_csv(s) for s in sections]
-        write_csv_to_output(rows, output)
+    if output_csv(sections, library_section_to_csv, csv_output, output):
         return
 
     table = Table(title="Plex Library Sections")
@@ -90,9 +87,7 @@ def get_section(
         console.print(f"[red]Section not found: {section_key}[/red]")
         raise typer.Exit(code=1)
 
-    if csv_output:
-        rows = [library_section_to_csv(section)]
-        write_csv_to_output(rows, output)
+    if output_csv([section], library_section_to_csv, csv_output, output):
         return
 
     console.print(f"\n[bold]{section.title}[/bold]")
@@ -160,11 +155,7 @@ def delete_section(
     Example:
         plexctl library delete 2 --yes
     """
-    if not confirm:
-        console.print(
-            f"[yellow]Will delete section {section_key}. Use --yes to confirm.[/yellow]"
-        )
-        raise typer.Exit(code=1)
+    require_confirm(confirm, f"delete section {section_key}")
 
     service = _get_service()
     service.delete_section(section_key)

@@ -24,8 +24,14 @@ from rich.table import Table
 from rich.tree import Tree
 
 from plexctl.client import PlexClient
+from plexctl.commands._helpers import if_empty_print, output_csv, require_section_key
 from plexctl.config import load_config
-from plexctl.converters import album_info_to_csv, artist_info_to_csv, track_info_to_csv
+from plexctl.converters import (
+    album_info_to_csv,
+    artist_info_to_csv,
+    media_tree_item_to_csv,
+    track_info_to_csv,
+)
 from plexctl.csv_utils import write_csv_to_output
 from plexctl.models import AlbumInfo, ArtistInfo, MediaTreeItem, TrackInfo
 from plexctl.options import CsvFlag, OutputFile
@@ -102,37 +108,25 @@ def music_default(
     service = _get_service()
     artists = service.list_artists(section_title=section, limit=limit)
 
-    if not artists:
-        console.print(f"[dim]No artists found in section '{section}'[/dim]")
+    if if_empty_print(artists, f"No artists found in section '{section}'"):
         return
 
     if tree:
         tree_service = _get_tree_service()
-        section_key = tree_service.resolve_section_key(section)
-        if section_key is None:
-            console.print(f"[red]Section not found: {section}[/red]")
-            console.print("[dim]Use 'plexctl library list' to see available sections.[/dim]")
-            raise typer.Exit(code=1)
+        section_key = require_section_key(tree_service, section)
 
         items = tree_service.get_section_tree(section_key, media_type="artist")
-        if not items:
-            console.print(f"[dim]No artists found in section '{section}'[/dim]")
+        if if_empty_print(items, f"No artists found in section '{section}'"):
             return
 
-        if csv_output:
-            from plexctl.converters import media_tree_item_to_csv
-
-            rows = [media_tree_item_to_csv(i) for i in items]
-            write_csv_to_output(rows, output)
+        if output_csv(items, media_tree_item_to_csv, csv_output, output):
             return
 
         rich_tree = _render_artist_tree(items)
         console.print(rich_tree)
         return
 
-    if csv_output:
-        rows: list[BaseModel] = [artist_info_to_csv(a) for a in artists[:limit]]  # type: ignore[no-redef]
-        write_csv_to_output(rows, output)
+    if output_csv(artists[:limit], artist_info_to_csv, csv_output, output):
         return
 
     table = Table(title=f"Artists in {section}")
@@ -180,16 +174,15 @@ def music_albums(
     service = _get_service()
     albums = service.list_albums(section_title=section, artist_key=artist_key, limit=limit)
 
-    if not albums:
-        if artist_key:
-            console.print(f"[dim]No albums found for artist key '{artist_key}'[/dim]")
-        else:
-            console.print(f"[dim]No albums found in section '{section}'[/dim]")
+    empty_msg = (
+        f"No albums found for artist key '{artist_key}'"
+        if artist_key
+        else f"No albums found in section '{section}'"
+    )
+    if if_empty_print(albums, empty_msg):
         return
 
-    if csv_output:
-        rows = [album_info_to_csv(a) for a in albums]
-        write_csv_to_output(rows, output)
+    if output_csv(albums, album_info_to_csv, csv_output, output):
         return
 
     table = Table(title="Albums" if not artist_key else f"Albums (artist {artist_key})")
@@ -239,18 +232,15 @@ def music_tracks(
         section_title=section, album_key=album_key, artist_key=artist_key, limit=limit
     )
 
-    if not tracks:
-        filter_desc = ""
-        if album_key:
-            filter_desc = f" in album '{album_key}'"
-        elif artist_key:
-            filter_desc = f" by artist '{artist_key}'"
-        console.print(f"[dim]No tracks found{filter_desc}[/dim]")
+    filter_desc = ""
+    if album_key:
+        filter_desc = f" in album '{album_key}'"
+    elif artist_key:
+        filter_desc = f" by artist '{artist_key}'"
+    if if_empty_print(tracks, f"No tracks found{filter_desc}"):
         return
 
-    if csv_output:
-        rows = [track_info_to_csv(t) for t in tracks]
-        write_csv_to_output(rows, output)
+    if output_csv(tracks, track_info_to_csv, csv_output, output):
         return
 
     title = "Tracks"
@@ -301,24 +291,14 @@ def music_tree(
         plexctl music tree -s "Music" --type artist
     """
     service = _get_tree_service()
-    section_key = service.resolve_section_key(section)
-
-    if section_key is None:
-        console.print(f"[red]Section not found: {section}[/red]")
-        console.print("[dim]Use 'plexctl library list' to see available sections.[/dim]")
-        raise typer.Exit(code=1)
+    section_key = require_section_key(service, section)
 
     items = service.get_section_tree(section_key, media_type=media_type)
 
-    if not items:
-        console.print(f"[dim]No items found in section '{section}'[/dim]")
+    if if_empty_print(items, f"No items found in section '{section}'"):
         return
 
-    if csv_output:
-        from plexctl.converters import media_tree_item_to_csv
-
-        rows = [media_tree_item_to_csv(i) for i in items]
-        write_csv_to_output(rows, output)
+    if output_csv(items, media_tree_item_to_csv, csv_output, output):
         return
 
     # Reuse the nav tree rendering from shows
@@ -348,8 +328,7 @@ def music_recently_added(
     service = _get_service()
     items = service.recently_added(section_title=section, maxresults=limit)
 
-    if not items:
-        console.print(f"[dim]No recently added music in section '{section}'[/dim]")
+    if if_empty_print(items, f"No recently added music in section '{section}'"):
         return
 
     if csv_output:

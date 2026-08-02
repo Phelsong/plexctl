@@ -16,17 +16,13 @@ from plexctl.models import (
     ButlerTask,
     CollectionInfo,
     CollectionMetadata,
-    CrcAuditResult,
     CsvAlbumInfo,
     CsvArtistInfo,
     CsvBandwidthStats,
     CsvButlerTask,
     CsvCollectionInfo,
     CsvCollectionMetadata,
-    CsvCrcAuditResult,
-    CsvEpisodeDiagnostics,
     CsvFsDir,
-    CsvLibraryLocation,
     CsvLibrarySection,
     CsvMediaMetadata,
     CsvMediaPartDetail,
@@ -41,24 +37,16 @@ from plexctl.models import (
     CsvSeasonGap,
     CsvServerInfo,
     CsvServerPreference,
-    CsvShokoEpisode,
-    CsvShokoFile,
-    CsvShokoMismatch,
-    CsvShokoSeries,
     CsvShowDiagnostics,
     CsvSimilarMedia,
     CsvSmartPlaylist,
-    CsvSmartPlaylistFilter,
     CsvSubtitleStreamInfo,
-    CsvTmdbSearchResult,
     CsvTrackInfo,
     CsvTranscodeSessionInfo,
     CsvTriageIssue,
     CsvUpdateInfo,
     CsvWatchHistoryEntry,
-    EpisodeDiagnostics,
     FsDir,
-    LibraryLocation,
     LibrarySection,
     MediaMetadata,
     MediaPartDetail,
@@ -71,19 +59,12 @@ from plexctl.models import (
     ResourceStats,
     SearchResult,
     SeasonGap,
-    ServerIdentity,
     ServerInfo,
     ServerPreference,
-    ShokoEpisode,
-    ShokoFile,
-    ShokoMismatch,
-    ShokoSeries,
     ShowDiagnostics,
     SimilarMedia,
     SmartPlaylist,
-    SmartPlaylistFilter,
     SubtitleStreamInfo,
-    TmdbSearchResult,
     TrackInfo,
     TranscodeSessionInfo,
     TriageIssue,
@@ -184,66 +165,6 @@ def season_gap_to_csv(gap: SeasonGap) -> CsvSeasonGap:
     )
 
 
-def shoko_series_to_csv(series: ShokoSeries) -> CsvShokoSeries:
-    """Convert ShokoSeries to a flat CSV row.
-
-    Delegated to plexctl.plugins.shoko.converters for backward compat.
-    """
-    from plexctl.plugins.shoko import converters as _shoko_converters
-
-    return _shoko_converters.shoko_series_to_csv(series)
-
-
-def shoko_file_to_csv(file: ShokoFile) -> CsvShokoFile:
-    """Convert ShokoFile to a flat CSV row.
-
-    Delegated to plexctl.plugins.shoko.converters for backward compat.
-    """
-    from plexctl.plugins.shoko import converters as _shoko_converters
-
-    return _shoko_converters.shoko_file_to_csv(file)
-
-
-def shoko_mismatch_to_csv(mismatch: ShokoMismatch) -> CsvShokoMismatch:
-    """Convert ShokoMismatch to a flat CSV row.
-
-    Delegated to plexctl.plugins.shoko.converters for backward compat.
-    """
-    from plexctl.plugins.shoko import converters as _shoko_converters
-
-    return _shoko_converters.shoko_mismatch_to_csv(mismatch)
-
-
-def shoko_episode_to_csv(episode: ShokoEpisode) -> CsvShokoEpisode:
-    """Convert ShokoEpisode to a flat CSV row.
-
-    Delegated to plexctl.plugins.shoko.converters for backward compat.
-    """
-    from plexctl.plugins.shoko import converters as _shoko_converters
-
-    return _shoko_converters.shoko_episode_to_csv(episode)
-
-
-def tmdb_search_result_to_csv(result: TmdbSearchResult) -> CsvTmdbSearchResult:
-    """Convert TmdbSearchResult to a flat CSV row.
-
-    Delegated to plexctl.plugins.shoko.converters for backward compat.
-    """
-    from plexctl.plugins.shoko import converters as _shoko_converters
-
-    return _shoko_converters.tmdb_search_result_to_csv(result)
-
-
-def crc_audit_to_csv(result: CrcAuditResult) -> CsvCrcAuditResult:
-    """Convert CrcAuditResult to a flat CSV row.
-
-    Delegated to plexctl.plugins.shoko.converters for backward compat.
-    """
-    from plexctl.plugins.shoko import converters as _shoko_converters
-
-    return _shoko_converters.crc_audit_to_csv(result)
-
-
 def fs_dir_to_csv(fs_dir: FsDir) -> CsvFsDir:
     """Convert FsDir to a flat CSV row."""
     return CsvFsDir(
@@ -255,22 +176,6 @@ def fs_dir_to_csv(fs_dir: FsDir) -> CsvFsDir:
         subdirs="|".join(fs_dir.subdirs),
         is_plex_location=str(fs_dir.is_plex_location),
         plex_shows="|".join(fs_dir.plex_shows),
-    )
-
-
-def episode_diagnostics_to_csv(ep: EpisodeDiagnostics) -> CsvEpisodeDiagnostics:
-    """Convert EpisodeDiagnostics to a flat CSV row."""
-    file_details = "|".join(
-        f"{d.file_path}(accessible={d.accessible},exists={d.exists})" for d in ep.file_details
-    )
-    return CsvEpisodeDiagnostics(
-        key=ep.key,
-        title=ep.title or "",
-        season_number=str(ep.season_number) if ep.season_number else "",
-        episode_number=str(ep.episode_number) if ep.episode_number else "",
-        media_count=str(ep.media_count),
-        has_unanalyzed=str(ep.has_unanalyzed),
-        file_details=file_details,
     )
 
 
@@ -338,27 +243,6 @@ def server_info_to_csv(info: ServerInfo) -> CsvServerInfo:
     )
 
 
-def server_identity_to_table(identity: ServerIdentity) -> Table:
-    """Create a Rich Table from ServerIdentity for display.
-
-    Args:
-        identity: ServerIdentity object to convert
-
-    Returns:
-        Rich Table object with server identity information
-    """
-    table = Table(title="Server Identity", show_header=True, header_style="bold magenta")
-    table.add_column("Property", style="cyan", width=30)
-    table.add_column("Value", style="green")
-
-    table.add_row("Machine ID", identity.machineIdentifier)
-    table.add_row("Version", identity.version)
-    table.add_row("Claimed", "Yes" if identity.claimed else "No")
-    table.add_row("Size", f"{identity.size:,} bytes")
-
-    return table
-
-
 def user_account_to_table(user: UserAccount) -> Table:
     """Create a Rich Table from UserAccount for display.
 
@@ -395,11 +279,6 @@ def butler_task_to_csv(task: ButlerTask) -> CsvButlerTask:
         last_run=task.last_run or "",
         next_run=task.next_run or "",
     )
-
-
-def library_location_to_csv(location: LibraryLocation) -> CsvLibraryLocation:
-    """Convert LibraryLocation to a flat CSV row."""
-    return CsvLibraryLocation(id=str(location.id), path=location.path)
 
 
 def media_tree_item_to_csv(item: MediaTreeItem) -> CsvMediaTreeItem:
@@ -460,11 +339,6 @@ def similar_media_to_csv(media: SimilarMedia) -> CsvSimilarMedia:
         similarity=str(media.similarity) if media.similarity is not None else "",
         thumb=media.thumb or "",
     )
-
-
-def smart_playlist_filter_to_csv(filt: SmartPlaylistFilter) -> CsvSmartPlaylistFilter:
-    """Convert SmartPlaylistFilter to a flat CSV row."""
-    return CsvSmartPlaylistFilter(field=filt.field, operator=filt.operator, value=filt.value)
 
 
 def smart_playlist_to_csv(playlist: SmartPlaylist) -> CsvSmartPlaylist:

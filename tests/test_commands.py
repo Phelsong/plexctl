@@ -4,9 +4,8 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-from typer.testing import CliRunner
-
 from plexctl.cli import app
+from typer.testing import CliRunner
 
 runner = CliRunner()
 
@@ -347,16 +346,6 @@ class TestLibraryConverters:
         csv_row = library_section_to_csv(section)
         assert csv_row.section_type == ""
 
-    def test_library_location_to_csv(self) -> None:
-        """library_location_to_csv converts correctly."""
-        from plexctl.converters import library_location_to_csv
-        from plexctl.models import LibraryLocation
-
-        loc = LibraryLocation(id=1, path="/data/anime")
-        csv_row = library_location_to_csv(loc)
-        assert csv_row.id == "1"
-        assert csv_row.path == "/data/anime"
-
     def test_media_tree_item_to_csv(self) -> None:
         """media_tree_item_to_csv converts correctly."""
         from plexctl.converters import media_tree_item_to_csv
@@ -480,26 +469,6 @@ class TestNewCsvModelRegistry:
 
 class TestCsvRoundtrip:
     """Tests that new models survive CSV roundtrip."""
-
-    def test_library_location_roundtrip(self) -> None:
-        """LibraryLocation CSV roundtrip preserves data."""
-        from plexctl.converters import library_location_to_csv
-        from plexctl.csv_utils import from_csv, to_csv
-        from plexctl.models import LibraryLocation
-
-        locations = [
-            LibraryLocation(id=1, path="/data/anime"),
-            LibraryLocation(id=2, path="/data/movies"),
-        ]
-        rows = [library_location_to_csv(loc) for loc in locations]
-        csv_content = to_csv(rows)
-
-        from plexctl.models import CsvLibraryLocation
-
-        restored = from_csv(CsvLibraryLocation, csv_content)
-        assert len(restored) == 2
-        assert restored[0].path == "/data/anime"
-        assert restored[1].path == "/data/movies"
 
     def test_library_section_roundtrip(self) -> None:
         """LibrarySection CSV roundtrip preserves data."""

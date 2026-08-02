@@ -12,6 +12,13 @@ from rich.console import Console
 from rich.table import Table
 
 from plexctl.client import PlexClient
+from plexctl.commands._helpers import (
+    media_results_table,
+    output_csv,
+    print_result,
+    require_confirm,
+    run_ingest,
+)
 from plexctl.config import load_config
 from plexctl.converters import (
     media_metadata_to_csv,
@@ -19,7 +26,6 @@ from plexctl.converters import (
     similar_media_to_csv,
     subtitle_stream_to_csv,
 )
-from plexctl.csv_utils import from_csv, get_model_class, list_model_names, write_csv_to_output
 from plexctl.models import MediaType, MetadataEdit
 from plexctl.options import CsvFlag, OutputFile
 from plexctl.services.fixes import FixService
@@ -81,25 +87,10 @@ def search_items(
         console.print(f"[yellow]No results found for '{query}'[/yellow]")
         return
 
-    if csv_output:
-        rows = [media_metadata_to_csv(r) for r in results]
-        write_csv_to_output(rows, output)
+    if output_csv(results, media_metadata_to_csv, csv_output, output):
         return
 
-    table = Table(title=f"Search: {query}")
-    table.add_column("Key", style="cyan", justify="right")
-    table.add_column("Title", style="green")
-    table.add_column("Type", style="yellow")
-    table.add_column("Year", style="magenta", justify="right")
-
-    for item in results:
-        table.add_row(
-            item.key,
-            item.title or "Unknown",
-            item.media_type.value if item.media_type else "-",
-            str(item.year) if item.year else "-",
-        )
-
+    table = media_results_table(f"Search: {query}", results)
     console.print(table)
     console.print(f"[dim]Found {len(results)} results[/dim]")
 
@@ -144,55 +135,7 @@ def ingest_csv(
         plexctl item ingest list
         plexctl item ingest triage_issue triage_report.csv
     """
-    if model == "list":
-        names = list_model_names()
-        console.print("[bold]Available model names for ingest:[/bold]")
-        for name in names:
-            model_class = get_model_class(name)
-            field_count = len(model_class.model_fields) if model_class else 0
-            console.print(f"  {name} ({field_count} fields)")
-        return
-
-    if file is None:
-        console.print("[red]FILE argument is required when MODEL is not 'list'.[/red]")
-        raise typer.Exit(code=1)
-
-    model_class = get_model_class(model)
-    if model_class is None:
-        available = ", ".join(list_model_names())
-        console.print(f"[red]Unknown model: {model}[/red]")
-        console.print(f"[dim]Available models: {available}[/dim]")
-        raise typer.Exit(code=1)
-
-    csv_path = FilePath(file)
-    if not csv_path.exists():
-        console.print(f"[red]File not found: {file}[/red]")
-        raise typer.Exit(code=1)
-
-    try:
-        models = from_csv(model_class, csv_path)
-    except Exception as exc:
-        console.print(f"[red]Error parsing CSV: {exc}[/red]")
-        raise typer.Exit(code=1) from exc
-
-    console.print(f"[green]✓ Loaded {len(models)} {model} records from {file}[/green]")
-
-    # Show a summary table of the ingested data
-    table = Table(title=f"Ingested {model} ({len(models)} rows)")
-    # Use the model's field names as columns, limited to first 6 for readability
-    fields = list(model_class.model_fields.keys())
-    display_fields = fields[:6]
-
-    for field in display_fields:
-        table.add_column(field, style="cyan")
-
-    for row in models[:25]:
-        values = [str(getattr(row, f, ""))[:40] for f in display_fields]
-        table.add_row(*values)
-
-    console.print(table)
-    if len(models) > 25:
-        console.print(f"[dim]Showing 25 of {len(models)} rows.[/dim]")
+    run_ingest(model, file, command_name="item ingest")
 
 
 # --- Info (from cli.py inline) --------------------------------------------
@@ -212,9 +155,7 @@ def item_info(
         console.print("[red]Item not found or unsupported type[/red]")
         return
 
-    if csv_output:
-        rows = [media_metadata_to_csv(metadata)]
-        write_csv_to_output(rows, output)
+    if output_csv([metadata], media_metadata_to_csv, csv_output, output):
         return
 
     console.print(f"\n[bold]{metadata.title}[/bold]")
@@ -250,10 +191,7 @@ def rate_item(
     service = _get_server_service()
     result = service.rate(key, rating)
 
-    if result.success:
-        console.print(f"[green]✓ Set rating for item {result.key} to {rating}[/green]")
-    else:
-        console.print(f"[red]✗ Failed to set rating: {result.error}[/red]")
+    print_result(result, f"Set rating for item {result.key} to {rating}", "Failed to set rating")
 
 
 # --- Watch state (from server.py) -----------------------------------------
@@ -269,10 +207,7 @@ def mark_watched(key: str = typer.Argument(help="Plex rating key of the item")) 
     service = _get_server_service()
     result = service.scrobble(key)
 
-    if result.success:
-        console.print(f"[green]✓ Marked item {result.key} as watched[/green]")
-    else:
-        console.print(f"[red]✗ Failed to mark as watched: {result.error}[/red]")
+    print_result(result, f"Marked item {result.key} as watched", "Failed to mark as watched")
 
 
 @item_app.command(name="unwatch")
@@ -285,10 +220,7 @@ def mark_unwatched(key: str = typer.Argument(help="Plex rating key of the item")
     service = _get_server_service()
     result = service.unscrobble(key)
 
-    if result.success:
-        console.print(f"[green]✓ Marked item {result.key} as unwatched[/green]")
-    else:
-        console.print(f"[red]✗ Failed to mark as unwatched: {result.error}[/red]")
+    print_result(result, f"Marked item {result.key} as unwatched", "Failed to mark as unwatched")
 
 
 # --- Delete (from server.py) ----------------------------------------------
@@ -306,17 +238,12 @@ def delete_item(
     Example:
         plexctl item delete 12345 --yes
     """
-    if not confirm:
-        console.print(f"[yellow]Will delete item {key}. Use --yes to confirm.[/yellow]")
-        raise typer.Exit(code=1)
+    require_confirm(confirm, f"delete item {key}")
 
     service = _get_server_service()
     result = service.delete_item(key)
 
-    if result.success:
-        console.print(f"[green]✓ Deleted item {result.key}[/green]")
-    else:
-        console.print(f"[red]✗ Failed to delete: {result.error}[/red]")
+    print_result(result, f"Deleted item {result.key}", "Failed to delete")
 
 
 # --- Matches (from fixes.py) ----------------------------------------------
@@ -445,9 +372,7 @@ def get_item(
         console.print(f"[red]No item found with key {key}[/red]")
         raise typer.Exit(code=1)
 
-    if csv_output:
-        rows = [search_result_to_csv(result)]
-        write_csv_to_output(rows, output)
+    if output_csv([result], search_result_to_csv, csv_output, output):
         return
 
     media_type_str = result.media_type.value if result.media_type else "unknown"
@@ -500,26 +425,15 @@ def search_advanced(
         console.print(f"[yellow]No results found for '{query}'[/yellow]")
         return
 
-    if csv_output:
-        rows = [search_result_to_csv(r) for r in results]
-        write_csv_to_output(rows, output)
+    if output_csv(results, search_result_to_csv, csv_output, output):
         return
 
-    table = Table(title=f"Advanced Search: {query}")
-    table.add_column("Key", style="cyan", justify="right")
-    table.add_column("Title", style="green")
-    table.add_column("Type", style="yellow")
-    table.add_column("Year", style="magenta", justify="right")
-    table.add_column("Rating", style="blue", justify="right")
-
-    for item in results:
-        table.add_row(
-            item.key,
-            item.title or "Unknown",
-            item.media_type.value if item.media_type else "-",
-            str(item.year) if item.year else "-",
-            f"{item.rating:.1f}" if item.rating else "-",
-        )
+    table = media_results_table(
+        f"Advanced Search: {query}",
+        results,
+        extra_header="Rating",
+        extra_accessor=lambda i: f"{i.rating:.1f}" if i.rating else "-",
+    )
     console.print(table)
     console.print(f"[dim]Found {len(results)} results[/dim]")
 
@@ -544,25 +458,10 @@ def search_by_actor(
         console.print(f"[yellow]No results found for actor '{actor}'[/yellow]")
         return
 
-    if csv_output:
-        rows = [search_result_to_csv(r) for r in results]
-        write_csv_to_output(rows, output)
+    if output_csv(results, search_result_to_csv, csv_output, output):
         return
 
-    table = Table(title=f"Actor: {actor}")
-    table.add_column("Key", style="cyan", justify="right")
-    table.add_column("Title", style="green")
-    table.add_column("Type", style="yellow")
-    table.add_column("Year", style="magenta", justify="right")
-
-    for item in results:
-        table.add_row(
-            item.key,
-            item.title or "Unknown",
-            item.media_type.value if item.media_type else "-",
-            str(item.year) if item.year else "-",
-        )
-
+    table = media_results_table(f"Actor: {actor}", results)
     console.print(table)
     console.print(f"[dim]Found {len(results)} results[/dim]")
 
@@ -590,25 +489,10 @@ def search_by_director(
         console.print(f"[yellow]No results found for director '{director}'[/yellow]")
         return
 
-    if csv_output:
-        rows = [search_result_to_csv(r) for r in results]
-        write_csv_to_output(rows, output)
+    if output_csv(results, search_result_to_csv, csv_output, output):
         return
 
-    table = Table(title=f"Director: {director}")
-    table.add_column("Key", style="cyan", justify="right")
-    table.add_column("Title", style="green")
-    table.add_column("Type", style="yellow")
-    table.add_column("Year", style="magenta", justify="right")
-
-    for item in results:
-        table.add_row(
-            item.key,
-            item.title or "Unknown",
-            item.media_type.value if item.media_type else "-",
-            str(item.year) if item.year else "-",
-        )
-
+    table = media_results_table(f"Director: {director}", results)
     console.print(table)
     console.print(f"[dim]Found {len(results)} results[/dim]")
 
@@ -636,25 +520,10 @@ def search_by_genre(
         console.print(f"[yellow]No results found for genre '{genre}'[/yellow]")
         return
 
-    if csv_output:
-        rows = [search_result_to_csv(r) for r in results]
-        write_csv_to_output(rows, output)
+    if output_csv(results, search_result_to_csv, csv_output, output):
         return
 
-    table = Table(title=f"Genre: {genre}")
-    table.add_column("Key", style="cyan", justify="right")
-    table.add_column("Title", style="green")
-    table.add_column("Type", style="yellow")
-    table.add_column("Year", style="magenta", justify="right")
-
-    for item in results:
-        table.add_row(
-            item.key,
-            item.title or "Unknown",
-            item.media_type.value if item.media_type else "-",
-            str(item.year) if item.year else "-",
-        )
-
+    table = media_results_table(f"Genre: {genre}", results)
     console.print(table)
     console.print(f"[dim]Found {len(results)} results[/dim]")
 
@@ -690,25 +559,10 @@ def search_by_title(
         console.print(f"[yellow]No results found for '{query}'[/yellow]")
         return
 
-    if csv_output:
-        rows = [search_result_to_csv(r) for r in results]
-        write_csv_to_output(rows, output)
+    if output_csv(results, search_result_to_csv, csv_output, output):
         return
 
-    table = Table(title=f"Title Search: {query}")
-    table.add_column("Key", style="cyan", justify="right")
-    table.add_column("Title", style="green")
-    table.add_column("Type", style="yellow")
-    table.add_column("Year", style="magenta", justify="right")
-
-    for item in results:
-        table.add_row(
-            item.key,
-            item.title or "Unknown",
-            item.media_type.value if item.media_type else "-",
-            str(item.year) if item.year else "-",
-        )
-
+    table = media_results_table(f"Title Search: {query}", results)
     console.print(table)
     console.print(f"[dim]Found {len(results)} results[/dim]")
 
@@ -736,9 +590,7 @@ def search_by_year(
         console.print(f"[yellow]No results found for year {year}[/yellow]")
         return
 
-    if csv_output:
-        rows = [search_result_to_csv(r) for r in results]
-        write_csv_to_output(rows, output)
+    if output_csv(results, search_result_to_csv, csv_output, output):
         return
 
     table = Table(title=f"Year: {year}")
@@ -782,27 +634,15 @@ def find_similar(
         console.print(f"[yellow]No similar items found for key {key}[/yellow]")
         return
 
-    if csv_output:
-        rows = [similar_media_to_csv(m) for m in similar]
-        write_csv_to_output(rows, output)
+    if output_csv(similar, similar_media_to_csv, csv_output, output):
         return
 
-    table = Table(title=f"Similar to {key}")
-    table.add_column("Key", style="cyan", justify="right")
-    table.add_column("Title", style="green")
-    table.add_column("Type", style="yellow")
-    table.add_column("Year", style="magenta", justify="right")
-    table.add_column("Match %", style="blue", justify="right")
-
-    for item in similar:
-        table.add_row(
-            item.key,
-            item.title or "Unknown",
-            item.media_type.value if item.media_type else "-",
-            str(item.year) if item.year else "-",
-            f"{item.similarity}%" if item.similarity is not None else "-",
-        )
-
+    table = media_results_table(
+        f"Similar to {key}",
+        similar,
+        extra_header="Match %",
+        extra_accessor=lambda i: f"{i.similarity}%" if i.similarity is not None else "-",
+    )
     console.print(table)
     console.print(f"[dim]Found {len(similar)} similar items[/dim]")
 
@@ -834,27 +674,15 @@ def search_tmdb(
         console.print(f"[yellow]No TMDB results found for '{query}'[/yellow]")
         return
 
-    if csv_output:
-        rows = [search_result_to_csv(r) for r in results]
-        write_csv_to_output(rows, output)
+    if output_csv(results, search_result_to_csv, csv_output, output):
         return
 
-    table = Table(title=f"TMDB Search: {query}")
-    table.add_column("Key", style="cyan", justify="right")
-    table.add_column("Title", style="green")
-    table.add_column("Type", style="yellow")
-    table.add_column("Year", style="magenta", justify="right")
-    table.add_column("Section", style="blue")
-
-    for item in results:
-        table.add_row(
-            item.key,
-            item.title or "Unknown",
-            item.media_type.value if item.media_type else "-",
-            str(item.year) if item.year else "-",
-            item.section_title or "-",
-        )
-
+    table = media_results_table(
+        f"TMDB Search: {query}",
+        results,
+        extra_header="Section",
+        extra_accessor=lambda i: i.section_title or "-",
+    )
     console.print(table)
     console.print(f"[dim]Found {len(results)} results[/dim]")
 
@@ -1025,9 +853,7 @@ def search_subtitles(
         console.print(f"[yellow]{msg}[/yellow]")
         return
 
-    if csv_output:
-        rows = [subtitle_stream_to_csv(r) for r in results]
-        write_csv_to_output(rows, output)
+    if output_csv(results, subtitle_stream_to_csv, csv_output, output):
         return
 
     table = Table(title=f"Subtitles for item {key}")
@@ -1163,12 +989,11 @@ def set_item_progress(
     service = _get_server_service()
     result = service.set_progress(rating_key, time_ms, state)
 
-    if result.success:
-        console.print(
-            f"[green]✓ Set progress for item {result.key} " f"to {time_ms}ms ({state})[/green]"
-        )
-    else:
-        console.print(f"[red]✗ Failed to set progress: {result.error}[/red]")
+    print_result(
+        result,
+        f"Set progress for item {result.key} to {time_ms}ms ({state})",
+        "Failed to set progress",
+    )
 
 
 @item_app.command(name="merge")
@@ -1186,12 +1011,7 @@ def merge_items(
     Example:
         plexctl item merge 12345 67890 54321 --yes
     """
-    if not confirm:
-        console.print(
-            f"[yellow]Will merge {len(sources)} item(s) into {target}. "
-            "Use --yes to confirm.[/yellow]"
-        )
-        raise typer.Exit(code=1)
+    require_confirm(confirm, f"merge {len(sources)} item(s) into {target}")
 
     service = _get_server_service()
     try:
@@ -1200,7 +1020,4 @@ def merge_items(
         console.print(f"[red]✗ {exc}[/red]")
         raise typer.Exit(code=1) from None
 
-    if result.success:
-        console.print(f"[green]✓ Merged {len(sources)} item(s) into {result.key}[/green]")
-    else:
-        console.print(f"[red]✗ Failed to merge: {result.error}[/red]")
+    print_result(result, f"Merged {len(sources)} item(s) into {result.key}", "Failed to merge")

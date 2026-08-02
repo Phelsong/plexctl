@@ -21,12 +21,12 @@ Examples:
 """
 
 import typer
-from pydantic import BaseModel
 from rich.console import Console
 from rich.table import Table
 from rich.tree import Tree
 
 from plexctl.client import PlexClient
+from plexctl.commands._helpers import if_empty_print, output_csv, require_section_key
 from plexctl.config import load_config
 from plexctl.converters import media_metadata_to_csv, media_tree_item_to_csv
 from plexctl.csv_utils import write_csv_to_output
@@ -181,35 +181,25 @@ def _list_shows(
     service = _get_metadata_service()
     all_shows = service.get_all_shows(section)
 
-    if not all_shows:
-        console.print(f"[dim]No shows found in section '{section}'[/dim]")
+    if if_empty_print(all_shows, f"No shows found in section '{section}'"):
         return
 
     if tree:
         tree_service = _get_tree_service()
-        section_key = tree_service.resolve_section_key(section)
-        if section_key is None:
-            console.print(f"[red]Section not found: {section}[/red]")
-            console.print("[dim]Use 'plexctl library list' to see available sections.[/dim]")
-            raise typer.Exit(code=1)
+        section_key = require_section_key(tree_service, section)
 
         items = tree_service.get_section_tree(section_key, media_type="show")
-        if not items:
-            console.print(f"[dim]No shows found in section '{section}'[/dim]")
+        if if_empty_print(items, f"No shows found in section '{section}'"):
             return
 
-        if csv_output:
-            rows = [media_tree_item_to_csv(i) for i in _flatten_tree(items)]
-            write_csv_to_output(rows, output)
+        if output_csv(_flatten_tree(items), media_tree_item_to_csv, csv_output, output):
             return
 
         rich_tree = _render_tree(items)
         console.print(rich_tree)
         return
 
-    if csv_output:
-        rows: list[BaseModel] = [media_metadata_to_csv(s) for s in all_shows[:limit]]  # type: ignore[no-redef]
-        write_csv_to_output(rows, output)
+    if output_csv(all_shows[:limit], media_metadata_to_csv, csv_output, output):
         return
 
     table = Table(title=f"TV Shows in {section}")
@@ -299,22 +289,14 @@ def shows_tree(
         plexctl shows tree -s "Anime" --type show
     """
     service = _get_tree_service()
-    section_key = service.resolve_section_key(section)
-
-    if section_key is None:
-        console.print(f"[red]Section not found: {section}[/red]")
-        console.print("[dim]Use 'plexctl library list' to see available sections.[/dim]")
-        raise typer.Exit(code=1)
+    section_key = require_section_key(service, section)
 
     items = service.get_section_tree(section_key, media_type=media_type)
 
-    if not items:
-        console.print(f"[dim]No items found in section '{section}'[/dim]")
+    if if_empty_print(items, f"No items found in section '{section}'"):
         return
 
-    if csv_output:
-        rows = [media_tree_item_to_csv(i) for i in _flatten_tree(items)]
-        write_csv_to_output(rows, output)
+    if output_csv(_flatten_tree(items), media_tree_item_to_csv, csv_output, output):
         return
 
     rich_tree = Tree(f"[bold]Section {section}[/bold]")

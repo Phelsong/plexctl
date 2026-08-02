@@ -16,15 +16,14 @@ Examples:
 """
 
 import typer
-from pydantic import BaseModel
 from rich.console import Console
 from rich.table import Table
 from rich.tree import Tree
 
 from plexctl.client import PlexClient
+from plexctl.commands._helpers import if_empty_print, output_csv, require_section_key
 from plexctl.config import load_config
-from plexctl.converters import photo_album_to_csv, photo_info_to_csv
-from plexctl.csv_utils import write_csv_to_output
+from plexctl.converters import media_tree_item_to_csv, photo_album_to_csv, photo_info_to_csv
 from plexctl.models import PhotoAlbumInfo, PhotoInfo
 from plexctl.options import CsvFlag, OutputFile
 from plexctl.services.photos import PhotoService
@@ -126,28 +125,18 @@ def photos_default(
     service = _get_photo_service()
     albums = service.list_albums(section_title=section)
 
-    if not albums:
-        console.print(f"[dim]No photo albums found in section '{section}'[/dim]")
+    if if_empty_print(albums, f"No photo albums found in section '{section}'"):
         return
 
     if tree:
         tree_service = _get_tree_service()
-        section_key = tree_service.resolve_section_key(section)
-        if section_key is None:
-            console.print(f"[red]Section not found: {section}[/red]")
-            console.print("[dim]Use 'plexctl library list' to see available sections.[/dim]")
-            raise typer.Exit(code=1)
+        section_key = require_section_key(tree_service, section)
 
         items = tree_service.get_section_tree(section_key, media_type="photo")
-        if not items:
-            console.print(f"[dim]No items found in section '{section}'[/dim]")
+        if if_empty_print(items, f"No items found in section '{section}'"):
             return
 
-        from plexctl.converters import media_tree_item_to_csv
-
-        if csv_output:
-            rows = [media_tree_item_to_csv(i) for i in items]
-            write_csv_to_output(rows, output)
+        if output_csv(items, media_tree_item_to_csv, csv_output, output):
             return
 
         rich_tree = Tree(f"[bold]{section}[/bold]")
@@ -161,9 +150,7 @@ def photos_default(
         console.print(rich_tree)
         return
 
-    if csv_output:
-        rows: list[BaseModel] = [photo_album_to_csv(a) for a in albums[:limit]]  # type: ignore[no-redef]
-        write_csv_to_output(rows, output)
+    if output_csv(albums[:limit], photo_album_to_csv, csv_output, output):
         return
 
     _render_album_table(albums[:limit], section)
@@ -195,16 +182,15 @@ def photos_list(
     service = _get_photo_service()
     photos = service.list_photos(section_title=section, album_key=album_key, limit=limit)
 
-    if not photos:
-        if album_key:
-            console.print(f"[dim]No photos found in album '{album_key}'[/dim]")
-        else:
-            console.print(f"[dim]No photos found in section '{section}'[/dim]")
+    empty_msg = (
+        f"No photos found in album '{album_key}'"
+        if album_key
+        else f"No photos found in section '{section}'"
+    )
+    if if_empty_print(photos, empty_msg):
         return
 
-    if csv_output:
-        rows = [photo_info_to_csv(p) for p in photos[:limit]]
-        write_csv_to_output(rows, output)
+    if output_csv(photos[:limit], photo_info_to_csv, csv_output, output):
         return
 
     _render_photo_table(photos[:limit])
@@ -232,24 +218,14 @@ def photos_tree(
         plexctl photos tree -s 4
     """
     tree_service = _get_tree_service()
-    section_key = tree_service.resolve_section_key(section)
-
-    if section_key is None:
-        console.print(f"[red]Section not found: {section}[/red]")
-        console.print("[dim]Use 'plexctl library list' to see available sections.[/dim]")
-        raise typer.Exit(code=1)
+    section_key = require_section_key(tree_service, section)
 
     items = tree_service.get_section_tree(section_key, media_type="photo")
 
-    if not items:
-        console.print(f"[dim]No items found in section '{section}'[/dim]")
+    if if_empty_print(items, f"No items found in section '{section}'"):
         return
 
-    from plexctl.converters import media_tree_item_to_csv
-
-    if csv_output:
-        rows = [media_tree_item_to_csv(i) for i in items]
-        write_csv_to_output(rows, output)
+    if output_csv(items, media_tree_item_to_csv, csv_output, output):
         return
 
     rich_tree = Tree(f"[bold]Section {section}[/bold]")
@@ -283,13 +259,10 @@ def photos_recently_added(
     service = _get_photo_service()
     albums = service.recently_added(section_title=section, maxresults=limit)
 
-    if not albums:
-        console.print(f"[dim]No recently added albums in section '{section}'[/dim]")
+    if if_empty_print(albums, f"No recently added albums in section '{section}'"):
         return
 
-    if csv_output:
-        rows = [photo_album_to_csv(a) for a in albums]
-        write_csv_to_output(rows, output)
+    if output_csv(albums, photo_album_to_csv, csv_output, output):
         return
 
     _render_album_table(albums, section)

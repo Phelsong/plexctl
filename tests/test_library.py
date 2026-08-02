@@ -5,7 +5,6 @@ from __future__ import annotations
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from plexctl.models import (
     CollectionInfo,
     CollectionMetadata,
@@ -432,77 +431,6 @@ class TestDeleteSection:
             service = LibraryService(mock_client)
             service.delete_section("5")
         mock_http.delete.assert_called_once_with("/library/sections/5")
-
-
-class TestSectionLocations:
-    """Tests for LibraryService.section_locations."""
-
-    def test_section_locations_returns_paths(self) -> None:
-        """section_locations parses location response."""
-        mock_client = MagicMock()
-        mock_http = MagicMock()
-        mock_http.get.return_value = {
-            "MediaContainer": {
-                "Location": [{"id": 1, "path": "/data/anime"}, {"id": 2, "path": "/data/anime2"}]
-            }
-        }
-
-        with patch("plexctl.client.PlexHTTPClient", return_value=mock_http):
-            service = LibraryService(mock_client)
-            locations = service.section_locations(2)
-
-        assert len(locations) == 2
-        assert locations[0].id == 1
-        assert locations[0].path == "/data/anime"
-        assert locations[1].id == 2
-        assert locations[1].path == "/data/anime2"
-
-    def test_section_locations_empty(self) -> None:
-        """section_locations returns empty list when no locations."""
-        mock_client = MagicMock()
-        mock_http = MagicMock()
-        mock_http.get.return_value = {"MediaContainer": {"Location": []}}
-
-        with patch("plexctl.client.PlexHTTPClient", return_value=mock_http):
-            service = LibraryService(mock_client)
-            locations = service.section_locations(1)
-        assert locations == []
-
-    def test_section_locations_none_response(self) -> None:
-        """section_locations returns empty list when API returns None."""
-        mock_client = MagicMock()
-        mock_http = MagicMock()
-        mock_http.get.return_value = None
-
-        with patch("plexctl.client.PlexHTTPClient", return_value=mock_http):
-            service = LibraryService(mock_client)
-            locations = service.section_locations(1)
-        assert locations == []
-
-    def test_section_locations_single_dict(self) -> None:
-        """section_locations handles single dict response."""
-        mock_client = MagicMock()
-        mock_http = MagicMock()
-        mock_http.get.return_value = {
-            "MediaContainer": {"Location": {"id": 1, "path": "/data/movies"}}
-        }
-
-        with patch("plexctl.client.PlexHTTPClient", return_value=mock_http):
-            service = LibraryService(mock_client)
-            locations = service.section_locations(1)
-        assert len(locations) == 1
-        assert locations[0].path == "/data/movies"
-
-    def test_section_locations_calls_correct_endpoint(self) -> None:
-        """section_locations calls the right endpoint."""
-        mock_client = MagicMock()
-        mock_http = MagicMock()
-        mock_http.get.return_value = {"MediaContainer": {"Location": []}}
-
-        with patch("plexctl.client.PlexHTTPClient", return_value=mock_http):
-            service = LibraryService(mock_client)
-            service.section_locations(5)
-        mock_http.get.assert_called_once_with("/library/sections/5")
 
 
 # --- Collection tests ----------------------------------------------------------

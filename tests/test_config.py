@@ -8,14 +8,13 @@ from unittest.mock import patch
 
 from plexctl.config import (
     PlexConfig,
-    ShokoConfig,
     _check_permissions,
     _read_toml_config,
     config_dir,
     config_path,
     load_config,
-    load_shoko_config,
 )
+from plexctl.plugins.shoko.config import ShokoConfig, load_shoko_config
 
 
 def test_config_defaults() -> None:

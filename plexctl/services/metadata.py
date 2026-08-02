@@ -16,7 +16,6 @@ if TYPE_CHECKING:
 
 from plexctl.models import (
     PLEX_MEDIA,
-    BatchEditResult,
     CollectionInfo,
     LibrarySection,
     MediaMetadata,
@@ -181,29 +180,6 @@ class MetadataService:
         except Exception:
             msg = f"Unsupported media type: {type(item).__name__}"
             raise ValueError(msg)
-
-    def batch_edit(
-        self, rating_keys: list[str | int], edits: list[MetadataEdit]
-    ) -> BatchEditResult:
-        """Apply the same edits to multiple items.
-
-        Args:
-            rating_keys: List of Plex rating keys.
-            edits: List of field-value pairs to apply to each item.
-
-        Returns:
-            Summary of successful and failed edits.
-        """
-        result = BatchEditResult(total=len(rating_keys))
-        for key in rating_keys:
-            try:
-                self.edit_metadata(key, edits)
-                result.updated += 1
-            except Exception as exc:
-                result.failed += 1
-                result.errors[str(key)] = str(exc)
-                logger.warning("Failed to edit item %s: %s", key, exc)
-        return result
 
     # --- Tag operations -----------------------------------------------------
 

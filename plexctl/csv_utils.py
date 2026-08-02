@@ -168,11 +168,6 @@ def from_csv[T: BaseModel](model_class: type[T], csv_data: str | Path) -> list[T
 _MODEL_REGISTRY: dict[str, type[BaseModel]] = {}
 
 
-def register_model(name: str, model_class: type[BaseModel]) -> None:
-    """Register a model class for CSV ingest by name."""
-    _MODEL_REGISTRY[name] = model_class
-
-
 def get_model_class(name: str) -> type[BaseModel] | None:
     """Look up a registered model class by name."""
     return _MODEL_REGISTRY.get(name)
@@ -209,7 +204,6 @@ def _register_all_csv_models() -> None:
         CsvCollectionInfo,
         CsvCollectionMetadata,
         CsvCrcAuditResult,
-        CsvEpisodeDiagnostics,
         CsvFsDir,
         CsvLibraryLocation,
         CsvLibrarySection,
@@ -258,7 +252,6 @@ def _register_all_csv_models() -> None:
             "shoko_file": CsvShokoFile,
             "shoko_mismatch": CsvShokoMismatch,
             "shoko_episode": CsvShokoEpisode,
-            "episode_diagnostics": CsvEpisodeDiagnostics,
             "media_part_detail": CsvMediaPartDetail,
             "tmdb_search_result": CsvTmdbSearchResult,
             "fs_dir": CsvFsDir,

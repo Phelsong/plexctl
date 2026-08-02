@@ -12,7 +12,6 @@ from enum import IntEnum, StrEnum
 
 from plexapi.audio import Audio
 from plexapi.collection import Collection
-from plexapi.media import MediaTag
 from plexapi.photo import Photo
 from plexapi.playlist import Playlist as Plex_Playlist
 from plexapi.video import Video
@@ -257,22 +256,6 @@ class CollectionMetadata(BaseModel):
     art: str | None = None
     added_at: int | str | None = None
     updated_at: int | str | None = None
-
-
-class BatchEditResult(BaseModel):
-    """Result of a batch metadata edit operation.
-
-    Attributes:
-        total: Total items attempted.
-        updated: Successfully updated items.
-        failed: Items that failed to update.
-        errors: Mapping of item keys to error messages.
-    """
-
-    total: int = 0
-    updated: int = 0
-    failed: int = 0
-    errors: dict[str, str] = Field(default_factory=dict)
 
 
 # --- Diagnostic models ---------------------------------------------------
@@ -1191,18 +1174,6 @@ class CsvShokoEpisode(BaseModel):
     is_hidden: str = ""
 
 
-class CsvEpisodeDiagnostics(BaseModel):
-    """Flat CSV row for EpisodeDiagnostics."""
-
-    key: str
-    title: str = ""
-    season_number: str = ""
-    episode_number: str = ""
-    media_count: str = ""
-    has_unanalyzed: str = ""
-    file_details: str = ""
-
-
 class CsvMediaPartDetail(BaseModel):
     """Flat CSV row for MediaPartDetail."""
 
@@ -1477,45 +1448,6 @@ class TmdbOrdering(BaseModel):
     is_default: bool = False
     is_preferred: bool = False
     in_use: bool = False
-
-
-class TmdbOrderingSeason(BaseModel):
-    """A single season within a TMDB episode ordering.
-
-    Attributes:
-        season_id: TMDB season ID (used to fetch episodes for this season).
-        ordering_id: The ordering this season belongs to.
-        season_number: Season number (None for arc-based orderings).
-        title: Season/arc title (e.g. "East Blue Saga", "Romance Dawn").
-        episode_count: Number of episodes in this season.
-    """
-
-    season_id: str
-    ordering_id: str
-    season_number: int | None = None
-    title: str = ""
-    episode_count: int = 0
-
-
-class TmdbOrderingEpisode(BaseModel):
-    """An episode within a TMDB episode ordering season.
-
-    The ID (TMDB episode ID) is consistent across all orderings —
-    it's the join key for mapping episodes between orderings.
-
-    Attributes:
-        episode_id: TMDB episode ID (unique, consistent across orderings).
-        season_id: TMDB season ID this episode belongs to.
-        season_number: Season number within this ordering.
-        episode_number: Episode number within this season/ordering.
-        title: Episode title.
-    """
-
-    episode_id: int
-    season_id: str = ""
-    season_number: int | None = None
-    episode_number: int | None = None
-    title: str = ""
 
 
 # --- PlexMatch models ---------------------------------------------------
@@ -1808,17 +1740,6 @@ class CsvServerInfo(BaseModel):
     platform_version: str = ""
     server_name: str = ""
     owner: str = ""
-    product: str = ""
-
-
-class CsvServerIdentity(BaseModel):
-    """Flat CSV row for ServerIdentity."""
-
-    machineIdentifier: str = ""  # noqa: N815
-    version: str = ""
-    claimed: str = ""
-    size: str = ""
-
     product: str = ""
 
 

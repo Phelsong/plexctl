@@ -22,6 +22,7 @@ from rich.table import Table
 from rich.tree import Tree
 
 from plexctl.client import PlexClient
+from plexctl.commands._helpers import output_csv, print_batch_result, print_result, run_ingest
 from plexctl.config import load_config
 from plexctl.converters import (
     fs_dir_to_csv,
@@ -29,7 +30,6 @@ from plexctl.converters import (
     show_diagnostics_to_csv,
     triage_issue_to_csv,
 )
-from plexctl.csv_utils import from_csv, get_model_class, list_model_names, write_csv_to_output
 from plexctl.models import ReorgAction, TriageAction, TriageSeverity
 from plexctl.options import CsvFlag, OutputFile  # noqa: TC001
 from plexctl.services.diagnostics import DiagnosticService
@@ -283,9 +283,7 @@ def report(
         return
 
     # CSV output
-    if csv_output:
-        rows = [triage_issue_to_csv(i) for i in filtered]
-        write_csv_to_output(rows, output)
+    if output_csv(filtered, triage_issue_to_csv, csv_output, output):
         return
 
     # Print summary
@@ -357,14 +355,7 @@ def run_fix(
         console.print(f"[bold]Running batch analysis for section '{section}'...[/bold]")
         result = fix_service.batch_analyze(section, only_unanalyzed=True)
 
-        console.print(f"\n  Shows targeted: {result.total}")
-        console.print(f"  Succeeded:       [green]{result.succeeded}[/green]")
-        console.print(f"  Failed:          [red]{result.failed}[/red]")
-
-        if result.results:
-            console.print("\n[bold]Failures:[/bold]")
-            for r in result.results:
-                console.print(f"  [red]✗[/red] {r.title or r.key}: {r.error}")
+        print_batch_result(result)
 
         if result.succeeded > 0:
             console.print(
@@ -376,14 +367,7 @@ def run_fix(
         console.print(f"[bold]Running batch refresh for section '{section}'...[/bold]")
         result = fix_service.batch_refresh(section, only_unanalyzed=True)
 
-        console.print(f"\n  Shows targeted: {result.total}")
-        console.print(f"  Succeeded:       [green]{result.succeeded}[/green]")
-        console.print(f"  Failed:          [red]{result.failed}[/red]")
-
-        if result.results:
-            console.print("\n[bold]Failures:[/bold]")
-            for r in result.results:
-                console.print(f"  [red]✗[/red] {r.title or r.key}: {r.error}")
+        print_batch_result(result)
 
     else:
         console.print(f"[red]Unknown action '{action}'. Supported: analyze, refresh[/red]")
@@ -427,9 +411,7 @@ def diagnose_scan(
     if issues_only:
         shows = [s for s in shows if s.unanalyzed_episodes > 0 or s.multi_media_episodes > 0]
 
-    if csv_output:
-        rows = [show_diagnostics_to_csv(s) for s in shows]
-        write_csv_to_output(rows, output)
+    if output_csv(shows, show_diagnostics_to_csv, csv_output, output):
         return
 
     if not shows:
@@ -505,9 +487,7 @@ def diagnose_show(
     service = _get_diagnostic_service()
     result = service.diagnose_show(key, deep=deep)
 
-    if csv_output:
-        rows = [show_diagnostics_to_csv(result)]
-        write_csv_to_output(rows, output)
+    if output_csv([result], show_diagnostics_to_csv, csv_output, output):
         return
 
     console.print(f"\n[bold]{result.title}[/bold] (key={result.key})")
@@ -585,8 +565,7 @@ def diagnose_files(
 
     if csv_output:
         if result.file_details:
-            rows = [media_part_detail_to_csv(d) for d in result.file_details]
-            write_csv_to_output(rows, output)
+            output_csv(result.file_details, media_part_detail_to_csv, csv_output, output)
         return
 
     console.print(f"\n[bold]{result.title or 'Episode ' + result.key}[/bold]")
@@ -683,15 +662,7 @@ def batch_analyze(
     service = _get_fix_service()
     result = service.batch_analyze(section, only_unanalyzed=only_unanalyzed)
 
-    console.print(f"\n[bold]Batch Analyze: {section}[/bold]")
-    console.print(f"  Shows targeted: {result.total}")
-    console.print(f"  Succeeded:      [green]{result.succeeded}[/green]")
-    console.print(f"  Failed:         [red]{result.failed}[/red]")
-
-    if result.results:
-        console.print("\n[bold]Failures:[/bold]")
-        for r in result.results:
-            console.print(f"  [red]✗[/red] {r.title or r.key}: {r.error}")
+    print_batch_result(result, title=f"Batch Analyze: {section}")
 
     if result.succeeded > 0:
         console.print(
@@ -714,15 +685,7 @@ def batch_refresh(
     service = _get_fix_service()
     result = service.batch_refresh(section, only_unanalyzed=only_unanalyzed)
 
-    console.print(f"\n[bold]Batch Refresh: {section}[/bold]")
-    console.print(f"  Shows targeted: {result.total}")
-    console.print(f"  Succeeded:      [green]{result.succeeded}[/green]")
-    console.print(f"  Failed:         [red]{result.failed}[/red]")
-
-    if result.results:
-        console.print("\n[bold]Failures:[/bold]")
-        for r in result.results:
-            console.print(f"  [red]✗[/red] {r.title or r.key}: {r.error}")
+    print_batch_result(result, title=f"Batch Refresh: {section}")
 
 
 @triage_app.command("refresh")
@@ -993,9 +956,8 @@ def fsck_scan(
     # CSV: output all directories as CSV
     if csv_output:
         all_dirs = result.orphan_dirs + result.grouped_dirs
-        rows = [fs_dir_to_csv(d) for d in all_dirs]
-        write_csv_to_output(rows, output)
-        return
+        if output_csv(all_dirs, fs_dir_to_csv, csv_output, output):
+            return
 
     # Multi-location shows
     if multi_loc and result.multi_location_shows:
@@ -1113,9 +1075,7 @@ def fsck_orphans(
     if with_files_only:
         orphans = [d for d in orphans if d.video_files > 0 or d.has_files]
 
-    if csv_output:
-        rows = [fs_dir_to_csv(d) for d in orphans]
-        write_csv_to_output(rows, output)
+    if output_csv(orphans, fs_dir_to_csv, csv_output, output):
         return
 
     if not orphans:
@@ -1174,9 +1134,7 @@ def fsck_grouped(
     service = _get_fs_service(path_map=pm)
     grouped = service.list_grouped(section)
 
-    if csv_output:
-        rows = [fs_dir_to_csv(d) for d in grouped]
-        write_csv_to_output(rows, output)
+    if output_csv(grouped, fs_dir_to_csv, csv_output, output):
         return
 
     if not grouped:
@@ -1496,55 +1454,7 @@ def ingest(
         plexctl triage ingest list
         plexctl triage ingest triage_issue triage_report.csv
     """
-    if model == "list":
-        names = list_model_names()
-        console.print("[bold]Available model names for ingest:[/bold]")
-        for name in names:
-            model_class = get_model_class(name)
-            field_count = len(model_class.model_fields) if model_class else 0
-            console.print(f"  {name} ({field_count} fields)")
-        return
-
-    if file is None:
-        console.print("[red]FILE argument is required when MODEL is not 'list'.[/red]")
-        raise typer.Exit(code=1)
-
-    model_class = get_model_class(model)
-    if model_class is None:
-        available = ", ".join(list_model_names())
-        console.print(f"[red]Unknown model: {model}[/red]")
-        console.print(f"[dim]Available models: {available}[/dim]")
-        raise typer.Exit(code=1)
-
-    csv_path = FilePath(file)
-    if not csv_path.exists():
-        console.print(f"[red]File not found: {file}[/red]")
-        raise typer.Exit(code=1)
-
-    try:
-        models = from_csv(model_class, csv_path)
-    except Exception as exc:
-        console.print(f"[red]Error parsing CSV: {exc}[/red]")
-        raise typer.Exit(code=1) from exc
-
-    console.print(f"[green]✓ Loaded {len(models)} {model} records from {file}[/green]")
-
-    # Show a summary table of the ingested data
-    table = Table(title=f"Ingested {model} ({len(models)} rows)")
-    # Use the model's field names as columns, limited to first 6 for readability
-    fields = list(model_class.model_fields.keys())
-    display_fields = fields[:6]
-
-    for field in display_fields:
-        table.add_column(field, style="cyan")
-
-    for row in models[:25]:
-        values = [str(getattr(row, f, ""))[:40] for f in display_fields]
-        table.add_row(*values)
-
-    console.print(table)
-    if len(models) > 25:
-        console.print(f"[dim]Showing 25 of {len(models)} rows.[/dim]")
+    run_ingest(model, file, command_name="triage ingest")
 
 
 # ===================================================================
@@ -1569,10 +1479,7 @@ def merge_items(
     service = _get_server_service()
     result = service.merge(target, list(sources))
 
-    if result.success:
-        console.print(f"[green]✓ Merged {len(sources)} items into {result.key}[/green]")
-    else:
-        console.print(f"[red]✗ Failed to merge: {result.error}[/red]")
+    print_result(result, f"Merged {len(sources)} items into {result.key}", "Failed to merge")
 
 
 @triage_app.command("empty-trash")
@@ -1589,7 +1496,4 @@ def empty_trash(
     service = _get_server_service()
     result = service.empty_trash(section_key)
 
-    if result.success:
-        console.print(f"[green]✓ Emptied trash for section {result.key}[/green]")
-    else:
-        console.print(f"[red]✗ Failed to empty trash: {result.error}[/red]")
+    print_result(result, f"Emptied trash for section {result.key}", "Failed to empty trash")

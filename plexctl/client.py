@@ -101,13 +101,6 @@ class PlexClient:
                 raise ConnectionError(msg) from exc
         return self._http_client
 
-    def reconnect(self) -> None:
-        """Force a fresh connection on next server access."""
-        self._server = None
-        if self._http_client is not None:
-            self._http_client.close()
-            self._http_client = None
-
     @property
     def is_connected(self) -> bool:
         """Check if a connection has been established."""

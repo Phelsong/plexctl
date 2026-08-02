@@ -10,9 +10,9 @@ from rich.console import Console
 from rich.table import Table
 
 from plexctl.client import PlexClient
+from plexctl.commands._helpers import if_empty_print, output_csv, require_confirm
 from plexctl.config import load_config
 from plexctl.converters import collection_info_to_csv, collection_metadata_to_csv
-from plexctl.csv_utils import write_csv_to_output
 from plexctl.options import CsvFlag, OutputFile
 from plexctl.services.library import LibraryService
 
@@ -46,14 +46,11 @@ def list_collections(
     section_key = int(section) if section else None
     colls = service.list_collections(section_key=section_key)
 
-    if not colls:
-        label = f" in section {section}" if section else ""
-        console.print(f"[dim]No collections found{label}.[/dim]")
+    label = f" in section {section}" if section else ""
+    if if_empty_print(colls, f"No collections found{label}."):
         return
 
-    if csv_output:
-        rows = [collection_info_to_csv(c) for c in colls]
-        write_csv_to_output(rows, output)
+    if output_csv(colls, collection_info_to_csv, csv_output, output):
         return
 
     table = Table(title="Collections")
@@ -85,9 +82,7 @@ def get_collection(
         console.print(f"[red]Collection not found: {key}[/red]")
         raise typer.Exit(code=1)
 
-    if csv_output:
-        rows = [collection_metadata_to_csv(coll)]
-        write_csv_to_output(rows, output)
+    if output_csv([coll], collection_metadata_to_csv, csv_output, output):
         return
 
     console.print(f"\n[bold]{coll.title}[/bold]")
@@ -166,9 +161,7 @@ def delete_collection(
     Example:
         plexctl library collections delete 12345 --yes
     """
-    if not confirm:
-        console.print(f"[yellow]Will delete collection {key}. Use --yes to confirm.[/yellow]")
-        raise typer.Exit(code=1)
+    require_confirm(confirm, f"delete collection {key}")
 
     service = _get_service()
     service.delete_collection(key)
@@ -223,12 +216,7 @@ def remove_from_collection(
     Example:
         plexctl library collections remove 12345 56789 --yes
     """
-    if not confirm:
-        console.print(
-            f"[yellow]Will remove {len(items)} item(s) from "
-            f"collection {key}. Use --yes to confirm.[/yellow]"
-        )
-        raise typer.Exit(code=1)
+    require_confirm(confirm, f"remove {len(items)} item(s) from collection {key}")
 
     service = _get_service()
     try:

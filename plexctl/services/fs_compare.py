@@ -354,12 +354,6 @@ class FsCompareService:
         result = self.compare_section(section_title, max_depth=max_depth, count_files=False)
         actions: list[ReorgAction] = []
 
-        # Action 1: Grouped directories — propose splitting subdirs to top-level.
-        # When a dir has both files and subdirs, ShokoRelay handles it by
-        # scanning each subdir independently. But this can cause issues when
-        # the subdirs are different seasons of the same show that should be
-        # grouped together. Moving subdirs to top-level eliminates the grouping
-        # risk and gives each series its own clean directory.
         for fs_dir in result.grouped_dirs:
             for subdir_name in fs_dir.subdirs:
                 src = f"{fs_dir.path}/{subdir_name}"
@@ -380,7 +374,6 @@ class FsCompareService:
                     )
                 )
 
-        # Action 2: Multi-location shows — flag for review.
         # These are shows where Shoko intentionally merged multiple AniDB
         # entries. The user needs to decide whether this is desired or not.
         # We can't automatically fix this — it requires Shoko config changes.
@@ -399,7 +392,6 @@ class FsCompareService:
                 )
             )
 
-        # Action 3: Orphans — categorize by risk.
         orphans_with_files = [d for d in result.orphan_dirs if d.has_files or d.video_files > 0]
         empty_orphans = [d for d in result.orphan_dirs if d.video_files == 0 and not d.has_files]
 
@@ -419,7 +411,6 @@ class FsCompareService:
                     )
                 )
             else:
-                # Flat orphan with files — likely an unmatched series.
                 actions.append(
                     ReorgAction(
                         action="review",

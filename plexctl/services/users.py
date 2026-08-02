@@ -2,7 +2,6 @@
 
 Provides high-level operations for:
 - Retrieving user accounts and authentication status
-- Getting server identity information
 - Viewing users associated with media items
 """
 
@@ -10,7 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from plexctl.models import ServerIdentity, UserAccount
+from plexctl.models import UserAccount
 
 if TYPE_CHECKING:
     from plexctl.client import PlexClient
@@ -25,27 +24,6 @@ class UserService:
 
     def __init__(self, client: PlexClient) -> None:
         self._client = client
-
-    def server_identity(self) -> ServerIdentity:
-        """Get Plex server identity information.
-
-        Returns:
-            ServerIdentity: Contains machineIdentifier, version, claimed status, and size.
-
-        Raises:
-            httpx.HTTPStatusError: If the API request fails.
-        """
-        response = self._client.server.get("/identity")  # type: ignore[attr-defined]
-        data = response.json()
-
-        # Parse identity response from MediaContainer wrapper
-        container = data.get("MediaContainer", {})
-        return ServerIdentity(
-            machineIdentifier=container.get("machineIdentifier", ""),
-            version=container.get("version", ""),
-            claimed=container.get("claimed", False),
-            size=container.get("size", 0),
-        )
 
     def media_users(self, media_key: int | str) -> list[UserAccount]:
         """Get users who have played or interacted with a specific media item.

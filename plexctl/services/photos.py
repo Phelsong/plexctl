@@ -94,24 +94,6 @@ class PhotoService:
             photos = section.search(libtype="photo", limit=limit or 9999)
         return [self._photo_to_info(p) for p in photos]
 
-    def get_photo(self, rating_key: str | int) -> PhotoInfo | None:
-        """Get photo details by rating key.
-
-        Args:
-            rating_key: Plex rating key for the photo.
-
-        Returns:
-            PhotoInfo if found, None otherwise.
-        """
-        server = self._client.server
-        item = server.fetchItem(int(rating_key))  # type: ignore[no-untyped-call]
-        if item is None:
-            return None
-        item_type = getattr(item, "type", None)
-        if item_type != "photo":
-            return None
-        return self._photo_to_info(item, detailed=True)
-
     def recently_added(
         self, section_title: str = "Photos", maxresults: int = 50
     ) -> list[PhotoAlbumInfo]:

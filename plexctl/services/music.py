@@ -7,6 +7,7 @@ libraries: artists, albums, and tracks via plexapi.
 from __future__ import annotations
 
 import logging
+from datetime import date, datetime
 from typing import TYPE_CHECKING
 
 from plexctl.models import AlbumInfo, ArtistInfo, TrackInfo
@@ -38,6 +39,21 @@ def _extract_tag(value: list[object] | object | None) -> str | None:
     return str(value)
 
 
+def _str_date(value: object | None) -> str | None:
+    """Coerce a plexapi date/datetime attribute to a string.
+
+    Plexapi returns ``datetime`` objects for ``originallyAvailableAt``;
+    our flat models store dates as strings. Returns the ISO date
+    (``YYYY-MM-DD``) for date/datetime values, ``str(value)`` otherwise,
+    and ``None`` for falsy input so the model default applies.
+    """
+    if not value:
+        return None
+    if isinstance(value, datetime | date):
+        return value.isoformat()
+    return str(value)
+
+
 class MusicService:
     """Service for Plex music library operations.
 
@@ -63,17 +79,6 @@ class MusicService:
         artists = section.search(libtype="artist", limit=max_results)
         return [self._artist_to_info(a) for a in artists]
 
-    def get_artist(self, rating_key: str | int) -> ArtistInfo | None:
-        """Get artist details by rating key.
-
-        Returns None if the item is not found or is not an artist.
-        """
-        server = self._client.server
-        item = server.fetchItem(int(rating_key))  # type: ignore[no-untyped-call]
-        if item and item.type == "artist":
-            return self._artist_to_info(item, detailed=True)
-        return None
-
     def list_albums(
         self,
         section_title: str = "Music",
@@ -90,17 +95,6 @@ class MusicService:
             max_results = limit or 9999
             albums = section.search(libtype="album", limit=max_results)
         return [self._album_to_info(a) for a in albums]
-
-    def get_album(self, rating_key: str | int) -> AlbumInfo | None:
-        """Get album details by rating key.
-
-        Returns None if the item is not found or is not an album.
-        """
-        server = self._client.server
-        item = server.fetchItem(int(rating_key))  # type: ignore[no-untyped-call]
-        if item and item.type == "album":
-            return self._album_to_info(item, detailed=True)
-        return None
 
     def list_tracks(
         self,
@@ -122,17 +116,6 @@ class MusicService:
             max_results = limit or 9999
             tracks = section.search(libtype="track", limit=max_results)
         return [self._track_to_info(t) for t in tracks]
-
-    def get_track(self, rating_key: str | int) -> TrackInfo | None:
-        """Get track details by rating key.
-
-        Returns None if the item is not found or is not a track.
-        """
-        server = self._client.server
-        item = server.fetchItem(int(rating_key))  # type: ignore[no-untyped-call]
-        if item and item.type == "track":
-            return self._track_to_info(item, detailed=True)
-        return None
 
     def recently_added(
         self, section_title: str = "Music", maxresults: int = 50, libtype: str | None = None
@@ -203,7 +186,7 @@ class MusicService:
             track_count=len(album.tracks()) if detailed else 0,  # type: ignore[no-untyped-call]
             rating=album.rating,
             user_rating=getattr(album, "userRating", None),
-            originally_available=getattr(album, "originallyAvailableAt", None),
+            originally_available=_str_date(getattr(album, "originallyAvailableAt", None)),
         )
         return info
 

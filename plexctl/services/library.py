@@ -17,13 +17,7 @@ from typing import TYPE_CHECKING, Any
 
 from rich.progress import track
 
-from plexctl.models import (
-    CollectionInfo,
-    CollectionMetadata,
-    LibraryLocation,
-    LibrarySection,
-    MediaType,
-)
+from plexctl.models import CollectionInfo, CollectionMetadata, LibrarySection, MediaType
 
 if TYPE_CHECKING:
     from plexctl.client import PlexClient
@@ -268,33 +262,6 @@ class LibraryService:
         key = str(section_key)
         http = PlexHTTPClient(self._client)
         http.delete(f"/library/sections/{key}")
-
-    def section_locations(self, section_key: str | int) -> list[LibraryLocation]:
-        """List filesystem locations for a library section.
-
-        Args:
-            section_key: The section key.
-
-        Returns:
-            List of LibraryLocation for each path in the section.
-        """
-        from plexctl.client import PlexHTTPClient
-
-        key = str(section_key)
-        http = PlexHTTPClient(self._client)
-        data = http.get(f"/library/sections/{key}")
-        if data is None:
-            return []
-
-        container = data.get("MediaContainer", data)
-        locations = container.get("Location", [])
-        if isinstance(locations, dict):
-            locations = [locations]
-
-        return [
-            LibraryLocation(id=int(loc.get("id", 0)), path=loc.get("path", ""))
-            for loc in locations
-        ]
 
     # --- Collections --------------------------------------------------------
 

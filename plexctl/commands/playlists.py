@@ -19,9 +19,9 @@ from rich.console import Console
 from rich.table import Table
 
 from plexctl.client import PlexClient
+from plexctl.commands._helpers import if_empty_print, output_csv, require_confirm
 from plexctl.config import load_config
 from plexctl.converters import playlist_item_to_csv, playlist_to_csv, smart_playlist_to_csv
-from plexctl.csv_utils import write_csv_to_output
 from plexctl.models import PlaylistType, SmartPlaylistFilter
 from plexctl.options import CsvFlag, OutputFile
 from plexctl.services.playlists import PlaylistService, SmartPlaylistService
@@ -113,14 +113,11 @@ def list_playlists(
     section_key = int(section) if section else None
     playlists = service.list_playlists(section_id=section_key)
 
-    if not playlists:
-        label = f" in section {section}" if section else ""
-        console.print(f"[dim]No regular playlists found{label}.[/dim]")
+    label = f" in section {section}" if section else ""
+    if if_empty_print(playlists, f"No regular playlists found{label}."):
         return
 
-    if csv_output:
-        rows = [playlist_to_csv(p) for p in playlists]
-        write_csv_to_output(rows, output)
+    if output_csv(playlists, playlist_to_csv, csv_output, output):
         return
 
     table = Table(title="Playlists")
@@ -161,9 +158,7 @@ def get_playlist(
         console.print(f"[red]Playlist not found: {key}[/red]")
         raise typer.Exit(code=1)
 
-    if csv_output:
-        rows = [playlist_to_csv(playlist)]
-        write_csv_to_output(rows, output)
+    if output_csv([playlist], playlist_to_csv, csv_output, output):
         return
 
     ptype = playlist.playlist_type.value if playlist.playlist_type else "unknown"
@@ -259,9 +254,7 @@ def delete_playlist(
     Example:
         plexctl playlists delete 12345 --yes
     """
-    if not confirm:
-        console.print(f"[yellow]Will delete playlist {key}. Use --yes to confirm.[/yellow]")
-        raise typer.Exit(code=1)
+    require_confirm(confirm, f"delete playlist {key}")
 
     service = _get_service()
     service.delete_playlist(key)
@@ -288,13 +281,10 @@ def list_playlist_items(
     service = _get_service()
     items = service.get_playlist_items(key, limit=limit)
 
-    if not items:
-        console.print(f"[dim]No items found in playlist {key}.[/dim]")
+    if if_empty_print(items, f"No items found in playlist {key}."):
         return
 
-    if csv_output:
-        rows = [playlist_item_to_csv(item) for item in items]
-        write_csv_to_output(rows, output)
+    if output_csv(items, playlist_item_to_csv, csv_output, output):
         return
 
     table = Table(title=f"Playlist Items ({key})")
@@ -363,12 +353,7 @@ def remove_from_playlist(
         console.print("[yellow]No items specified.[/yellow]")
         raise typer.Exit(code=1)
 
-    if not confirm:
-        console.print(
-            f"[yellow]Will remove {len(items)} item(s) from "
-            f"playlist {key}. Use --yes to confirm.[/yellow]"
-        )
-        raise typer.Exit(code=1)
+    require_confirm(confirm, f"remove {len(items)} item(s) from playlist {key}")
 
     service = _get_service()
     try:
@@ -473,9 +458,7 @@ def get_smart_playlist(
         console.print(f"[red]Smart playlist not found: {key}[/red]")
         raise typer.Exit(code=1)
 
-    if csv_output:
-        rows = [smart_playlist_to_csv(playlist)]
-        write_csv_to_output(rows, output)
+    if output_csv([playlist], smart_playlist_to_csv, csv_output, output):
         return
 
     ptype = playlist.playlist_type.value if playlist.playlist_type else "unknown"
@@ -514,14 +497,11 @@ def list_smart_playlists(
     section_key = int(section) if section else None
     playlists = service.list_smart_playlists(section_id=section_key)
 
-    if not playlists:
-        label = f" in section {section}" if section else ""
-        console.print(f"[dim]No smart playlists found{label}.[/dim]")
+    label = f" in section {section}" if section else ""
+    if if_empty_print(playlists, f"No smart playlists found{label}."):
         return
 
-    if csv_output:
-        rows = [smart_playlist_to_csv(p) for p in playlists]
-        write_csv_to_output(rows, output)
+    if output_csv(playlists, smart_playlist_to_csv, csv_output, output):
         return
 
     table = Table(title="Smart Playlists")
@@ -609,9 +589,7 @@ def delete_smart_playlist(
     Example:
         plexctl playlists smart delete 12345 --yes
     """
-    if not confirm:
-        console.print(f"[yellow]Will delete smart playlist {key}. Use --yes to confirm.[/yellow]")
-        raise typer.Exit(code=1)
+    require_confirm(confirm, f"delete smart playlist {key}")
 
     service = _get_smart_service()
     service.delete_smart_playlist(key)
@@ -640,13 +618,10 @@ def list_smart_playlist_items(
     service = _get_smart_service()
     items = service.get_playlist_items(key, limit=limit)
 
-    if not items:
-        console.print(f"[dim]No items found in playlist {key}.[/dim]")
+    if if_empty_print(items, f"No items found in playlist {key}."):
         return
 
-    if csv_output:
-        rows = [playlist_item_to_csv(item) for item in items]
-        write_csv_to_output(rows, output)
+    if output_csv(items, playlist_item_to_csv, csv_output, output):
         return
 
     table = Table(title=f"Playlist Items ({key})")

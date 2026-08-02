@@ -5,7 +5,6 @@ from __future__ import annotations
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from plexctl.models import (
     MediaType,
     PlaylistItem,
@@ -734,15 +733,6 @@ class TestPlaylistTypeEnum:
 class TestSmartPlaylistConverters:
     """Tests for smart playlist CSV converters."""
 
-    def test_smart_playlist_filter_to_csv(self) -> None:
-        from plexctl.converters import smart_playlist_filter_to_csv
-
-        filt = SmartPlaylistFilter(field="year", operator=">=", value="2019")
-        csv_row = smart_playlist_filter_to_csv(filt)
-        assert csv_row.field == "year"
-        assert csv_row.operator == ">="
-        assert csv_row.value == "2019"
-
     def test_smart_playlist_to_csv(self) -> None:
         from plexctl.converters import smart_playlist_to_csv
 
@@ -801,21 +791,6 @@ class TestSmartPlaylistConverters:
 
 class TestSmartPlaylistCsvRoundtrip:
     """Tests that smart playlist models survive CSV roundtrip."""
-
-    def test_smart_playlist_filter_roundtrip(self) -> None:
-        from plexctl.converters import smart_playlist_filter_to_csv
-        from plexctl.csv_utils import from_csv, to_csv
-        from plexctl.models import CsvSmartPlaylistFilter
-
-        filt = SmartPlaylistFilter(field="genre", operator="=", value="Action")
-        csv_row = smart_playlist_filter_to_csv(filt)
-        csv_content = to_csv([csv_row])
-
-        restored = from_csv(CsvSmartPlaylistFilter, csv_content)
-        assert len(restored) == 1
-        assert restored[0].field == "genre"
-        assert restored[0].operator == "="
-        assert restored[0].value == "Action"
 
     def test_smart_playlist_roundtrip(self) -> None:
         from plexctl.converters import smart_playlist_to_csv

@@ -21,6 +21,7 @@ from rich.console import Console
 from rich.table import Table
 
 from plexctl.client import PlexClient
+from plexctl.commands._helpers import if_empty_print, output_csv, print_result, require_confirm
 from plexctl.config import load_config
 from plexctl.converters import (
     bandwidth_stats_to_csv,
@@ -35,7 +36,6 @@ from plexctl.converters import (
     user_account_to_table,
     watch_history_entry_to_csv,
 )
-from plexctl.csv_utils import write_csv_to_output
 from plexctl.options import CsvFlag, OutputFile
 from plexctl.services.server import ServerService, parse_duration
 from plexctl.services.users import UserService
@@ -62,13 +62,10 @@ def list_sessions(csv_output: CsvFlag = False, output: OutputFile = None) -> Non
     service = _get_service()
     sessions = service.list_sessions()
 
-    if not sessions:
-        console.print("[dim]No active playback sessions.[/dim]")
+    if if_empty_print(sessions, "No active playback sessions."):
         return
 
-    if csv_output:
-        rows = [playback_session_to_csv(s) for s in sessions]
-        write_csv_to_output(rows, output)
+    if output_csv(sessions, playback_session_to_csv, csv_output, output):
         return
 
     table = Table(title="Active Sessions")
@@ -126,10 +123,7 @@ def rate_item(
     service = _get_service()
     result = service.rate(key, rating)
 
-    if result.success:
-        console.print(f"[green]✓ Set rating for item {result.key} to {rating}[/green]")
-    else:
-        console.print(f"[red]✗ Failed to set rating: {result.error}[/red]")
+    print_result(result, f"Set rating for item {result.key} to {rating}", "Failed to set rating")
 
 
 # --- Watch state -----------------------------------------------------------
@@ -150,10 +144,7 @@ def mark_watched(key: str = typer.Argument(help="Plex rating key of the item")) 
     service = _get_service()
     result = service.scrobble(key)
 
-    if result.success:
-        console.print(f"[green]✓ Marked item {result.key} as watched[/green]")
-    else:
-        console.print(f"[red]✗ Failed to mark as watched: {result.error}[/red]")
+    print_result(result, f"Marked item {result.key} as watched", "Failed to mark as watched")
 
 
 @server_app.command(name="unwatch", deprecated=True)
@@ -171,10 +162,7 @@ def mark_unwatched(key: str = typer.Argument(help="Plex rating key of the item")
     service = _get_service()
     result = service.unscrobble(key)
 
-    if result.success:
-        console.print(f"[green]✓ Marked item {result.key} as unwatched[/green]")
-    else:
-        console.print(f"[red]✗ Failed to mark as unwatched: {result.error}[/red]")
+    print_result(result, f"Marked item {result.key} as unwatched", "Failed to mark as unwatched")
 
 
 # --- Delete -----------------------------------------------------------------
@@ -197,17 +185,12 @@ def delete_item(
         DeprecationWarning,
         stacklevel=2,
     )
-    if not confirm:
-        console.print(f"[yellow]Will delete item {key}. Use --yes to confirm.[/yellow]")
-        raise typer.Exit(code=1)
+    require_confirm(confirm, f"delete item {key}")
 
     service = _get_service()
     result = service.delete_item(key)
 
-    if result.success:
-        console.print(f"[green]✓ Deleted item {result.key}[/green]")
-    else:
-        console.print(f"[red]✗ Failed to delete: {result.error}[/red]")
+    print_result(result, f"Deleted item {result.key}", "Failed to delete")
 
 
 # --- Merge ------------------------------------------------------------------
@@ -230,10 +213,7 @@ def merge_items(
     service = _get_service()
     result = service.merge(target, list(sources))
 
-    if result.success:
-        console.print(f"[green]✓ Merged {len(sources)} items into {result.key}[/green]")
-    else:
-        console.print(f"[red]✗ Failed to merge: {result.error}[/red]")
+    print_result(result, f"Merged {len(sources)} items into {result.key}", "Failed to merge")
 
 
 # --- Empty trash -----------------------------------------------------------
@@ -253,10 +233,7 @@ def empty_trash(
     service = _get_service()
     result = service.empty_trash(section_key)
 
-    if result.success:
-        console.print(f"[green]✓ Emptied trash for section {result.key}[/green]")
-    else:
-        console.print(f"[red]✗ Failed to empty trash: {result.error}[/red]")
+    print_result(result, f"Emptied trash for section {result.key}", "Failed to empty trash")
 
 
 # --- Server Info ------------------------------------------------------------
@@ -268,9 +245,7 @@ def server_info(csv_output: CsvFlag = False, output: OutputFile = None) -> None:
     service = _get_service()
     info = service.server_info()
 
-    if csv_output:
-        rows = [server_info_to_csv(info)]
-        write_csv_to_output(rows, output)
+    if output_csv([info], server_info_to_csv, csv_output, output):
         return
 
     console.print("\n[bold]Plex Media Server[/bold]")
@@ -292,13 +267,10 @@ def list_prefs(csv_output: CsvFlag = False, output: OutputFile = None) -> None:
     service = _get_service()
     prefs = service.list_preferences()
 
-    if not prefs:
-        console.print("[dim]No preferences found.[/dim]")
+    if if_empty_print(prefs, "No preferences found."):
         return
 
-    if csv_output:
-        rows = [server_preference_to_csv(p) for p in prefs]
-        write_csv_to_output(rows, output)
+    if output_csv(prefs, server_preference_to_csv, csv_output, output):
         return
 
     table = Table(title="Server Preferences")
@@ -326,10 +298,7 @@ def set_pref(
     service = _get_service()
     result = service.set_preference(pref_id, value)
 
-    if result.success:
-        console.print(f"[green]✓ Set {pref_id} = {value}[/green]")
-    else:
-        console.print(f"[red]✗ Failed to set preference: {result.error}[/red]")
+    print_result(result, f"Set {pref_id} = {value}", "Failed to set preference")
 
 
 # --- Butler tasks ----------------------------------------------------------
@@ -341,13 +310,10 @@ def list_butler_tasks(csv_output: CsvFlag = False, output: OutputFile = None) ->
     service = _get_service()
     tasks = service.list_butler_tasks()
 
-    if not tasks:
-        console.print("[dim]No butler tasks found.[/dim]")
+    if if_empty_print(tasks, "No butler tasks found."):
         return
 
-    if csv_output:
-        rows = [butler_task_to_csv(t) for t in tasks]
-        write_csv_to_output(rows, output)
+    if output_csv(tasks, butler_task_to_csv, csv_output, output):
         return
 
     table = Table(title="Butler Tasks")
@@ -375,10 +341,7 @@ def run_butler_task(
     service = _get_service()
     result = service.run_butler_task(task_name)
 
-    if result.success:
-        console.print(f"[green]✓ Started butler task: {task_name}[/green]")
-    else:
-        console.print(f"[red]✗ Failed to start butler task: {result.error}[/red]")
+    print_result(result, f"Started butler task: {task_name}", "Failed to start butler task")
 
 
 # --- Watch history ---------------------------------------------------------
@@ -429,13 +392,10 @@ def watch_history(
         section_id=section,
     )
 
-    if not entries:
-        console.print("[dim]No watch history found.[/dim]")
+    if if_empty_print(entries, "No watch history found."):
         return
 
-    if csv_output:
-        rows = [watch_history_entry_to_csv(e) for e in entries]
-        write_csv_to_output(rows, output)
+    if output_csv(entries, watch_history_entry_to_csv, csv_output, output):
         return
 
     table = Table(title="Watch History")
@@ -479,10 +439,7 @@ def stop_session(
     service = _get_service()
     result = service.stop_session(session_key, reason)
 
-    if result.success:
-        console.print(f"[green]✓ Stopped session {session_key}[/green]")
-    else:
-        console.print(f"[red]✗ Failed to stop session: {result.error}[/red]")
+    print_result(result, f"Stopped session {session_key}", "Failed to stop session")
 
 
 # --- Set progress ----------------------------------------------------------
@@ -508,12 +465,11 @@ def set_progress(
     service = _get_service()
     result = service.set_progress(rating_key, time_ms, state)
 
-    if result.success:
-        console.print(
-            f"[green]✓ Set progress for item {result.key} " f"to {time_ms}ms ({state})[/green]"
-        )
-    else:
-        console.print(f"[red]✗ Failed to set progress: {result.error}[/red]")
+    print_result(
+        result,
+        f"Set progress for item {result.key} to {time_ms}ms ({state})",
+        "Failed to set progress",
+    )
 
 
 # --- On Deck ---------------------------------------------------------------
@@ -524,6 +480,7 @@ def on_deck(
     section: int | None = typer.Option(
         None, "-s", "--section", help="Library section key to scope results."
     ),
+    limit: int = typer.Option(50, "--limit", "-l", help="Maximum number of items to display."),
     csv_output: CsvFlag = False,
     output: OutputFile = None,
 ) -> None:
@@ -532,18 +489,18 @@ def on_deck(
     Example:
         plexctl server on-deck
         plexctl server on-deck -s 2
+        plexctl server on-deck --limit 20
     """
     service = _get_service()
     items = service.on_deck(section_key=section)
 
-    if not items:
-        console.print("[dim]No On Deck items.[/dim]")
+    if if_empty_print(items, "No On Deck items."):
         return
 
-    if csv_output:
-        rows = [media_metadata_to_csv(item) for item in items]
-        write_csv_to_output(rows, output)
+    if output_csv(items, media_metadata_to_csv, csv_output, output):
         return
+
+    items = items[:limit]
 
     table = Table(title="On Deck")
     table.add_column("Key", style="cyan", max_width=10)
@@ -587,13 +544,10 @@ def recently_added(
     service = _get_service()
     items = service.recently_added(section_key=section, maxresults=limit, libtype=type)
 
-    if not items:
-        console.print("[dim]No recently added items.[/dim]")
+    if if_empty_print(items, "No recently added items."):
         return
 
-    if csv_output:
-        rows = [media_metadata_to_csv(item) for item in items]
-        write_csv_to_output(rows, output)
+    if output_csv(items, media_metadata_to_csv, csv_output, output):
         return
 
     table = Table(title="Recently Added")
@@ -621,6 +575,7 @@ def continue_watching(
     section: int | None = typer.Option(
         None, "-s", "--section", help="Library section key to scope results."
     ),
+    limit: int = typer.Option(50, "--limit", "-l", help="Maximum number of items to display."),
     csv_output: CsvFlag = False,
     output: OutputFile = None,
 ) -> None:
@@ -629,18 +584,18 @@ def continue_watching(
     Example:
         plexctl server continue-watching
         plexctl server continue-watching -s 2
+        plexctl server continue-watching --limit 20
     """
     service = _get_service()
     items = service.continue_watching(section_key=section)
 
-    if not items:
-        console.print("[dim]No Continue Watching items.[/dim]")
+    if if_empty_print(items, "No Continue Watching items."):
         return
 
-    if csv_output:
-        rows = [media_metadata_to_csv(item) for item in items]
-        write_csv_to_output(rows, output)
+    if output_csv(items, media_metadata_to_csv, csv_output, output):
         return
+
+    items = items[:limit]
 
     table = Table(title="Continue Watching")
     table.add_column("Key", style="cyan", max_width=10)
@@ -673,13 +628,10 @@ def list_transcode_sessions(csv_output: CsvFlag = False, output: OutputFile = No
     service = _get_service()
     sessions = service.transcode_sessions()
 
-    if not sessions:
-        console.print("[dim]No active transcode sessions.[/dim]")
+    if if_empty_print(sessions, "No active transcode sessions."):
         return
 
-    if csv_output:
-        rows = [transcode_session_to_csv(s) for s in sessions]
-        write_csv_to_output(rows, output)
+    if output_csv(sessions, transcode_session_to_csv, csv_output, output):
         return
 
     table = Table(title="Transcode Sessions")
@@ -722,9 +674,7 @@ def check_for_update(csv_output: CsvFlag = False, output: OutputFile = None) -> 
         console.print("[green]✓ Server is up to date.[/green]")
         return
 
-    if csv_output:
-        rows = [update_info_to_csv(info)]
-        write_csv_to_output(rows, output)
+    if output_csv([info], update_info_to_csv, csv_output, output):
         return
 
     console.print("\n[bold]Update Available[/bold]")
@@ -775,6 +725,7 @@ def bandwidth_stats(
     account: int | None = typer.Option(None, "--account", help="Filter by account ID."),
     device: int | None = typer.Option(None, "--device", help="Filter by device ID."),
     lan: bool | None = typer.Option(None, "--lan/--remote", help="Local only or remote only."),
+    limit: int = typer.Option(20, "--limit", "-l", help="Maximum number of entries to display."),
     csv_output: CsvFlag = False,
     output: OutputFile = None,
 ) -> None:
@@ -790,14 +741,13 @@ def bandwidth_stats(
         timespan=normalized, account_id=account, device_id=device, lan=lan
     )
 
-    if not stats:
-        console.print("[dim]No bandwidth statistics found.[/dim]")
+    if if_empty_print(stats, "No bandwidth statistics found."):
         return
 
-    if csv_output:
-        rows = [bandwidth_stats_to_csv(s) for s in stats]
-        write_csv_to_output(rows, output)
+    if output_csv(stats, bandwidth_stats_to_csv, csv_output, output):
         return
+
+    stats = stats[:limit]
 
     timespan_label = normalized.capitalize()
     table = Table(title=f"Bandwidth Statistics ({timespan_label})")
@@ -820,19 +770,22 @@ def bandwidth_stats(
 
 
 @server_app.command(name="resources")
-def resource_stats(csv_output: CsvFlag = False, output: OutputFile = None) -> None:
+def resource_stats(
+    limit: int = typer.Option(20, "--limit", "-l", help="Maximum number of entries to display."),
+    csv_output: CsvFlag = False,
+    output: OutputFile = None,
+) -> None:
     """Show server resource utilization (CPU/memory)."""
     service = _get_service()
     stats = service.resource_stats()
 
-    if not stats:
-        console.print("[dim]No resource statistics found.[/dim]")
+    if if_empty_print(stats, "No resource statistics found."):
         return
 
-    if csv_output:
-        rows = [resource_stats_to_csv(s) for s in stats]
-        write_csv_to_output(rows, output)
+    if output_csv(stats, resource_stats_to_csv, csv_output, output):
         return
+
+    stats = stats[:limit]
 
     table = Table(title="Resource Utilization")
     table.add_column("Time", style="cyan")
@@ -893,7 +846,7 @@ def download_databases(
         raise typer.Exit(code=1) from exc
 
 
-@server_app.command(name="info")
+@server_app.command(name="accounts")
 def list_accounts(
     media_key: int | None = typer.Option(
         None, "--media", "-m", help="Rating key of media item to find users."
@@ -918,8 +871,7 @@ def list_accounts(
         )
         return
 
-    if not users:
-        console.print("[dim]No users found for this media.[/dim]")
+    if if_empty_print(users, "No users found for this media."):
         return
 
     table = Table(title="Users")
