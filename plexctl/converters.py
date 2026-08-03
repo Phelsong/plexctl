@@ -275,9 +275,9 @@ def butler_task_to_csv(task: ButlerTask) -> CsvButlerTask:
         name=task.name,
         description=task.description,
         enabled=str(task.enabled),
+        interval=str(task.interval),
+        schedule_randomized=str(task.schedule_randomized),
         schedule=task.schedule,
-        last_run=task.last_run or "",
-        next_run=task.next_run or "",
     )
 
 

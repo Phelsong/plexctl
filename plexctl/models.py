@@ -1371,22 +1371,22 @@ class ButlerTask(BaseModel):
     """A Plex butler (background maintenance) task.
 
     Attributes:
-        id: Task identifier.
-        name: Human-readable task name.
+        id: Machine key used to run the task (e.g. 'BackupDatabase').
+        name: Human-readable task name (falls back to the machine key).
         description: Description of what the task does.
         enabled: Whether the task is enabled.
-        schedule: Schedule description (e.g. 'daily', 'weekly').
-        last_run: Timestamp of the last run.
-        next_run: Timestamp of the next scheduled run.
+        interval: Run interval in days (1 = daily, 7 = weekly).
+        schedule_randomized: Whether the run time is randomized within the interval.
+        schedule: Human-readable schedule derived from interval and randomization.
     """
 
     id: str = ""
     name: str = ""
     description: str = ""
     enabled: bool = True
+    interval: int = 0
+    schedule_randomized: bool = False
     schedule: str = ""
-    last_run: str | None = None
-    next_run: str | None = None
 
 
 # --- CRC audit models ------------------------------------------------------
@@ -1771,9 +1771,9 @@ class CsvButlerTask(BaseModel):
     name: str = ""
     description: str = ""
     enabled: str = ""
+    interval: str = ""
+    schedule_randomized: str = ""
     schedule: str = ""
-    last_run: str = ""
-    next_run: str = ""
 
 
 # --- Subtitle models --------------------------------------------------------

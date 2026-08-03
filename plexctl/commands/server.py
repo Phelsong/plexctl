@@ -698,20 +698,49 @@ def check_for_update(csv_output: CsvFlag = False, output: OutputFile = None) -> 
 
 
 @server_app.command(name="install-update")
-def install_update() -> None:
+def install_update(
+    tonight: bool = typer.Option(
+        False,
+        "--tonight",
+        help=(
+            "Schedule the update to install during the server's next "
+            "maintenance window tonight. Takes precedence over --skip."
+        ),
+    ),
+    skip: bool = typer.Option(
+        False,
+        "--skip",
+        help="Skip this update and wait for the next one. Ignored if --tonight is set.",
+    ),
+) -> None:
     """Install the latest available Plex Media Server update.
 
-    This will download and apply the update, which may restart the server.
+    Downloads the update if needed, then applies it. The server may
+    restart to apply the update. Use --tonight to defer the install to
+    the server's maintenance window, or --skip to dismiss this update.
     """
     service = _get_service()
 
-    console.print("[dim]Checking for updates...[/dim]")
-    if not service.install_update():
+    console.print("[dim]Checking and Downloading updates... This may take several minutes.[/dim]")
+    try:
+        applied = service.install_update(tonight=tonight, skip=skip)
+    except ValueError as exc:
+        console.print(f"[red]✗ {exc}[/red]")
+        raise typer.Exit(code=1) from None
+
+    if not applied:
         console.print("[green]✓ Server is already up to date.[/green]")
         return
 
-    console.print("[green]✓ Update installed successfully.[/green]")
-    console.print("[dim]The server may restart to apply the update.[/dim]")
+    if tonight:
+        console.print("[green]✓ Update scheduled for tonight's maintenance window.[/green]")
+    elif skip:
+        console.print(
+            "[green]✓ Update skipped. The server will wait for the next release.[/green]"
+        )
+    else:
+        console.print("[green]✓ Update installed successfully.[/green]")
+        console.print("[dim]The server may restart to apply the update.[/dim]")
 
 
 # --- Bandwidth statistics --------------------------------------------------

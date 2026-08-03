@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import logging
 import re
+import time
 from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING, Any
 
@@ -44,6 +45,30 @@ if TYPE_CHECKING:
     from plexctl.client import PlexClient
 
 logger = logging.getLogger(__name__)
+
+
+def _format_butler_schedule(interval: int, randomized: bool) -> str:
+    """Render a butler task's schedule as a human-readable string.
+
+    Args:
+        interval: Run interval in days (1 = daily, 7 = weekly, etc.).
+        randomized: Whether the run time is randomized within the interval.
+
+    Returns:
+        A description like "daily", "every 3 days", or "weekly (randomized)".
+    """
+    if interval <= 0:
+        base = "never"
+    elif interval == 1:
+        base = "daily"
+    elif interval == 7:
+        base = "weekly"
+    else:
+        base = f"every {interval} days"
+
+    if randomized and interval > 0:
+        return f"{base} (randomized)"
+    return base
 
 
 class ServerService:
@@ -401,7 +426,8 @@ class ServerService:
         if data is None:
             return []
 
-        container = data.get("MediaContainer", data)
+        # The butler endpoint wraps tasks under "ButlerTasks.ButlerTask".
+        container = data.get("ButlerTasks", data)
         task_list = container.get("ButlerTask", [])
 
         if isinstance(task_list, dict):
@@ -409,13 +435,16 @@ class ServerService:
 
         tasks = [
             ButlerTask(
-                id=str(task.get("key", task.get("id", ""))),
-                name=task.get("name", ""),
-                description=task.get("description", task.get("summary", "")),
+                id=task.get("name", ""),
+                name=task.get("title") or task.get("name", ""),
+                description=task.get("description", ""),
                 enabled=task.get("enabled", True),
-                schedule=task.get("schedule", ""),
-                last_run=task.get("lastRunAt"),
-                next_run=task.get("nextRunAt"),
+                interval=int(task.get("interval", 0) or 0),
+                schedule_randomized=bool(task.get("scheduleRandomized", False)),
+                schedule=_format_butler_schedule(
+                    interval=int(task.get("interval", 0) or 0),
+                    randomized=bool(task.get("scheduleRandomized", False)),
+                ),
             )
             for task in task_list
         ]
@@ -716,20 +745,92 @@ class ServerService:
             release_notes=getattr(release, "releaseNotes", ""),
         )
 
-    def install_update(self) -> bool:
+    def install_update(
+        self, tonight: bool = False, skip: bool = False, timeout: int = 300
+    ) -> bool:
         """Install the latest available Plex Media Server update.
 
-        Returns:
-            True if update was applied, False if already up to date.
-        """
-        server = self._client.server
-        release = server.checkForUpdate(force=True)  # type: ignore[no-untyped-call]
+        Polls ``/updater/status`` and only calls ``/updater/apply`` once
+        ``canInstall`` reports a downloaded update is ready, triggering a
+        download first if needed. The Plex API's ``tonight`` and ``skip``
+        flags are forwarded as BoolInt query params; per the API docs,
+        ``tonight`` takes precedence and ``skip`` is ignored when both are
+        set.
 
-        if release is None:
+        Args:
+            tonight: Schedule the update to install during the server's
+                next maintenance window tonight.
+            skip: Skip this update and wait for the next one.
+            timeout: Seconds to wait for the update to download before
+                giving up (default 300).
+
+        Returns:
+            True if the update was applied, False if already up to date.
+
+        Raises:
+            ValueError: If no update is available or the download does
+                not become ready within ``timeout`` seconds.
+        """
+        http = PlexHTTPClient(self._client)
+
+        if not self._update_available(http):
             return False
 
-        server.installUpdate()  # type: ignore[no-untyped-call]
+        if not self._update_downloaded(http, timeout=timeout):
+            raise ValueError(
+                "Update is not downloaded yet. The server reported an "
+                "available update but it has not been fetched. Try again "
+                "later or run `plexctl server check-update` first."
+            )
+
+        # tonight takes precedence per Plex API docs; skip is ignored when
+        # both are set, so only forward skip when tonight is not requested.
+        params: dict[str, Any] = {}
+        if tonight:
+            params["tonight"] = 1
+        elif skip:
+            params["skip"] = 1
+
+        http.put("/updater/apply", params=params or None)
         return True
+
+    def _update_available(self, http: PlexHTTPClient) -> bool:
+        """Return True if ``/updater/status`` reports a known release."""
+        data = http.get("/updater/status")
+        container = data.get("MediaContainer", data) if data else None
+        if not container:
+            return False
+        release = container.get("Release")
+        return release is not None
+
+    def _update_downloaded(self, http: PlexHTTPClient, timeout: int) -> bool:
+        """Return True once ``canInstall`` reports 1, triggering a download.
+
+        Triggers ``PUT /updater/check?download=1`` first, then polls
+        ``/updater/status`` until the server reports the update is ready
+        to apply or ``timeout`` seconds elapse.
+        """
+        if self._can_install(http):
+            return True
+
+        http.put("/updater/check", params={"download": 1})
+
+        deadline = datetime.now(UTC) + timedelta(seconds=timeout)
+        while datetime.now(UTC) < deadline:
+            if self._can_install(http):
+                return True
+            time.sleep(5)
+
+        return False
+
+    @staticmethod
+    def _can_install(http: PlexHTTPClient) -> bool:
+        """Return True if ``/updater/status`` reports ``canInstall=1``."""
+        data = http.get("/updater/status")
+        container = data.get("MediaContainer", data) if data else None
+        if not container:
+            return False
+        return str(container.get("canInstall", "0")) == "1"
 
     def bandwidth_stats(
         self,

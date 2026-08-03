@@ -564,7 +564,7 @@ Plex server administration and playback commands.
 - **`server continue-watching`** — Show Continue Watching items.
 - **`server get-transcodes`** — List active transcode sessions.
 - **`server check-update`** — Check for available Plex Media Server updates.
-- **`server install-update`** — Install the latest available Plex Media Server update.
+- **`server install-update`** — Install the latest available Plex Media Server update (`--tonight`, `--skip`).
 - **`server bandwidth`** — Show server bandwidth statistics.
 - **`server resources`** — Show server resource utilization (CPU/memory).
 - **`server download-logs`** — Download Plex Media Server logs.
