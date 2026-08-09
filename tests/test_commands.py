@@ -433,16 +433,6 @@ class TestLibraryConverters:
 class TestNewCsvModelRegistry:
     """Tests that new CSV models are registered for ingest."""
 
-    def test_library_location_registered(self) -> None:
-        """library_location model is registered for ingest."""
-        from plexctl.csv_utils import get_model_class
-
-        cls = get_model_class("library_location")
-        assert cls is not None
-        from plexctl.models import CsvLibraryLocation
-
-        assert cls is CsvLibraryLocation
-
     def test_media_tree_item_registered(self) -> None:
         """media_tree_item model is registered for ingest."""
         from plexctl.csv_utils import get_model_class

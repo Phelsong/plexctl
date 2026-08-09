@@ -87,9 +87,6 @@ class MetadataType(IntEnum):
     playlistfolder = 16
     collection = 18
 
-    # def __getitem__(self, key):
-    #     self[key], self[key].value
-
 
 def plex_media_types() -> tuple[type[object], ...]:
     """Return the tuple of plexapi media types for isinstance checks.
@@ -200,21 +197,6 @@ class LibrarySection(BaseModel):
     scanner: str | None = None
     language: str | None = None
     count: int = 0
-
-
-class LibraryLocation(BaseModel):
-    """A filesystem location for a Plex library section.
-
-    Plex sections scan one or more directories for media. Each location
-    maps to a path on disk that Ples uses to find content.
-
-    Attributes:
-        id: Location ID.
-        path: Filesystem path scanned by this section.
-    """
-
-    id: int
-    path: str
 
 
 class MediaTreeItem(BaseModel):
@@ -767,25 +749,6 @@ class ShokoFile(BaseModel):
     sha1: str | None = None
 
 
-class ShokoGroup(BaseModel):
-    """A Shoko group that contains related series.
-
-    Groups organize series that share a franchise (e.g. all
-    Arifureta series grouped together).
-
-    Attributes:
-        id: Shoko internal group ID.
-        name: Group name.
-        series_count: Number of series in this group.
-        series_ids: IDs of series belonging to this group.
-    """
-
-    id: int
-    name: str
-    series_count: int = 0
-    series_ids: list[int] = Field(default_factory=list)
-
-
 class ShokoMismatch(BaseModel):
     """A detected mismatch between Shoko and Plex data.
 
@@ -1042,13 +1005,6 @@ class CsvLibrarySection(BaseModel):
     count: str = ""
 
 
-class CsvLibraryLocation(BaseModel):
-    """Flat CSV row for LibraryLocation."""
-
-    id: str
-    path: str
-
-
 class CsvMediaTreeItem(BaseModel):
     """Flat CSV row for MediaTreeItem."""
 
@@ -1296,33 +1252,6 @@ class UserAccount(BaseModel):
     filtered: bool = False
     customAvatar: str = ""  # noqa: N815
     joinedAt: str | None = None  # noqa: N815
-
-
-class CsvUserAccount(BaseModel):
-    """Flat CSV row for UserAccount."""
-
-    id: str = ""
-    username: str = ""
-    email: str = ""
-    title: str = ""
-    friend: str = ""
-    restricted: str = ""
-
-
-class ServerIdentity(BaseModel):
-    """Plex server identity information.
-
-    Attributes:
-        machineIdentifier: Unique computer identifier.
-        version: Plex Media Server version string.
-        claimed: Whether the server has been claimed.
-        size: Container size.
-    """
-
-    machineIdentifier: str = ""  # noqa: N815
-    version: str = ""
-    claimed: bool = False
-    size: int = 0
 
 
 class ServerPreference(BaseModel):

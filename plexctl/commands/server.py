@@ -2,11 +2,6 @@
 
 Provides commands for:
 - Viewing active sessions (who's watching what)
-- Rating media items
-- Marking items as watched/unwatched
-- Emptying section trash
-- Deleting items
-- Merging media items
 - Viewing server info and preferences
 - Managing butler (background) tasks
 - Watch history and progress management
@@ -14,14 +9,12 @@ Provides commands for:
 - Transcode session listing
 """
 
-import warnings
-
 import typer
 from rich.console import Console
 from rich.table import Table
 
 from plexctl.client import PlexClient
-from plexctl.commands._helpers import if_empty_print, output_csv, print_result, require_confirm
+from plexctl.commands._helpers import if_empty_print, output_csv, print_result
 from plexctl.config import load_config
 from plexctl.converters import (
     bandwidth_stats_to_csv,
@@ -100,140 +93,6 @@ def list_sessions(csv_output: CsvFlag = False, output: OutputFile = None) -> Non
         )
 
     console.print(table)
-
-
-# --- Rate ------------------------------------------------------------------
-
-
-@server_app.command(name="rate", deprecated=True)
-def rate_item(
-    key: str = typer.Argument(help="Plex rating key of the item"),
-    rating: float = typer.Argument(help="Rating value (0-10)"),
-) -> None:
-    """Set the user rating for a media item.
-
-    Example:
-        plexctl server rate 12345 8.5
-    """
-    warnings.warn(
-        "Command 'plexctl server rate' is deprecated. Use 'plexctl item rate' instead.",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-    service = _get_service()
-    result = service.rate(key, rating)
-
-    print_result(result, f"Set rating for item {result.key} to {rating}", "Failed to set rating")
-
-
-# --- Watch state -----------------------------------------------------------
-
-
-@server_app.command(name="watch", deprecated=True)
-def mark_watched(key: str = typer.Argument(help="Plex rating key of the item")) -> None:
-    """Mark a media item as watched.
-
-    Example:
-        plexctl server watch 12345
-    """
-    warnings.warn(
-        "Command 'plexctl server watch' is deprecated. " "Use 'plexctl item watch' instead.",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-    service = _get_service()
-    result = service.scrobble(key)
-
-    print_result(result, f"Marked item {result.key} as watched", "Failed to mark as watched")
-
-
-@server_app.command(name="unwatch", deprecated=True)
-def mark_unwatched(key: str = typer.Argument(help="Plex rating key of the item")) -> None:
-    """Mark a media item as unwatched.
-
-    Example:
-        plexctl server unwatch 12345
-    """
-    warnings.warn(
-        "Command 'plexctl server unwatch' is deprecated. " "Use 'plexctl item unwatch' instead.",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-    service = _get_service()
-    result = service.unscrobble(key)
-
-    print_result(result, f"Marked item {result.key} as unwatched", "Failed to mark as unwatched")
-
-
-# --- Delete -----------------------------------------------------------------
-
-
-@server_app.command(name="delete", deprecated=True)
-def delete_item(
-    key: str = typer.Argument(help="Plex rating key of the item to delete"),
-    confirm: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation prompt."),
-) -> None:
-    """Delete a media item from the library.
-
-    This permanently removes the item and its metadata.
-
-    Example:
-        plexctl server delete 12345 --yes
-    """
-    warnings.warn(
-        "Command 'plexctl server delete' is deprecated. " "Use 'plexctl item delete' instead.",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-    require_confirm(confirm, f"delete item {key}")
-
-    service = _get_service()
-    result = service.delete_item(key)
-
-    print_result(result, f"Deleted item {result.key}", "Failed to delete")
-
-
-# --- Merge ------------------------------------------------------------------
-
-
-@server_app.command(name="merge")
-def merge_items(
-    target: str = typer.Argument(help="Rating key of the target item"),
-    sources: list[str] = typer.Argument(  # noqa: B008
-        help="Rating keys of items to merge into target"
-    ),
-) -> None:
-    """Merge multiple media items into one.
-
-    The target item absorbs all source items. Source items are removed.
-
-    Example:
-        plexctl server merge 12345 67890 54321
-    """
-    service = _get_service()
-    result = service.merge(target, list(sources))
-
-    print_result(result, f"Merged {len(sources)} items into {result.key}", "Failed to merge")
-
-
-# --- Empty trash -----------------------------------------------------------
-
-
-@server_app.command(name="empty-trash")
-def empty_trash(
-    section_key: str = typer.Argument(help="Section key (use 'plexctl library list' to find it)"),
-) -> None:
-    """Empty the trash for a library section.
-
-    Permanently removes all items in the section's trash bin.
-
-    Example:
-        plexctl server empty-trash 2
-    """
-    service = _get_service()
-    result = service.empty_trash(section_key)
-
-    print_result(result, f"Emptied trash for section {result.key}", "Failed to empty trash")
 
 
 # --- Server Info ------------------------------------------------------------
@@ -440,36 +299,6 @@ def stop_session(
     result = service.stop_session(session_key, reason)
 
     print_result(result, f"Stopped session {session_key}", "Failed to stop session")
-
-
-# --- Set progress ----------------------------------------------------------
-
-
-@server_app.command(name="set-progress", deprecated=True)
-def set_progress(
-    rating_key: str = typer.Argument(help="Plex rating key of the item."),
-    time_ms: int = typer.Argument(help="Progress time in milliseconds."),
-    state: str = typer.Option(
-        "stopped", "--state", help="Playback state to set (default: stopped)."
-    ),
-) -> None:
-    """Set playback progress for a media item.
-
-    Time is specified in milliseconds. Use this to mark how far you've
-    watched an item.
-
-    Example:
-        plexctl server set-progress 12345 3600000
-        plexctl server set-progress 12345 1800000 --state paused
-    """
-    service = _get_service()
-    result = service.set_progress(rating_key, time_ms, state)
-
-    print_result(
-        result,
-        f"Set progress for item {result.key} to {time_ms}ms ({state})",
-        "Failed to set progress",
-    )
 
 
 # --- On Deck ---------------------------------------------------------------

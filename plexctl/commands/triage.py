@@ -2,13 +2,10 @@
 
 Provides a single triage command group that consolidates:
 - Cross-referenced triage reports (Plex + filesystem)
-- Plex media diagnostics (scan, show, files, analyze)
-- Metadata fix actions (batch-analyze, batch-refresh, refresh, scan,
-  split, remove-duplicates, matches, fix-match, unmatch)
+- Plex media diagnostics (scan, show, files)
 - Filesystem comparison (fsck-scan, fsck-orphans, fsck-grouped,
   fsck-reorganize)
 - CSV ingest
-- Server-level merge and empty-trash
 """
 
 from __future__ import annotations

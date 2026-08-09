@@ -205,7 +205,6 @@ def _register_all_csv_models() -> None:
         CsvCollectionMetadata,
         CsvCrcAuditResult,
         CsvFsDir,
-        CsvLibraryLocation,
         CsvLibrarySection,
         CsvMediaMetadata,
         CsvMediaPartDetail,
@@ -241,7 +240,6 @@ def _register_all_csv_models() -> None:
         {
             "media_metadata": CsvMediaMetadata,
             "library_section": CsvLibrarySection,
-            "library_location": CsvLibraryLocation,
             "collection_info": CsvCollectionInfo,
             "collection_metadata": CsvCollectionMetadata,
             "media_tree_item": CsvMediaTreeItem,

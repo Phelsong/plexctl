@@ -6,17 +6,13 @@ encapsulated here so the CLI layer stays thin.
 from __future__ import annotations
 
 import logging
-from contextlib import contextmanager
 from typing import TYPE_CHECKING, Any, cast
 
 if TYPE_CHECKING:
-    from collections.abc import Generator
-
     from plexctl.client import PlexClient
     from plexctl.models import PLEX_MEDIA
 
 from plexctl.models import (
-    CollectionInfo,
     LibrarySection,
     MediaMetadata,
     MediaType,
@@ -51,17 +47,6 @@ _TAG_REMOVE_METHODS: dict[str, str] = {
     "country": "removeCountry",
     "similar_artist": "removeSimilarArtist",
 }
-
-
-@contextmanager
-def _batch_edits(item: PLEX_MEDIA) -> Generator[None, None, None]:
-    """Context manager that applies edits in a single batch on exit."""
-    try:
-        with item.batchEdits():  # type: ignore[no-untyped-call]
-            yield
-    except Exception:
-        logger.exception("Batch edit failed for %s", item.title)
-        raise
 
 
 class MetadataService:
@@ -290,21 +275,6 @@ class MetadataService:
 
     # --- Collections -------------------------------------------------------
 
-    def list_collections(self, section_title: str = "Movies") -> list[CollectionInfo]:
-        """List all collections in a library section."""
-        section = self._client.server.library.section(section_title)
-        collections = section.collections()
-        return [
-            CollectionInfo(
-                key=c.key,
-                title=c.title,
-                smart=getattr(c, "smart", False),
-                content_count=getattr(c, "childCount", 0),
-                section_title=section_title,
-            )
-            for c in collections
-        ]
-
     # --- Private helpers ---------------------------------------------------
 
     # --- Subtitle operations ------------------------------------------------
@@ -437,16 +407,12 @@ class MetadataService:
             user_id=getattr(stream, "userID", None),
         )
 
-    def _to_metadata(self, item: PLEX_MEDIA, *, debug: bool = False) -> MediaMetadata | None:
+    def _to_metadata(self, item: PLEX_MEDIA) -> MediaMetadata | None:
         """Convert a plexapi item to MediaMetadata based on its type.
 
         Delegates to the appropriate type-specific converter.
         Returns None for unsupported types.
         """
-        if debug:
-            for k, v in item.__dict__.items():
-                print(k, v)
-                print(type(v))
         year = None
         content_rating = None
         try:

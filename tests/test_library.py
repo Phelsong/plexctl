@@ -5,13 +5,7 @@ from __future__ import annotations
 from unittest.mock import MagicMock, patch
 
 import pytest
-from plexctl.models import (
-    CollectionInfo,
-    CollectionMetadata,
-    LibraryLocation,
-    LibrarySection,
-    MediaType,
-)
+from plexctl.models import CollectionInfo, CollectionMetadata, LibrarySection, MediaType
 from plexctl.services.library import LibraryService, _safe_bool, _safe_int_or
 
 # --- Section CRUD tests ---------------------------------------------------------
@@ -866,20 +860,6 @@ class TestSafeBool:
 
 
 # --- Model tests ---------------------------------------------------------------
-
-
-class TestLibraryLocationModel:
-    """Tests for LibraryLocation model."""
-
-    def test_library_location_creation(self) -> None:
-        loc = LibraryLocation(id=1, path="/data/anime")
-        assert loc.id == 1
-        assert loc.path == "/data/anime"
-
-    def test_library_location_defaults(self) -> None:
-        loc = LibraryLocation(id=0, path="")
-        assert loc.id == 0
-        assert loc.path == ""
 
 
 class TestMediaTreeItemModel:

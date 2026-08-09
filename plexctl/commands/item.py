@@ -77,7 +77,6 @@ def search_items(
     type: Annotated[MediaType | None, typer.Option(help="Media type filter")] = None,
     csv_output: CsvFlag = False,
     output: OutputFile = None,
-    debug: bool = False,
 ) -> None:
     """Search for media by title."""
     service = _get_metadata_service()
