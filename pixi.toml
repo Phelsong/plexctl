@@ -2,8 +2,20 @@
 authors = ["Josh S Wilkinson <joshswilkinson@pm.me>"]
 channels = ["conda-forge"]
 name = "plexctl"
-platforms = ["linux-64"]
+platforms = ["linux-64", "linux-aarch64"]
 version = "0.1.0"
+preview = ["pixi-build"]
+
+[package.build.backend]
+name = "pixi-build-python"
+version = "0.*"
+
+[package.host-dependencies]
+hatchling = "*"
+
+[package]
+name = "plexctl"
+version = "1.0.0"
 
 [tasks]
 # Development (run with pixi run -e dev <task>)
@@ -20,9 +32,12 @@ plexctl = "python -m plexctl"
 # Install / uninstall symlink
 install = "python scripts/install.py install"
 uninstall = "python scripts/install.py uninstall"
+build = "pixi publish --target-dir ./bin"
 
 [dependencies]
 python = ">=3.12"
+plexctl = { path = "." }
+
 
 [pypi-dependencies]
 plexapi = ">=4.16"

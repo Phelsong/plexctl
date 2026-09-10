@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# plexctl - Global entry point for the plexctl CLI
+# Supports being called via symlink from ~/.local/bin
+set -euo pipefail
+
+# Resolve symlinks to find the real script location
+SELF="$(readlink -f "${BASH_SOURCE[0]}")"
+PROJECT_DIR="$(dirname "$(dirname "$SELF")")"
+
+exec pixi run --manifest-path "$PROJECT_DIR/pixi.toml" plexctl "$@"

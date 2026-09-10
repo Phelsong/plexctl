@@ -15,7 +15,7 @@ from rich.table import Table
 
 from plexctl.commands._helpers import output_csv
 from plexctl.models import PlexMatchBatchResult, PlexMatchResult, ShokoSeries
-from plexctl.options import CsvFlag, OutputFile
+from plexctl.options import CsvFlag, OutputFile, Search
 from plexctl.plugins.shoko.converters import (
     crc_audit_to_csv,
     shoko_episode_to_csv,
@@ -101,11 +101,7 @@ def _format_episode_type(ep_type: str) -> str:
 
 
 @shoko_app.command()
-def series(
-    search: Annotated[str | None, typer.Option(help="Search series by name")] = None,
-    csv_output: CsvFlag = False,
-    output: OutputFile = None,
-) -> None:
+def series(search: Search = None, csv_output: CsvFlag = False, output: OutputFile = None) -> None:
     """List or search series from Shoko Server.
 
     Paginates through all series and streams rows into a live table.

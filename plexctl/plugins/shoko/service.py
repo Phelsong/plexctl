@@ -1325,8 +1325,9 @@ class ShokoService:
         normalized = name.lower().strip()
         # Remove common anime suffixes like "(2025)", "[SubGroup]",
         # "2nd Season", "Season 3", etc.
-        normalized = re.sub(r"\(?\d{4}\)?", "", normalized)  # Remove years
-        normalized = re.sub(r"\[.*?\]", "", normalized)  # Remove [group] tags
+        # these aren't elegant enough -- problematic.
+        # normalized = re.sub(r"\(?\d{4}\)?", "", normalized)  # Remove years
+        # normalized = re.sub(r"\[.*?\]", "", normalized)  # Remove [group] tags
         # Remove season suffixes
         for suffix in (
             "2nd season",

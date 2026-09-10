@@ -18,8 +18,8 @@ SOURCE = PROJECT_DIR / "bin" / "plexctl"
 
 
 def install(prefix: Path = DEFAULT_PREFIX) -> None:
-    """Create a symlink from PREFIX/bin/plexctl pointing to the project's bin/plexctl."""
-    link_path = prefix / "bin" / "plexctl"
+    """Create a symlink to PREFIX/scripts/plexctl-dev."""
+    link_path = prefix / "scripts" / "plexctl-dev"
 
     if link_path.is_symlink() and link_path.resolve() == SOURCE.resolve():
         print(f"Already installed: {link_path} -> {SOURCE}")
@@ -35,8 +35,8 @@ def install(prefix: Path = DEFAULT_PREFIX) -> None:
 
 
 def uninstall(prefix: Path = DEFAULT_PREFIX) -> None:
-    """Remove the plexctl symlink from PREFIX/bin."""
-    link_path = prefix / "bin" / "plexctl"
+    """Remove the plexctl symlink."""
+    link_path = prefix / "scripts" / "plexctl-dev"
 
     if not link_path.exists() and not link_path.is_symlink():
         print(f"plexctl not found at {link_path}")

@@ -16,3 +16,5 @@ OutputFile = Annotated[
     str | None,
     typer.Option("--output", "-o", help="Write output to this file path instead of stdout."),
 ]
+
+Search = Annotated[str | None, typer.Option("--search", "-s", help="Search by name")]
