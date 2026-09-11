@@ -2,5 +2,5 @@
 
 from plexctl.cli import app
 
-if __name__ == "__main__":
+if __name__ == "__main__" or __name__ == "plexctl.__main__":
     app()

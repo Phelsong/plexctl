@@ -40,23 +40,23 @@ class MediaType(StrEnum):
     WEBSHOW = "webshow"
     NEWS = "news"
     # Collection Subtypes
-    # movie
-    # show
-    # artist
-    # album
+    MOVIECOLLECTION = "movie"
+    SHOWCOLLECTION = "show"
+    ARTISTCOLLECTION = "artist"
+    ALBUMCOLLECTION = "album"
     # Extras Subtypes
     TRAILER = "trailer"
-    # deletedScene
+    DELETEDSCENE = "deletedScene"
     INTERVIEW = "interview"
     MUSICVIDEO = "musicVideo"
-    # behindTheScenes
-    # sceneOrSample
-    # liveMusicVideo
-    # lyricMusicVideo
+    BEHINDTHESCENES = "behindTheScenes"
+    SCENEORSAMPLE = "sceneOrSample"
+    LIVEMUSICVIDEO = "liveMusicVideo"
+    LYRICSMUSICVIDEO = "lyricMusicVideo"
     CONCERT = "concert"
-    # featurette
+    FEATURETTE = "featurette"
     SHORT = "short"
-    # other
+    OTHER = "other"
 
     @classmethod
     def from_plex_type(cls, value: str) -> MediaType | None:
@@ -71,6 +71,7 @@ class MediaType(StrEnum):
 
 
 class MetadataType(IntEnum):
+    track = 0
     movie = 1
     show = 2
     season = 3
@@ -79,7 +80,6 @@ class MetadataType(IntEnum):
     person = 7
     artist = 8
     album = 9
-    track = 0
     clip = 12
     photo = 13
     photoalbum = 14

@@ -550,8 +550,6 @@ Unified diagnostics, fixes, and filesystem checks for Plex.
 Plex server administration and playback commands.
 
 - **`server sessions`** — List active playback sessions on the server.
-- **`server merge`** — Merge multiple media items into one.
-- **`server empty-trash`** — Empty the trash for a library section.
 - **`server info`** — Display Plex server identity and version information.
 - **`server prefs`** — List Plex server preference settings.
 - **`server set-pref`** — Set a server preference value.
@@ -564,7 +562,7 @@ Plex server administration and playback commands.
 - **`server continue-watching`** — Show Continue Watching items.
 - **`server get-transcodes`** — List active transcode sessions.
 - **`server check-update`** — Check for available Plex Media Server updates.
-- **`server install-update`** — Install the latest available Plex Media Server update (`--tonight`, `--skip`).
+- **`server install-update`** — Install the latest available Plex Media Server update.
 - **`server bandwidth`** — Show server bandwidth statistics.
 - **`server resources`** — Show server resource utilization (CPU/memory).
 - **`server download-logs`** — Download Plex Media Server logs.
@@ -603,7 +601,7 @@ Query Shoko Server for anime metadata and file information.
 - **`help`** — Show help for plexctl or a specific command.
 
 ---
-*Total active commands: 139*
+*Total active commands: 137*
 
 
 <!-- END COMMAND TREE -->
