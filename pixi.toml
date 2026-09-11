@@ -26,7 +26,8 @@ format = {cmd="black -C plexctl tests", default-environment = "dev", depends-on 
 typecheck = {cmd="mypy plexctl", default-environment = "dev"}
 test = {cmd="pytest tests -v", default-environment = "dev"}
 scan = {cmd="bandit plexctl -r", default-environment = "dev"}
-pre-commit = {depends-on = ["sort","format","typecheck","test","scan"]}
+tree = "scripts/generate_command_tree.py"
+pre-commit = {depends-on = ["sort","format","typecheck","test","scan","tree"]}
 # CLI entry points
 plexctl = "python -m plexctl"
 # Install / uninstall symlink
@@ -36,8 +37,8 @@ build = "pixi publish --target-dir ./bin"
 
 [dependencies]
 python = ">=3.12"
+click = ">=8.4.2,<9"
 plexctl = { path = "." }
-
 
 [pypi-dependencies]
 plexapi = ">=4.16"

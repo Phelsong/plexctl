@@ -1,18 +1,29 @@
 """types helper"""
 
-import typer
 from rich.console import Console
+from rich.live import Live
+from rich.table import Table
+from typer import Typer
 
 from plexctl.models import MediaType, MetadataType
 
-types_app = typer.Typer(name="types", help="get plex types")
+types_app = Typer(name="types", help="get plex types", no_args_is_help=True)
 console = Console()
 
 
-@types_app.command(name="types")
+@types_app.command(name="list")
 def print_types() -> None:
     """print reference types to the console"""
-    for x in MediaType:
-        console.print(f"[green]{x}[/green]")
-    for y in MetadataType:
-        console.print(f"[green]{y.name}, {y}[/green]")
+    console.print("")
+    types_table = Table(title="Media Types")
+    types_table.add_column("Name", style="cyan", justify="center")
+    types_table.add_column("Id", style="cyan", justify="center")
+
+    with Live(types_table, console=console, refresh_per_second=10):
+        for x in MediaType:
+            # from contextlib import suppress
+            # with suppress(KeyError):
+            try:
+                types_table.add_row(f"{x}", f"{MetadataType[x]}", style="cyan")
+            except KeyError:
+                types_table.add_row(f"{x}", "", style="cyan")

@@ -25,6 +25,9 @@ from typing import TYPE_CHECKING
 import click
 import typer
 from rich.console import Console
+from typer.main import get_command
+
+from plexctl.config import config_dir
 
 if TYPE_CHECKING:
     from click import Command
@@ -82,8 +85,6 @@ console = Console()
 
 def _make_runner(app: typer.Typer) -> Command:
     """Build a Click command once from the Typer app and reuse it."""
-    from typer.main import get_command
-
     return get_command(app)
 
 
@@ -119,8 +120,6 @@ def _run_line(runner: Command, line: str) -> None:
 
 def _history_path() -> str:
     """Return the path to the REPL history file."""
-    from plexctl.config import config_dir
-
     return str(config_dir() / "repl_history")
 
 
