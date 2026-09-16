@@ -64,7 +64,6 @@ Manage Plex library sections and collections.
 - **`library collections`** — Manage Plex collections.
   - **`library collections list`** — List all collections, optionally filtered by section.
   - **`library collections get`** — Get detailed metadata for a collection.
-  - **`library collections create`** — Create a new collection in a library section.
   - **`library collections update`** — Update a collection's metadata.
   - **`library collections delete`** — Delete a collection permanently.
   - **`library collections add`** — Add items to a collection.
@@ -201,7 +200,7 @@ Plex server administration and playback commands.
 
 get plex types
 
-- **`types types`** — print reference types to the console
+- **`types list`** — print reference types to the console
 
 ## `shoko`
 

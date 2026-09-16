@@ -344,7 +344,8 @@ class LibraryService:
 
         try:
             data = http.get(f"/library/metadata/{key}")
-        except Exception:
+        except Exception as e:
+            print(repr(e))
             return None
 
         if data is None:

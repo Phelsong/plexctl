@@ -252,7 +252,7 @@ class CollectionMetadata(BaseModel):
     title: str
     smart: bool = False
     content_count: int = 0
-    section_key: str | None = None
+    section_key: int | str | None = None
     section_title: str | None = None
     summary: str | None = None
     thumb: str | None = None

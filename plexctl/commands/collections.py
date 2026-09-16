@@ -76,6 +76,7 @@ def get_collection(
 ) -> None:
     """Get detailed metadata for a collection."""
     service = _get_service()
+    print(key)
     coll = service.get_collection(key)
 
     if coll is None:
@@ -98,23 +99,23 @@ def get_collection(
 # --- Create collection -------------------------------------------------------
 
 
-@collections_app.command("create")
-def create_collection(
-    name: str = typer.Argument(help="Collection title"),
-    section: str = typer.Option(
-        ..., "--section", "-s", help="Section key to create the collection in"
-    ),
-    smart: bool = typer.Option(False, "--smart", help="Create a smart collection"),
-) -> None:
-    """Create a new collection in a library section.
+# @collections_app.command("create")
+# def create_collection(
+#     name: str = typer.Argument(help="Collection title"),
+#     section: str = typer.Option(
+#         ..., "--section", "-s", help="Section key to create the collection in"
+#     ),
+#     smart: bool = typer.Option(False, "--smart", help="Create a smart collection"),
+# ) -> None:
+#     """Create a new collection in a library section.
 
-    Example:
-        plexctl library collections create "My Favorites" --section 2
-        plexctl library collections create "Action Movies" --section 2 --smart
-    """
-    service = _get_service()
-    coll = service.create_collection(title=name, section_key=section, smart=smart)
-    console.print(f"[green]✓ Created collection '{coll.title}' (key={coll.key})[/green]")
+#     Example:
+#         plexctl library collections create "My Favorites" --section 2
+#         plexctl library collections create "Action Movies" --section 2 --smart
+#     """
+#     service = _get_service()
+#     coll = service.create_collection(title=name, section_key=section, smart=smart)
+#     console.print(f"[green]✓ Created collection '{coll.title}' (key={coll.key})[/green]")
 
 
 # --- Update collection -------------------------------------------------------

@@ -304,7 +304,7 @@ def collection_metadata_to_csv(collection: CollectionMetadata) -> CsvCollectionM
         title=collection.title,
         smart=str(collection.smart),
         content_count=str(collection.content_count),
-        section_key=collection.section_key or "",
+        section_key=str(collection.section_key) or "",
         section_title=collection.section_title or "",
         summary=(collection.summary or "").replace("\n", " ").strip(),
         thumb=collection.thumb or "",
