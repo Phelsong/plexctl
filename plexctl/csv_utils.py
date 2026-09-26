@@ -178,17 +178,34 @@ def list_model_names() -> list[str]:
     return sorted(_MODEL_REGISTRY.keys())
 
 
+def _current_command_args() -> list[str]:
+    """Return the active command's argv tail (e.g. ['library', 'list']).
+
+    Uses sys.argv, skipping the program name. Best-effort labeling only.
+    """
+    import sys
+
+    return sys.argv[1:]
+
+
 def write_csv_to_output(models: Sequence[BaseModel], output: str | None = None) -> None:
     """Write models as CSV to either a file or stdout.
 
     A convenience wrapper around to_csv() that handles the common
     CLI pattern of '--output FILE' or stdout.
+
+    Stashes stdout-written CSV as "last output" so a later ``plexctl pin``
+    can capture it (see plexctl.pin).
     """
     csv_content = to_csv(models, output=Path(output) if output else None)
 
     if not output:
         # Write to stdout (skip if already written to file)
         sys.stdout.write(csv_content)
+        # Stash for `plexctl pin` (import here to avoid a cycle at load).
+        from plexctl.pin import stash_last_output
+
+        stash_last_output(csv_content, _current_command_args())
 
 
 # --- Register all CSV models for ingest ---

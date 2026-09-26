@@ -63,6 +63,11 @@ mypy_path = "."
 module = "plexapi.*"
 ignore_missing_imports = true
 
+[[tool.mypy.overrides]]
+module = ["typer.*", "click.*", "rich.*"]
+ignore_missing_imports = true
+follow_imports = "skip"
+
 [tool.black]
 line-length = 98
 target_version = ["py312"]
