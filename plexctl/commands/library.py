@@ -18,6 +18,7 @@ from plexctl.config import load_config
 from plexctl.converters import library_section_to_csv
 from plexctl.options import CsvFlag, OutputFile
 from plexctl.services.library import LibraryService
+from plexctl.utils.live import stream_table
 
 library_app = typer.Typer(
     name="library", help="Manage Plex library sections and collections.", no_args_is_help=True
@@ -56,18 +57,17 @@ def list_sections(csv_output: CsvFlag = False, output: OutputFile = None) -> Non
     table.add_column("Language", style="white")
     table.add_column("Count", style="magenta", justify="right")
 
-    for sect in sections:
-        table.add_row(
-            sect.key,
-            sect.title,
-            sect.section_type.value if sect.section_type else "unknown",
-            sect.agent or "-",
-            sect.scanner or "-",
-            sect.language or "-",
-            str(sect.count),
-        )
-
-    console.print(table)
+    with stream_table(table, console):
+        for sect in sections:
+            table.add_row(
+                sect.key,
+                sect.title,
+                sect.section_type.value if sect.section_type else "unknown",
+                sect.agent or "-",
+                sect.scanner or "-",
+                sect.language or "-",
+                str(sect.count),
+            )
 
 
 # --- Get section details -----------------------------------------------------

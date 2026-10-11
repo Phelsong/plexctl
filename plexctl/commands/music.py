@@ -37,6 +37,7 @@ from plexctl.models import AlbumInfo, ArtistInfo, MediaTreeItem, TrackInfo
 from plexctl.options import CsvFlag, OutputFile
 from plexctl.services.music import MusicService
 from plexctl.services.tree import TreeService
+from plexctl.utils.live import stream_table
 
 music_app = typer.Typer(
     name="music", help="Browse and manage music libraries.", invoke_without_command=True
@@ -136,16 +137,15 @@ def music_default(
     table.add_column("Country", style="blue")
     table.add_column("Albums", style="magenta", justify="right")
 
-    for artist in artists[:limit]:
-        table.add_row(
-            artist.key,
-            artist.title or "Unknown",
-            artist.genre or "-",
-            artist.country or "-",
-            str(artist.album_count) if artist.album_count else "-",
-        )
-
-    console.print(table)
+    with stream_table(table, console):
+        for artist in artists[:limit]:
+            table.add_row(
+                artist.key,
+                artist.title or "Unknown",
+                artist.genre or "-",
+                artist.country or "-",
+                str(artist.album_count) if artist.album_count else "-",
+            )
     if len(artists) > limit:
         console.print(
             f"[dim]Showing {limit} of {len(artists)} artists. " f"Use --limit to see more.[/dim]"
@@ -192,16 +192,15 @@ def music_albums(
     table.add_column("Year", style="magenta", justify="right")
     table.add_column("Tracks", style="blue", justify="right")
 
-    for album in albums:
-        table.add_row(
-            album.key,
-            album.title or "Unknown",
-            album.artist or "-",
-            str(album.year) if album.year else "-",
-            str(album.track_count) if album.track_count else "-",
-        )
-
-    console.print(table)
+    with stream_table(table, console):
+        for album in albums:
+            table.add_row(
+                album.key,
+                album.title or "Unknown",
+                album.artist or "-",
+                str(album.year) if album.year else "-",
+                str(album.track_count) if album.track_count else "-",
+            )
 
 
 # --- Tracks subcommand -------------------------------------------------------
@@ -257,17 +256,16 @@ def music_tracks(
     table.add_column("#", style="magenta", justify="right")
     table.add_column("Duration", style="white", justify="right")
 
-    for track in tracks:
-        table.add_row(
-            track.key,
-            track.title or "Unknown",
-            track.artist or "-",
-            track.album or "-",
-            str(track.track_number) if track.track_number else "-",
-            _format_duration(track.duration),
-        )
-
-    console.print(table)
+    with stream_table(table, console):
+        for track in tracks:
+            table.add_row(
+                track.key,
+                track.title or "Unknown",
+                track.artist or "-",
+                track.album or "-",
+                str(track.track_number) if track.track_number else "-",
+                _format_duration(track.duration),
+            )
 
 
 # --- Tree subcommand ----------------------------------------------------------
@@ -350,21 +348,20 @@ def music_recently_added(
     table.add_column("Artist", style="yellow")
     table.add_column("Year", style="magenta", justify="right")
 
-    for item in items:
-        item_type = "artist"
-        artist = "-"
-        year = "-"
-        if isinstance(item, AlbumInfo):
-            item_type = "album"
-            artist = item.artist or "-"
-            year = str(item.year) if item.year else "-"
-        elif isinstance(item, TrackInfo):
-            item_type = "track"
-            artist = item.artist or "-"
-            year = str(item.year) if item.year else "-"
-        elif isinstance(item, ArtistInfo):
+    with stream_table(table, console):
+        for item in items:
+            item_type = "artist"
+            artist = "-"
             year = "-"
+            if isinstance(item, AlbumInfo):
+                item_type = "album"
+                artist = item.artist or "-"
+                year = str(item.year) if item.year else "-"
+            elif isinstance(item, TrackInfo):
+                item_type = "track"
+                artist = item.artist or "-"
+                year = str(item.year) if item.year else "-"
+            elif isinstance(item, ArtistInfo):
+                year = "-"
 
-        table.add_row(item.key, item_type, item.title or "Unknown", artist, year)
-
-    console.print(table)
+            table.add_row(item.key, item_type, item.title or "Unknown", artist, year)

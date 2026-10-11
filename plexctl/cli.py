@@ -13,6 +13,7 @@ from plexctl.commands.movies import movies_app
 from plexctl.commands.music import music_app
 from plexctl.commands.photos import photos_app
 from plexctl.commands.playlists import playlists_app, smart_app
+from plexctl.commands.search import search_app
 from plexctl.commands.server import server_app
 from plexctl.commands.shows import shows_app
 from plexctl.commands.triage import triage_app
@@ -28,6 +29,7 @@ app = typer.Typer(
 )
 
 app.add_typer(item_app, name="item")
+app.add_typer(search_app, name="search")
 app.add_typer(library_app, name="library")
 app.add_typer(movies_app, name="movies")
 app.add_typer(music_app, name="music")

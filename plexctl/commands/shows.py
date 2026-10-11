@@ -34,6 +34,7 @@ from plexctl.models import MediaTreeItem
 from plexctl.options import CsvFlag, OutputFile
 from plexctl.services.metadata import MetadataService
 from plexctl.services.tree import TreeService
+from plexctl.utils.live import stream_table
 
 shows_app = typer.Typer(
     name="shows", help="Browse TV shows in your library.", invoke_without_command=True
@@ -179,9 +180,10 @@ def _list_shows(
 ) -> None:
     """List shows in a library section."""
     service = _get_metadata_service()
-    all_shows = service.get_all_shows(section)
+    total = service.section_size(section)
 
-    if if_empty_print(all_shows, f"No shows found in section '{section}'"):
+    if total == 0:
+        console.print(f"[yellow]No shows found in section '{section}'[/yellow]")
         return
 
     if tree:
@@ -199,27 +201,34 @@ def _list_shows(
         console.print(rich_tree)
         return
 
-    if output_csv(all_shows[:limit], media_metadata_to_csv, csv_output, output):
-        return
+    if csv_output:
+        # For CSV, collect all pages then dump
+        all_rows = list(service.iter_media(section))
+        if output_csv(all_rows[:limit], media_metadata_to_csv, csv_output, output):
+            return
 
-    table = Table(title=f"TV Shows in {section}")
+    table = Table(title=f"TV Shows in {section} (0/{total})")
     table.add_column("Key", style="cyan", justify="right")
     table.add_column("Title", style="green")
     table.add_column("Year", style="yellow", justify="right")
     table.add_column("Rating", style="magenta", justify="right")
 
-    for show in all_shows[:limit]:
-        table.add_row(
-            show.key,
-            show.title or "Unknown",
-            str(show.year) if show.year else "-",
-            f"{show.audience_rating:.1f}" if show.audience_rating else "-",
-        )
-
-    console.print(table)
-    if len(all_shows) > limit:
+    shown = 0
+    with stream_table(table, console):
+        for show in service.iter_media(section):
+            if shown >= limit:
+                break
+            table.add_row(
+                show.key,
+                show.title or "Unknown",
+                str(show.year) if show.year else "-",
+                f"{show.audience_rating:.1f}" if show.audience_rating else "-",
+            )
+            shown += 1
+            table.title = f"TV Shows in {section} ({shown}/{total})"
+    if total > limit:
         console.print(
-            f"[dim]Showing {limit} of {len(all_shows)} shows. " f"Use --limit to see more.[/dim]"
+            f"[dim]Showing {limit} of {total} shows. " f"Use --limit to see more.[/dim]"
         )
 
 

@@ -9,6 +9,8 @@ import logging
 from typing import TYPE_CHECKING, Any, cast
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from plexctl.client import PlexClient
     from plexctl.models import PLEX_MEDIA
 
@@ -93,6 +95,27 @@ class MetadataService:
         section = self._client.server.library.section(section_title)
         movies = section.all()
         return [m for m in (self._to_metadata(x) for x in movies) if m is not None]
+
+    def section_size(self, section_title: str) -> int:
+        """Total number of items reported by a library section."""
+        return int(self._client.server.library.section(section_title).totalSize)
+
+    def iter_media(self, section_title: str, page_size: int = 100) -> Iterator[MediaMetadata]:
+        """Yield media items from a section page by page as they are fetched."""
+        section = self._client.server.library.section(section_title)
+        total = section.totalSize
+        start = 0
+        while start < total:
+            batch = section.search(
+                container_start=start, container_size=page_size, maxresults=page_size
+            )
+            if not batch:
+                break
+            for item in batch:
+                meta = self._to_metadata(item)
+                if meta is not None:
+                    yield meta
+            start += len(batch)
 
     def get_all_shows(self, section_title: str = "TV Shows") -> list[MediaMetadata]:
         """Retrieve all shows from a library section."""

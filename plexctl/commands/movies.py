@@ -23,6 +23,7 @@ from plexctl.models import MediaTreeItem
 from plexctl.options import CsvFlag, OutputFile
 from plexctl.services.metadata import MetadataService
 from plexctl.services.tree import TreeService
+from plexctl.utils.live import stream_table
 
 movies_app = typer.Typer(
     name="movies", help="Browse movies in your library.", invoke_without_command=True
@@ -77,9 +78,10 @@ def movies_default(
         return
 
     service = _get_metadata_service()
-    all_movies = service.get_all_movies(section)
+    total = service.section_size(section)
 
-    if if_empty_print(all_movies, f"No movies found in section '{section}'"):
+    if total == 0:
+        console.print(f"[yellow]No movies found in section '{section}'[/yellow]")
         return
 
     if tree:
@@ -97,26 +99,32 @@ def movies_default(
         console.print(rich_tree)
         return
 
-    if output_csv(all_movies[:limit], media_metadata_to_csv, csv_output, output):
-        return
+    if csv_output:
+        # For CSV, collect all pages then dump
+        all_rows = list(service.iter_media(section))
+        if output_csv(all_rows[:limit], media_metadata_to_csv, csv_output, output):
+            return
 
-    table = Table(title=f"Movies in {section}")
+    table = Table(title=f"Movies in {section} (0/{total})")
     table.add_column("Key", style="cyan", justify="right")
     table.add_column("Title", style="green")
     table.add_column("Year", style="yellow", justify="right")
     table.add_column("Rating", style="magenta", justify="right")
 
-    for movie in all_movies[:limit]:
-        table.add_row(
-            movie.key,
-            movie.title or "Unknown",
-            str(movie.year) if movie.year else "-",
-            f"{movie.audience_rating:.1f}" if movie.audience_rating else "-",
-        )
-
-    console.print(table)
-    if len(all_movies) > limit:
+    shown = 0
+    with stream_table(table, console):
+        for movie in service.iter_media(section):
+            if shown >= limit:
+                break
+            table.add_row(
+                movie.key,
+                movie.title or "Unknown",
+                str(movie.year) if movie.year else "-",
+                f"{movie.audience_rating:.1f}" if movie.audience_rating else "-",
+            )
+            shown += 1
+            table.title = f"Movies in {section} ({shown}/{total})"
+    if total > limit:
         console.print(
-            f"[dim]Showing {limit} of {len(all_movies)} movies. "
-            f"Use --limit to see more.[/dim]"
+            f"[dim]Showing {limit} of {total} movies. " f"Use --limit to see more.[/dim]"
         )

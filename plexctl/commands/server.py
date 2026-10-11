@@ -9,9 +9,15 @@ Provides commands for:
 - Transcode session listing
 """
 
+import time
+
 import typer
-from rich.console import Console
+from rich.console import Console, Group, RenderableType
+from rich.layout import Layout
+from rich.panel import Panel
+from rich.progress import ProgressBar  # type: ignore[attr-defined]
 from rich.table import Table
+from rich.text import Text
 
 from plexctl.client import PlexClient
 from plexctl.commands._helpers import if_empty_print, output_csv, print_result
@@ -29,9 +35,15 @@ from plexctl.converters import (
     user_account_to_table,
     watch_history_entry_to_csv,
 )
+from plexctl.models import PlaybackSession, ResourceStats
 from plexctl.options import CsvFlag, OutputFile
 from plexctl.services.server import ServerService, parse_duration
 from plexctl.services.users import UserService
+from plexctl.utils.live import (
+    DEFAULT_DASHBOARD_INTERVAL,
+    poll_dashboard,
+    stream_table,
+)
 
 server_app = typer.Typer(
     name="server", help="Plex server administration and playback commands.", no_args_is_help=True
@@ -70,29 +82,33 @@ def list_sessions(csv_output: CsvFlag = False, output: OutputFile = None) -> Non
     table.add_column("Type", style="blue")
     table.add_column("Transcode", style="red")
 
-    for session in sessions:
-        # For episodes, show "Show - Season X - Episode"
-        display_title = session.title
-        if session.grandparent_title:
-            display_title = f"{session.grandparent_title} - {display_title}"
+    with stream_table(table, console):
+        for session in sessions:
+            _add_session_row(table, session)
 
-        state_color = {
-            "playing": "[green]playing[/green]",
-            "paused": "[yellow]paused[/yellow]",
-            "buffering": "[blue]buffering[/blue]",
-        }.get(session.state, session.state)
 
-        table.add_row(
-            session.rating_key,
-            session.user,
-            session.player_title,
-            state_color,
-            display_title,
-            session.media_type,
-            "✓" if session.transcoding else "",
-        )
+def _add_session_row(table: Table, session: PlaybackSession) -> None:
+    """Add one playback session row to a Rich table."""
+    # For episodes, show "Show - Season X - Episode"
+    display_title = session.title
+    if session.grandparent_title:
+        display_title = f"{session.grandparent_title} - {display_title}"
 
-    console.print(table)
+    state_color = {
+        "playing": "[green]playing[/green]",
+        "paused": "[yellow]paused[/yellow]",
+        "buffering": "[blue]buffering[/blue]",
+    }.get(session.state, session.state)
+
+    table.add_row(
+        session.rating_key,
+        session.user,
+        session.player_title,
+        state_color,
+        display_title,
+        session.media_type,
+        "✓" if session.transcoding else "",
+    )
 
 
 # --- Server Info ------------------------------------------------------------
@@ -138,10 +154,9 @@ def list_prefs(csv_output: CsvFlag = False, output: OutputFile = None) -> None:
     table.add_column("Value", style="yellow")
     table.add_column("Type", style="magenta")
 
-    for pref in prefs:
-        table.add_row(pref.id, pref.label, str(pref.value), pref.type)
-
-    console.print(table)
+    with stream_table(table, console):
+        for pref in prefs:
+            table.add_row(pref.id, pref.label, str(pref.value), pref.type)
 
 
 @server_app.command(name="set-pref")
@@ -181,11 +196,10 @@ def list_butler_tasks(csv_output: CsvFlag = False, output: OutputFile = None) ->
     table.add_column("Enabled", style="yellow")
     table.add_column("Schedule", style="magenta")
 
-    for task in tasks:
-        enabled_str = "✓" if task.enabled else "✗"
-        table.add_row(task.id, task.name, enabled_str, task.schedule)
-
-    console.print(table)
+    with stream_table(table, console):
+        for task in tasks:
+            enabled_str = "✓" if task.enabled else "✗"
+            table.add_row(task.id, task.name, enabled_str, task.schedule)
 
 
 @server_app.command(name="butler-run")
@@ -265,18 +279,17 @@ def watch_history(
     table.add_column("Viewed At", style="green")
     table.add_column("Show/Artist", style="magenta")
 
-    for entry in entries:
-        grandparent = entry.grandparent_title or ""
-        table.add_row(
-            entry.key,
-            entry.title,
-            entry.media_type,
-            str(entry.year) if entry.year else "",
-            entry.viewed_at or "",
-            grandparent,
-        )
-
-    console.print(table)
+    with stream_table(table, console):
+        for entry in entries:
+            grandparent = entry.grandparent_title or ""
+            table.add_row(
+                entry.key,
+                entry.title,
+                entry.media_type,
+                str(entry.year) if entry.year else "",
+                entry.viewed_at or "",
+                grandparent,
+            )
 
 
 # --- Stop session ----------------------------------------------------------
@@ -337,15 +350,14 @@ def on_deck(
     table.add_column("Type", style="blue")
     table.add_column("Year", style="yellow", max_width=6)
 
-    for item in items:
-        table.add_row(
-            item.key,
-            item.title or "",
-            item.media_type.value if item.media_type else "",
-            str(item.year) if item.year else "",
-        )
-
-    console.print(table)
+    with stream_table(table, console):
+        for item in items:
+            table.add_row(
+                item.key,
+                item.title or "",
+                item.media_type.value if item.media_type else "",
+                str(item.year) if item.year else "",
+            )
 
 
 # --- Recently Added --------------------------------------------------------
@@ -385,15 +397,14 @@ def recently_added(
     table.add_column("Type", style="blue")
     table.add_column("Year", style="yellow", max_width=6)
 
-    for item in items:
-        table.add_row(
-            item.key,
-            item.title or "",
-            item.media_type.value if item.media_type else "",
-            str(item.year) if item.year else "",
-        )
-
-    console.print(table)
+    with stream_table(table, console):
+        for item in items:
+            table.add_row(
+                item.key,
+                item.title or "",
+                item.media_type.value if item.media_type else "",
+                str(item.year) if item.year else "",
+            )
 
 
 # --- Continue Watching -----------------------------------------------------
@@ -432,15 +443,14 @@ def continue_watching(
     table.add_column("Type", style="blue")
     table.add_column("Year", style="yellow", max_width=6)
 
-    for item in items:
-        table.add_row(
-            item.key,
-            item.title or "",
-            item.media_type.value if item.media_type else "",
-            str(item.year) if item.year else "",
-        )
-
-    console.print(table)
+    with stream_table(table, console):
+        for item in items:
+            table.add_row(
+                item.key,
+                item.title or "",
+                item.media_type.value if item.media_type else "",
+                str(item.year) if item.year else "",
+            )
 
 
 # --- Transcode sessions ----------------------------------------------------
@@ -472,25 +482,31 @@ def list_transcode_sessions(csv_output: CsvFlag = False, output: OutputFile = No
     table.add_column("Audio Decision", style="blue")
     table.add_column("Context", style="magenta")
 
-    for session in sessions:
-        throttled_str = "✓" if session.throttled else ""
-        table.add_row(
-            session.key,
-            f"{session.progress:.1f}%",
-            f"{session.speed:.2f}x",
-            throttled_str,
-            session.video_decision,
-            session.audio_decision,
-            session.context,
-        )
-
-    console.print(table)
+    with stream_table(table, console):
+        for session in sessions:
+            throttled_str = "✓" if session.throttled else ""
+            table.add_row(
+                session.key,
+                f"{session.progress:.1f}%",
+                f"{session.speed:.2f}x",
+                throttled_str,
+                session.video_decision,
+                session.audio_decision,
+                session.context,
+            )
 
 
 # --- Check for Update -------------------------------------------------------
 
 
 VALID_TIMESPANS: frozenset[str] = frozenset({"seconds", "hours", "days", "weeks", "months"})
+
+# Rows reserved for the bars view (4 bar rows), history table
+# frame/header (title, borders, column header), footer, plus a safety
+# margin because terminals frequently expose one or two fewer usable rows
+# than they report. The latest entry's timestamp is the last history row,
+# so no separate label is rendered.
+RESOURCES_DASHBOARD_CHROME_ROWS = 12
 
 
 @server_app.command(name="check-update")
@@ -630,10 +646,22 @@ def bandwidth_stats(
 @server_app.command(name="resources")
 def resource_stats(
     limit: int = typer.Option(20, "--limit", "-l", help="Maximum number of entries to display."),
+    interval: float = typer.Option(
+        DEFAULT_DASHBOARD_INTERVAL,
+        "--interval",
+        "-i",
+        help="Seconds between dashboard refreshes.",
+    ),
     csv_output: CsvFlag = False,
     output: OutputFile = None,
 ) -> None:
-    """Show server resource utilization (CPU/memory)."""
+    """Show server resource utilization (CPU/memory).
+
+    Displays a live dashboard that re-polls the server every --interval
+    seconds until Ctrl-C: the historic utilization table is listed above
+    and progress bars for the latest result sit below it. Use --csv to
+    dump a single snapshot instead.
+    """
     service = _get_service()
     stats = service.resource_stats()
 
@@ -643,25 +671,149 @@ def resource_stats(
     if output_csv(stats, resource_stats_to_csv, csv_output, output):
         return
 
-    stats = stats[:limit]
+    def render() -> Group:
+        stats = service.resource_stats()[:limit]
 
-    table = Table(title="Resource Utilization")
-    table.add_column("Time", style="cyan")
-    table.add_column("Host CPU %", style="green", justify="right")
-    table.add_column("Host Memory %", style="yellow", justify="right")
-    table.add_column("Process CPU %", style="magenta", justify="right")
-    table.add_column("Process Memory %", style="blue", justify="right")
+        # Keep the most recent rows that fit above the bars panel + footer.
+        max_rows = max(3, console.size.height - RESOURCES_DASHBOARD_CHROME_ROWS)
+        shown = stats[-max_rows:]
 
-    for stat in stats:
-        table.add_row(
-            stat.at,
-            f"{stat.host_cpu:.1f}",
-            f"{stat.host_memory:.1f}",
-            f"{stat.process_cpu:.1f}",
-            f"{stat.process_memory:.1f}",
+        table = Table(
+            title=(
+                "Resource Utilization"
+                if len(shown) == len(stats)
+                else f"Resource Utilization (latest {len(shown)} of {len(stats)})"
+            )
+        )
+        table.add_column("Time", style="cyan")
+        table.add_column("Host CPU %", style="green", justify="right")
+        table.add_column("Host Memory %", style="yellow", justify="right")
+        table.add_column("Process CPU %", style="magenta", justify="right")
+        table.add_column("Process Memory %", style="blue", justify="right")
+
+        for stat in shown:
+            table.add_row(
+                stat.at,
+                f"{stat.host_cpu:.1f}",
+                f"{stat.host_memory:.1f}",
+                f"{stat.process_cpu:.1f}",
+                f"{stat.process_memory:.1f}",
+            )
+
+        latest = shown[-1]
+        return Group(table, _resource_bars(latest))
+
+    poll_dashboard(console, render, interval=interval)
+
+
+# --- Live dashboard ---------------------------------------------------------
+
+
+@server_app.command(name="dashboard")
+def live_dashboard(
+    interval: float = typer.Option(
+        DEFAULT_DASHBOARD_INTERVAL,
+        "--interval",
+        "-i",
+        help="Seconds between dashboard refreshes.",
+    ),
+) -> None:
+    """Live combined dashboard: active streams plus server resources.
+
+    Renders in a full-terminal frame that re-polls active playback
+    sessions and CPU/memory utilization every --interval seconds until
+    Ctrl-C.
+    """
+    service = _get_service()
+
+    def render() -> Layout:
+        sessions = service.list_sessions()
+        stats = service.resource_stats()
+
+        if sessions:
+            streams_view: RenderableType = _build_streams_table(sessions)
+        else:
+            streams_view = Text("No active playback sessions.", justify="center", style="dim")
+
+        if stats:
+            resources_view: RenderableType = _resource_bars(stats[-1])
+        else:
+            resources_view = Text("No resource statistics found.", justify="center", style="dim")
+
+        footer = Text(
+            f"updated {time.strftime('%H:%M:%S')} · "
+            f"refreshing every {interval:.1f}s · Ctrl-C to exit",
+            style="dim",
+            justify="right",
         )
 
-    console.print(table)
+        # Bars block is 4 rows (+2 panel borders); text fallback is 1 (+2).
+        lower_region = Layout(
+            Panel(resources_view, title="Server Resources", border_style="dim"),
+            name="resources",
+            size=6 if stats else 3,
+        )
+
+        layout = Layout(name="root")
+        layout.split_column(
+            Layout(
+                Panel(
+                    streams_view,
+                    title=f"Active Streams ({len(sessions)})",
+                    border_style="dim",
+                ),
+                name="streams",
+            ),
+            lower_region,
+            Layout(footer, name="footer", size=1),
+        )
+        return layout
+
+    poll_dashboard(console, render, interval=interval, add_footer=False)
+
+
+def _build_streams_table(sessions: list[PlaybackSession]) -> Table:
+    """Build the active-streams table (all active sessions, newest last)."""
+    streams_table = Table()
+    streams_table.add_column("Key", style="cyan")
+    streams_table.add_column("User", style="green")
+    streams_table.add_column("Player", style="yellow")
+    streams_table.add_column("State", style="magenta")
+    streams_table.add_column("Title", style="white")
+    streams_table.add_column("Type", style="blue")
+    streams_table.add_column("Transcode", style="red")
+    for session in sessions:
+        _add_session_row(streams_table, session)
+    return streams_table
+
+
+def _resource_bars(stat: ResourceStats) -> Table:
+    """Build a borderless table of progress bars for a ResourceStats entry."""
+    metrics = [
+        ("Host CPU", stat.host_cpu, "green"),
+        ("Host Memory", stat.host_memory, "yellow"),
+        ("Process CPU", stat.process_cpu, "magenta"),
+        ("Process Memory", stat.process_memory, "blue"),
+    ]
+
+    bars = Table(show_header=False, box=None, padding=(0, 2))
+    bars.add_column(justify="right", min_width=15)
+    bars.add_column(ratio=1)
+    bars.add_column(justify="right", min_width=6)
+
+    for label, value, style in metrics:
+        bars.add_row(
+            Text(label, style=style),
+            ProgressBar(
+                total=100.0,
+                completed=min(value, 100.0),
+                complete_style=style,
+                finished_style=style,
+            ),
+            Text(f"{value:.1f}%", style="bold " + style),
+        )
+
+    return bars
 
 
 # --- Download logs ---------------------------------------------------------
@@ -739,12 +891,11 @@ def list_accounts(
     table.add_column("Title", style="yellow")
     table.add_column("Friend", style="magenta")
 
-    for user in users:
-        table.add_row(
-            str(user.id), user.username, user.email, user.title, "✓" if user.friend else "✗"
-        )
-
-    console.print(table)
+    with stream_table(table, console):
+        for user in users:
+            table.add_row(
+                str(user.id), user.username, user.email, user.title, "✓" if user.friend else "✗"
+            )
 
     if typer.confirm("Show user details for each user?"):
         for user in users:

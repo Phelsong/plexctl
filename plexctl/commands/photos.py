@@ -28,6 +28,7 @@ from plexctl.models import PhotoAlbumInfo, PhotoInfo
 from plexctl.options import CsvFlag, OutputFile
 from plexctl.services.photos import PhotoService
 from plexctl.services.tree import TreeService
+from plexctl.utils.live import stream_table
 
 photos_app = typer.Typer(
     name="photos", help="Browse and manage photo libraries.", no_args_is_help=True
@@ -57,15 +58,14 @@ def _render_album_table(albums: list[PhotoAlbumInfo], section: str) -> None:
     table.add_column("Photos", style="yellow", justify="right")
     table.add_column("Rating", style="magenta", justify="right")
 
-    for album in albums:
-        table.add_row(
-            album.key,
-            album.title or "Unknown",
-            str(album.photo_count),
-            f"{album.user_rating:.1f}" if album.user_rating else "-",
-        )
-
-    console.print(table)
+    with stream_table(table, console):
+        for album in albums:
+            table.add_row(
+                album.key,
+                album.title or "Unknown",
+                str(album.photo_count),
+                f"{album.user_rating:.1f}" if album.user_rating else "-",
+            )
 
 
 def _render_photo_table(photos: list[PhotoInfo]) -> None:
@@ -76,15 +76,14 @@ def _render_photo_table(photos: list[PhotoInfo]) -> None:
     table.add_column("Album", style="yellow")
     table.add_column("Date", style="blue")
 
-    for photo in photos:
-        table.add_row(
-            photo.key,
-            photo.title or "Unknown",
-            photo.album or "-",
-            photo.originally_available or "-",
-        )
-
-    console.print(table)
+    with stream_table(table, console):
+        for photo in photos:
+            table.add_row(
+                photo.key,
+                photo.title or "Unknown",
+                photo.album or "-",
+                photo.originally_available or "-",
+            )
 
 
 def _render_album_tree(albums: list[PhotoAlbumInfo]) -> Tree:

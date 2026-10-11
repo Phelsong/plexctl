@@ -35,6 +35,7 @@ from plexctl.services.fs_compare import FsCompareService
 from plexctl.services.plexmatch import PlexMatchService
 from plexctl.services.server import ServerService
 from plexctl.services.triage import TriageService
+from plexctl.utils.live import stream_table
 
 triage_app = typer.Typer(
     name="triage",
@@ -193,12 +194,11 @@ def _display_reorg_actions(actions: list[ReorgAction], title: str) -> None:
         table.add_column("Destination", style="green")
         table.add_column("Reason", style="white")
 
-        for a in type_actions:
-            risk_marker = f"[{_risk_style(a.risk)}]{a.risk}[/{_risk_style(a.risk)}]"
-            dest = a.destination or "-"
-            table.add_row(risk_marker, a.source, dest, a.reason)
-
-        console.print(table)
+        with stream_table(table, console):
+            for a in type_actions:
+                risk_marker = f"[{_risk_style(a.risk)}]{a.risk}[/{_risk_style(a.risk)}]"
+                dest = a.destination or "-"
+                table.add_row(risk_marker, a.source, dest, a.reason)
 
     # Summary
     move_count = len(action_types.get("move", []))
@@ -295,16 +295,16 @@ def report(
     table.add_column("Plex Show", style="green", max_width=30)
     table.add_column("Detail", style="white", max_width=60)
 
-    for idx, issue in enumerate(filtered, 1):
-        table.add_row(
-            str(idx),
-            _format_severity(issue.severity),
-            issue.issue_type.value,
-            _format_action(issue.action),
-            issue.plex_title or "[dim]-[/dim]",
-            issue.detail,
-        )
-    console.print(table)
+    with stream_table(table, console):
+        for idx, issue in enumerate(filtered, 1):
+            table.add_row(
+                str(idx),
+                _format_severity(issue.severity),
+                issue.issue_type.value,
+                _format_action(issue.action),
+                issue.plex_title or "[dim]-[/dim]",
+                issue.detail,
+            )
 
     # Print actionable steps
     auto_fixable = [i for i in filtered if i.action == TriageAction.ANALYZE]
@@ -424,19 +424,18 @@ def diagnose_scan(
     table.add_column("Missing Files", style="red", justify="right")
     table.add_column("Locations", style="dim")
 
-    for show in shows:
-        locations_str = "\n".join(show.locations) if show.locations else "-"
-        table.add_row(
-            show.key,
-            show.title or "Unknown",
-            str(show.total_episodes),
-            str(show.unanalyzed_episodes),
-            str(show.multi_media_episodes),
-            str(show.missing_file_episodes),
-            locations_str,
-        )
-
-    console.print(table)
+    with stream_table(table, console):
+        for show in shows:
+            locations_str = "\n".join(show.locations) if show.locations else "-"
+            table.add_row(
+                show.key,
+                show.title or "Unknown",
+                str(show.total_episodes),
+                str(show.unanalyzed_episodes),
+                str(show.multi_media_episodes),
+                str(show.missing_file_episodes),
+                locations_str,
+            )
 
     # If deep scan, show per-episode details for shows with issues
     if deep:
@@ -1099,15 +1098,14 @@ def fsck_orphans(
     table.add_column("Subdirs", style="cyan", justify="right")
     table.add_column("Subdirectory Names", style="dim")
 
-    for fs_dir in orphans:
-        table.add_row(
-            fs_dir.name,
-            str(fs_dir.video_files),
-            str(fs_dir.subdir_count),
-            ", ".join(fs_dir.subdirs[:5]) + ("..." if len(fs_dir.subdirs) > 5 else ""),
-        )
-
-    console.print(table)
+    with stream_table(table, console):
+        for fs_dir in orphans:
+            table.add_row(
+                fs_dir.name,
+                str(fs_dir.video_files),
+                str(fs_dir.subdir_count),
+                ", ".join(fs_dir.subdirs[:5]) + ("..." if len(fs_dir.subdirs) > 5 else ""),
+            )
 
 
 @triage_app.command("fsck-grouped")
@@ -1233,12 +1231,11 @@ def fsck_reorganize(
         table.add_column("Destination", style="green")
         table.add_column("Reason", style="white")
 
-        for a in type_actions:
-            risk_marker = f"[{_risk_style(a.risk)}]{a.risk}[/{_risk_style(a.risk)}]"
-            dest = a.destination or "-"
-            table.add_row(risk_marker, a.source, dest, a.reason)
-
-        console.print(table)
+        with stream_table(table, console):
+            for a in type_actions:
+                risk_marker = f"[{_risk_style(a.risk)}]{a.risk}[/{_risk_style(a.risk)}]"
+                dest = a.destination or "-"
+                table.add_row(risk_marker, a.source, dest, a.reason)
 
     # Guidance
     console.print("\n[bold]Next Steps:[/bold]")

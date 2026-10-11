@@ -27,6 +27,7 @@ from plexctl.converters import playlist_item_to_csv, playlist_to_csv, smart_play
 from plexctl.models import PlaylistType, SmartPlaylistFilter
 from plexctl.options import CsvFlag, OutputFile
 from plexctl.services.playlists import PlaylistService, SmartPlaylistService
+from plexctl.utils.live import stream_table
 
 # ---------------------------------------------------------------------------
 # Typer apps
@@ -128,15 +129,14 @@ def list_playlists(
     table.add_column("Type", style="yellow")
     table.add_column("Items", style="magenta", justify="right")
 
-    for pl in playlists:
-        table.add_row(
-            pl.key,
-            pl.title,
-            pl.playlist_type.value if pl.playlist_type else "unknown",
-            str(pl.item_count),
-        )
-
-    console.print(table)
+    with stream_table(table, console):
+        for pl in playlists:
+            table.add_row(
+                pl.key,
+                pl.title,
+                pl.playlist_type.value if pl.playlist_type else "unknown",
+                str(pl.item_count),
+            )
 
 
 # --- Get playlist ------------------------------------------------------------
@@ -296,17 +296,16 @@ def list_playlist_items(
     table.add_column("Year", style="magenta", justify="right")
     table.add_column("Duration", style="blue", justify="right")
 
-    for item in items:
-        duration_str = _format_duration(item.duration) if item.duration else "-"
-        table.add_row(
-            item.key,
-            item.title or "Unknown",
-            item.media_type.value if item.media_type else "-",
-            str(item.year) if item.year else "-",
-            duration_str,
-        )
-
-    console.print(table)
+    with stream_table(table, console):
+        for item in items:
+            duration_str = _format_duration(item.duration) if item.duration else "-"
+            table.add_row(
+                item.key,
+                item.title or "Unknown",
+                item.media_type.value if item.media_type else "-",
+                str(item.year) if item.year else "-",
+                duration_str,
+            )
     console.print(f"[dim]Showing {len(items)} items[/dim]")
 
 
@@ -628,21 +627,20 @@ def list_smart_playlists(
     table.add_column("Items", style="magenta", justify="right")
     table.add_column("Filters", style="blue")
 
-    for pl in playlists:
-        filter_summary = (
-            ", ".join(f"{f.field}{f.operator}{f.value}" for f in pl.filters)
-            if pl.filters
-            else "-"
-        )
-        table.add_row(
-            pl.key,
-            pl.title,
-            pl.playlist_type.value if pl.playlist_type else "unknown",
-            str(pl.item_count),
-            filter_summary,
-        )
-
-    console.print(table)
+    with stream_table(table, console):
+        for pl in playlists:
+            filter_summary = (
+                ", ".join(f"{f.field}{f.operator}{f.value}" for f in pl.filters)
+                if pl.filters
+                else "-"
+            )
+            table.add_row(
+                pl.key,
+                pl.title,
+                pl.playlist_type.value if pl.playlist_type else "unknown",
+                str(pl.item_count),
+                filter_summary,
+            )
 
 
 # --- Update smart playlist ---------------------------------------------------
@@ -748,17 +746,16 @@ def list_smart_playlist_items(
     table.add_column("Year", style="magenta", justify="right")
     table.add_column("Duration", style="blue", justify="right")
 
-    for item in items:
-        duration_str = _format_duration(item.duration) if item.duration else "-"
-        table.add_row(
-            item.key,
-            item.title or "Unknown",
-            item.media_type.value if item.media_type else "-",
-            str(item.year) if item.year else "-",
-            duration_str,
-        )
-
-    console.print(table)
+    with stream_table(table, console):
+        for item in items:
+            duration_str = _format_duration(item.duration) if item.duration else "-"
+            table.add_row(
+                item.key,
+                item.title or "Unknown",
+                item.media_type.value if item.media_type else "-",
+                str(item.year) if item.year else "-",
+                duration_str,
+            )
     console.print(f"[dim]Showing {len(items)} items[/dim]")
 
 

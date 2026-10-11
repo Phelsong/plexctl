@@ -26,6 +26,11 @@ runner = CliRunner()
 CONFIG_PATCH = "plexctl.commands.item.load_config"
 CLIENT_PATCH = "plexctl.commands.item.PlexClient"
 
+# Search commands moved to plexctl.commands.search (which imports its own
+# config/client helpers).
+SEARCH_CONFIG_PATCH = "plexctl.commands.search.load_config"
+SEARCH_CLIENT_PATCH = "plexctl.commands.search.PlexClient"
+
 MOCK_CONFIG = PlexConfig(url="http://localhost:32400", token="test-token")
 
 
@@ -115,17 +120,17 @@ class TestItemInfoCommand:
 
 
 # ---------------------------------------------------------------------------
-# item search
+# search media (moved from item; now plexctl search media)
 # ---------------------------------------------------------------------------
 
 
-class TestItemSearchCommand:
-    """Tests for 'plexctl item search' CLI command."""
+class TestSearchMediaCommand:
+    """Tests for 'plexctl search media' CLI command."""
 
-    @patch(CLIENT_PATCH)
-    @patch(CONFIG_PATCH)
+    @patch(SEARCH_CLIENT_PATCH)
+    @patch(SEARCH_CONFIG_PATCH)
     def test_item_search_with_results(self, mock_config, mock_client_cls) -> None:
-        """item search calls MetadataService.search and displays results."""
+        """search media calls MetadataService.search and displays results."""
         mock_config.return_value = MOCK_CONFIG
         mock_client = MagicMock()
         mock_client_cls.return_value = mock_client
@@ -135,21 +140,21 @@ class TestItemSearchCommand:
         ]
 
         with _patch_item_service(MetadataService, "search", results):
-            result = runner.invoke(app, ["item", "search", "Bunny"])
+            result = runner.invoke(app, ["search", "media", "Bunny"])
 
         assert result.exit_code == 0
         assert "Bunny" in result.output
 
-    @patch(CLIENT_PATCH)
-    @patch(CONFIG_PATCH)
+    @patch(SEARCH_CLIENT_PATCH)
+    @patch(SEARCH_CONFIG_PATCH)
     def test_item_search_no_results(self, mock_config, mock_client_cls) -> None:
-        """item search shows message when no results found."""
+        """search media shows message when no results found."""
         mock_config.return_value = MOCK_CONFIG
         mock_client = MagicMock()
         mock_client_cls.return_value = mock_client
 
         with _patch_item_service(MetadataService, "search", []):
-            result = runner.invoke(app, ["item", "search", "nonexistent"])
+            result = runner.invoke(app, ["search", "media", "nonexistent"])
 
         assert result.exit_code == 0
         assert "no results" in result.output.lower()

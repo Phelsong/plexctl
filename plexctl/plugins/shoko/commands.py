@@ -10,7 +10,6 @@ from typing import Annotated
 
 import typer
 from rich.console import Console
-from rich.live import Live
 from rich.table import Table
 
 from plexctl.commands._helpers import output_csv
@@ -25,6 +24,7 @@ from plexctl.plugins.shoko.converters import (
     tmdb_search_result_to_csv,
 )
 from plexctl.plugins.shoko.service import ShokoService
+from plexctl.utils.live import stream_table
 
 shoko_app = typer.Typer(
     name="shoko",
@@ -100,12 +100,23 @@ def _format_episode_type(ep_type: str) -> str:
     return type_labels.get(ep_type, "?")
 
 
+_SERIES_PAGE_SIZE = 100
+
+
 @shoko_app.command()
-def series(search: Search = None, csv_output: CsvFlag = False, output: OutputFile = None) -> None:
+def series(
+    search: Search = None,
+    limit: Annotated[
+        int, typer.Option(help="Maximum number of results to display (0 = all)")
+    ] = 0,
+    csv_output: CsvFlag = False,
+    output: OutputFile = None,
+) -> None:
     """List or search series from Shoko Server.
 
-    Paginates through all series and streams rows into a live table.
-    Use --search to filter by name.
+    Paginates through all series and streams rows into a live table,
+    with the title tracking (shown/total). Use --search to filter by
+    name and --limit to cap the displayed rows.
     """
     service = _get_service()
 
@@ -127,38 +138,50 @@ def series(search: Search = None, csv_output: CsvFlag = False, output: OutputFil
             return
 
     # Build live table
-    table = Table(title="Shoko Series")
+    base_title = "Shoko Series" + (f" (search: {search})" if search else "")
+    table = Table(title=base_title)
     table.add_column("ID", style="cyan", justify="right")
     table.add_column("Name", style="green")
     table.add_column("AniDB", style="yellow", justify="right")
     table.add_column("Episodes", style="magenta", justify="right")
     table.add_column("TMDB", style="blue")
 
-    if search:
-        results = service.search_series(search)
-        total = len(results)
-        for s in results:
-            _add_series_row(table, s)
-        table.title = f"Shoko Series ({total} found)"
-        console.print(table)
-        return
+    shown = 0
 
-    # Paginate with live updates
-    page_size = 100
-    with Live(table, console=console, refresh_per_second=10):
+    def _row_add(s: ShokoSeries) -> bool:
+        """Add one row if under the limit. Returns True when done streaming."""
+        nonlocal shown
+        if limit and shown >= limit:
+            return True
+        _add_series_row(table, s)
+        shown += 1
+        return False
+
+    with stream_table(table, console):
+        if search:
+            results = service.search_series(search)
+            for s in results:
+                if _row_add(s):
+                    break
+            table.title = f"{base_title} ({shown}/{len(results)})"
+            return
+
         page = 1
         total = None
         fetched = 0
         while total is None or fetched < total:
-            batch, total = service.list_series(page=page, page_size=page_size)
+            batch, total = service.list_series(page=page, page_size=_SERIES_PAGE_SIZE)
             if not batch:
                 break
             for s in batch:
-                _add_series_row(table, s)
+                if _row_add(s):
+                    break
             fetched += len(batch)
-            table.title = f"Shoko Series ({fetched}/{total})"
+            table.title = f"{base_title} ({shown}/{total})"
             page += 1
-            if page > (total // page_size) + 2:
+            if limit and shown >= limit:
+                break
+            if page > (total // _SERIES_PAGE_SIZE) + 2:
                 break
 
 
@@ -207,18 +230,17 @@ def episodes(
     table.add_column("Name", style="green")
     table.add_column("Hidden", style="dim")
 
-    for ep in results:
-        type_label = _format_episode_type(ep.episode_type.value)
-        table.add_row(
-            str(ep.id),
-            type_label,
-            str(ep.episode_number or "-"),
-            str(ep.season_number if ep.season_number is not None else "-"),
-            ep.name or "[dim]Unknown[/dim]",
-            "yes" if ep.is_hidden else "",
-        )
-
-    console.print(table)
+    with stream_table(table, console):
+        for ep in results:
+            type_label = _format_episode_type(ep.episode_type.value)
+            table.add_row(
+                str(ep.id),
+                type_label,
+                str(ep.episode_number or "-"),
+                str(ep.season_number if ep.season_number is not None else "-"),
+                ep.name or "[dim]Unknown[/dim]",
+                "yes" if ep.is_hidden else "",
+            )
 
 
 @shoko_app.command()
@@ -253,17 +275,16 @@ def files(
     table.add_column("Var", style="dim")
     table.add_column("Ign", style="dim")
 
-    for f in results[:limit]:
-        table.add_row(
-            str(f.id),
-            f.filename or "[dim]unknown[/dim]",
-            f.series_name or "[dim]unlinked[/dim]",
-            f.resolution or "-",
-            "V" if f.is_variation else "",
-            "I" if f.is_ignored else "",
-        )
-
-    console.print(table)
+    with stream_table(table, console):
+        for f in results[:limit]:
+            table.add_row(
+                str(f.id),
+                f.filename or "[dim]unknown[/dim]",
+                f.series_name or "[dim]unlinked[/dim]",
+                f.resolution or "-",
+                "V" if f.is_variation else "",
+                "I" if f.is_ignored else "",
+            )
 
     if not search and total > limit:
         console.print(f"[dim]Showing page {page}. Use --page to see more results.[/dim]")
@@ -290,15 +311,14 @@ def unlinked(csv_output: CsvFlag = False, output: OutputFile = None) -> None:
     table.add_column("Path", style="yellow", max_width=80)
     table.add_column("Accessible", style="magenta")
 
-    for f in results:
-        table.add_row(
-            str(f.id),
-            f.filename or "[dim]unknown[/dim]",
-            f.relative_path or "-",
-            "yes" if f.is_accessible else "[red]no[/red]",
-        )
-
-    console.print(table)
+    with stream_table(table, console):
+        for f in results:
+            table.add_row(
+                str(f.id),
+                f.filename or "[dim]unknown[/dim]",
+                f.relative_path or "-",
+                "yes" if f.is_accessible else "[red]no[/red]",
+            )
 
 
 @shoko_app.command()
@@ -325,17 +345,16 @@ def problems(csv_output: CsvFlag = False, output: OutputFile = None) -> None:
 
     severity_colors = {"error": "red", "warning": "yellow", "info": "blue"}
 
-    for m in results:
-        color = severity_colors.get(m.severity, "white")
-        table.add_row(
-            m.mismatch_type,
-            f"[{color}]{m.severity}[/{color}]",
-            str(m.shoko_id or "-"),
-            m.name or "[dim]unknown[/dim]",
-            m.detail,
-        )
-
-    console.print(table)
+    with stream_table(table, console):
+        for m in results:
+            color = severity_colors.get(m.severity, "white")
+            table.add_row(
+                m.mismatch_type,
+                f"[{color}]{m.severity}[/{color}]",
+                str(m.shoko_id or "-"),
+                m.name or "[dim]unknown[/dim]",
+                m.detail,
+            )
 
 
 @shoko_app.command("search-tmdb")
@@ -371,19 +390,18 @@ def search_tmdb(
     table.add_column("Year", style="yellow", justify="right")
     table.add_column("Overview", style="white", max_width=60)
 
-    for r in results:
-        table.add_row(
-            str(r.id),
-            r.name,
-            str(r.year or "-"),
-            (
-                (r.overview or "")[:60] + "..."
-                if r.overview and len(r.overview) > 60
-                else r.overview or ""
-            ),
-        )
-
-    console.print(table)
+    with stream_table(table, console):
+        for r in results:
+            table.add_row(
+                str(r.id),
+                r.name,
+                str(r.year or "-"),
+                (
+                    (r.overview or "")[:60] + "..."
+                    if r.overview and len(r.overview) > 60
+                    else r.overview or ""
+                ),
+            )
     console.print("[dim]Use 'link-tmdb' to link a TMDB result to a Shoko series.[/dim]")
 
 
@@ -574,19 +592,18 @@ def crc_audit(csv_output: CsvFlag = False, output: OutputFile = None) -> None:
     table.add_column("No Bracket", style="yellow", justify="right")
     table.add_column("Sample Paths", style="dim", max_width=60)
 
-    for r in report.series_missing_crc[:25]:
-        paths_str = "\n".join(r.missing_crc_paths[:3]) if r.missing_crc_paths else ""
-        table.add_row(
-            str(r.series_id),
-            r.series_name,
-            str(r.total_files),
-            str(r.files_with_crc),
-            str(r.files_missing_crc),
-            str(r.files_no_bracket),
-            paths_str,
-        )
-
-    console.print(table)
+    with stream_table(table, console):
+        for r in report.series_missing_crc[:25]:
+            paths_str = "\n".join(r.missing_crc_paths[:3]) if r.missing_crc_paths else ""
+            table.add_row(
+                str(r.series_id),
+                r.series_name,
+                str(r.total_files),
+                str(r.files_with_crc),
+                str(r.files_missing_crc),
+                str(r.files_no_bracket),
+                paths_str,
+            )
 
     if len(report.series_missing_crc) > 25:
         console.print(
@@ -749,22 +766,21 @@ def season_gaps(
     gap_table.add_column("Missing", style="red", width=7, justify="right")
     gap_table.add_column("Status", width=8)
 
-    for gap in gaps:
-        status = "[red]MISSING[/red]" if gap.is_missing else "[green]OK[/green]"
-        deficit = gap.expected_episode_count - gap.actual_episode_count
-        shoko_names = ", ".join(f"{s.name} ({s.episode_count}ep)" for s in gap.shoko_series)
+    with stream_table(gap_table, console):
+        for gap in gaps:
+            status = "[red]MISSING[/red]" if gap.is_missing else "[green]OK[/green]"
+            deficit = gap.expected_episode_count - gap.actual_episode_count
+            shoko_names = ", ".join(f"{s.name} ({s.episode_count}ep)" for s in gap.shoko_series)
 
-        gap_table.add_row(
-            gap.plex_title,
-            str(gap.tmdb_show_id or "-"),
-            shoko_names,
-            str(gap.actual_episode_count),
-            str(gap.expected_episode_count),
-            str(deficit) if deficit > 0 else "-",
-            status,
-        )
-
-    console.print(gap_table)
+            gap_table.add_row(
+                gap.plex_title,
+                str(gap.tmdb_show_id or "-"),
+                shoko_names,
+                str(gap.actual_episode_count),
+                str(gap.expected_episode_count),
+                str(deficit) if deficit > 0 else "-",
+                status,
+            )
 
     # Show detail for missing shows
     missing_gaps = [g for g in gaps if g.is_missing]
@@ -992,24 +1008,23 @@ def plexmatch_orderings(
     table.add_column("Episodes", style="magenta", justify="right")
     table.add_column("Flags", style="dim")
 
-    for o in orderings:
-        flags = []
-        if o.is_default:
-            flags.append("default")
-        if o.is_preferred:
-            flags.append("preferred")
-        if o.in_use:
-            flags.append("in-use")
+    with stream_table(table, console):
+        for o in orderings:
+            flags = []
+            if o.is_default:
+                flags.append("default")
+            if o.is_preferred:
+                flags.append("preferred")
+            if o.in_use:
+                flags.append("in-use")
 
-        table.add_row(
-            o.ordering_id,
-            o.name,
-            str(o.season_count),
-            str(o.episode_count),
-            ", ".join(flags) if flags else "",
-        )
-
-    console.print(table)
+            table.add_row(
+                o.ordering_id,
+                o.name,
+                str(o.season_count),
+                str(o.episode_count),
+                ", ".join(flags) if flags else "",
+            )
     console.print(
         "\n[dim]Use the Ordering ID with " "--ordering flag on plexmatch/plexmatch-all.[/dim]"
     )
@@ -1209,27 +1224,26 @@ def plexmatch_all(
     table.add_column("Episodes", style="magenta", justify="right")
     table.add_column("Detail", style="dim", max_width=40)
 
-    for r in result.results:
-        if r.success:
-            status = "[green]✓[/green]"
-            detail = f"{r.entry_count} episodes"
-        elif r.series_id == 0:
-            status = "[yellow]⊘[/yellow]"
-            detail = r.error or "No match"
-        else:
-            status = "[red]✗[/red]"
-            detail = r.error or "Failed"
+    with stream_table(table, console):
+        for r in result.results:
+            if r.success:
+                status = "[green]✓[/green]"
+                detail = f"{r.entry_count} episodes"
+            elif r.series_id == 0:
+                status = "[yellow]⊘[/yellow]"
+                detail = r.error or "No match"
+            else:
+                status = "[red]✗[/red]"
+                detail = r.error or "Failed"
 
-        table.add_row(
-            status,
-            r.folder_name,
-            r.series_name or "[dim]—[/dim]",
-            str(r.series_id) if r.series_id else "[dim]—[/dim]",
-            str(r.entry_count) if r.entry_count else "[dim]—[/dim]",
-            detail,
-        )
-
-    console.print(table)
+            table.add_row(
+                status,
+                r.folder_name,
+                r.series_name or "[dim]—[/dim]",
+                str(r.series_id) if r.series_id else "[dim]—[/dim]",
+                str(r.entry_count) if r.entry_count else "[dim]—[/dim]",
+                detail,
+            )
 
     # Print summary
     console.print(

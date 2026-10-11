@@ -94,8 +94,13 @@ chmod 400 ~/.config/plexctl/plexctl.toml
 ### Item Commands
 
 ```bash
-# Search by title (item search)
-plexctl item search "One Piece" --section Anime
+# Search by title
+plexctl search media "One Piece" --section Anime
+
+# Search by genre / year / actor
+plexctl search genre "Science Fiction" --type movie
+plexctl search year 1999 --type movie
+plexctl search actor "Bryan Cranston" --type show
 
 # Show detailed metadata for a specific item
 plexctl item info 32272
@@ -379,7 +384,6 @@ pixi run pre-commit
 
 Operations on individual media items.
 
-- **`item search`** — Search for media by title.
 - **`item edit`** — Edit a metadata field for a media item.
 - **`item ingest`** — Read CSV data back into validated Pydantic models.
 - **`item info`** — Show detailed metadata for a media item.
@@ -391,14 +395,6 @@ Operations on individual media items.
 - **`item fix-match`** — Fix an incorrect metadata match.
 - **`item unmatch`** — Remove metadata match from an item.
 - **`item get`** — Find a media item by its Plex rating key.
-- **`item advanced`** — Advanced search with multiple filters.
-- **`item actor`** — Search for media featuring a specific actor.
-- **`item director`** — Search for media directed by a specific director.
-- **`item genre`** — Search for media by genre.
-- **`item title`** — Search for media by title.
-- **`item year`** — Search for media by release year.
-- **`item similar`** — Find media similar to a given item.
-- **`item tmdb`** — Search for media using TMDB-integrated search.
 - **`item add-genre`** — Add genre
 - **`item remove-genre`** — Remove genre
 - **`item add-collection`** — Add collection
@@ -423,6 +419,21 @@ Operations on individual media items.
 - **`item remove-sub`** — Remove a subtitle from a media item.
 - **`item set-progress`** — Set playback progress for a media item.
 - **`item merge`** — Merge multiple media items into one.
+
+## `search`
+
+Search Plex for media by title, people, genre, year, and more.
+
+- **`search`** *(default)* — Search Plex for media by title.
+- **`search media`** — Search for media by title.
+- **`search advanced`** — Advanced search with multiple filters.
+- **`search actor`** — Search for media featuring a specific actor.
+- **`search director`** — Search for media directed by a specific director.
+- **`search genre`** — Search for media by genre.
+- **`search title`** — Search for media by title filter.
+- **`search year`** — Search for media by release year.
+- **`search similar`** — Find media similar to a given item.
+- **`search tmdb`** — Search for media using TMDB-integrated search.
 
 ## `library`
 
@@ -564,6 +575,7 @@ Plex server administration and playback commands.
 - **`server install-update`** — Install the latest available Plex Media Server update.
 - **`server bandwidth`** — Show server bandwidth statistics.
 - **`server resources`** — Show server resource utilization (CPU/memory).
+- **`server dashboard`** — Live combined dashboard: active streams plus server resources.
 - **`server download-logs`** — Download Plex Media Server logs.
 - **`server download-dbs`** — Download Plex Media Server databases for backup.
 - **`server accounts`** — List Plex account users.
@@ -600,7 +612,7 @@ Query Shoko Server for anime metadata and file information.
 - **`help`** — Show help for plexctl or a specific command.
 
 ---
-*Total active commands: 137*
+*Total active commands: 139*
 
 
 <!-- END COMMAND TREE -->

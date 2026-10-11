@@ -15,6 +15,7 @@ from plexctl.config import load_config
 from plexctl.converters import collection_info_to_csv, collection_metadata_to_csv
 from plexctl.options import CsvFlag, OutputFile
 from plexctl.services.library import LibraryService
+from plexctl.utils.live import stream_table
 
 collections_app = typer.Typer(
     name="collections", help="Manage Plex collections.", no_args_is_help=True
@@ -59,10 +60,11 @@ def list_collections(
     table.add_column("Smart", style="yellow")
     table.add_column("Items", style="magenta", justify="right")
 
-    for coll in colls:
-        table.add_row(coll.key, coll.title, "✓" if coll.smart else "✗", str(coll.content_count))
-
-    console.print(table)
+    with stream_table(table, console):
+        for coll in colls:
+            table.add_row(
+                coll.key, coll.title, "✓" if coll.smart else "✗", str(coll.content_count)
+            )
 
 
 # --- Get collection ----------------------------------------------------------
