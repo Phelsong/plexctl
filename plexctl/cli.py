@@ -17,6 +17,7 @@ from plexctl.commands.search import search_app
 from plexctl.commands.server import server_app
 from plexctl.commands.shows import shows_app
 from plexctl.commands.triage import triage_app
+from plexctl.pin import register_pin
 from plexctl.plugins.registry import register_plugins
 from plexctl.repl import register_help, register_repl
 from plexctl.utils.types_helper import types_app
@@ -49,6 +50,9 @@ register_repl(app)
 
 # plexctl help [cmd] — convenient in the REPL (avoids --help exiting the loop)
 register_help(app)
+
+# Pinned tables: plexctl pin / unpin, reprints after every command
+register_pin(app)
 
 # --- Backward-compat deprecated aliases ---
 # Old command groups removed from the active menu in Phase 2E.

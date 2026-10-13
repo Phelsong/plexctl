@@ -183,12 +183,20 @@ def write_csv_to_output(models: Sequence[BaseModel], output: str | None = None) 
 
     A convenience wrapper around to_csv() that handles the common
     CLI pattern of '--output FILE' or stdout.
+
+    Stashes stdout-written CSV (with the running command's label) as
+    "last output" so a later ``plexctl pin`` can capture it (see
+    plexctl.pin).
     """
     csv_content = to_csv(models, output=Path(output) if output else None)
 
     if not output:
         # Write to stdout (skip if already written to file)
         sys.stdout.write(csv_content)
+        # Stash for `plexctl pin` (import here to avoid a cycle at load).
+        from plexctl.pin import command_source, stash_last_output
+
+        stash_last_output(csv_content, command_source())
 
 
 # --- Register all CSV models for ingest ---

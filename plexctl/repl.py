@@ -28,6 +28,7 @@ from rich.console import Console
 from typer.main import get_command
 
 from plexctl.config import config_dir
+from plexctl.pin import record_command_run
 
 if TYPE_CHECKING:
     from click import Command
@@ -101,21 +102,26 @@ def _run_line(runner: Command, line: str) -> None:
 
     try:
         runner.main(args, standalone_mode=False, prog_name="plexctl")
-    except typer.Exit:
+    except typer.Exit as exc:
         # Commands raise typer.Exit(1) on controlled failures; swallow so
-        # the REPL keeps running.
-        pass
-    except SystemExit:
+        # the REPL keeps running. Both outcomes are a completed run that
+        # `pin` may replay — failures blot any stale CSV stash.
+        record_command_run(args, failed=bool(exc.exit_code))
+    except SystemExit as exc:
         # Click raises SystemExit(0) for --help / successful commands
         # when standalone_mode is False. Ignore the exit, keep looping.
-        pass
+        record_command_run(args, failed=bool(exc.code))
     except click.exceptions.UsageError as exc:
         console.print(f"[red]Usage error: {exc.message}[/red]")
+        return
     except click.exceptions.Abort:
         console.print("[red]Aborted.[/red]")
+        return
     except Exception as exc:
         # Surface unexpected errors without crashing the REPL.
         console.print(f"[red]Error: {exc}[/red]")
+        return
+    record_command_run(args)
 
 
 def _history_path() -> str:
