@@ -317,6 +317,20 @@ plexctl library list --csv --output sections.csv
 plexctl triage report --section Anime --csv --output triage_report.csv
 ```
 
+### Pinned Reference Table
+
+Keep a tabular result always on screen. Run any command with `--csv`, then `pin` it:
+
+```bash
+# Pin a table so it reprints after every following command
+plexctl library list --csv
+plexctl pin
+plexctl server info        # prints server info, then the pinned table
+plexctl unpin              # stop reprinting
+```
+
+`--csv` is optional: `plexctl pin` takes the last command you ran and, when it didn't write CSV, quietly re-runs it with the flag in a background subprocess and pins that output (the success note says so). Commands that can't produce tabular output — mostly mutating commands like delete/update — are refused instead of re-executed. The pinned table is reprinted automatically after every subsequent command — a lightweight reference pane with no TUI needed. State lives in JSON files in the plexctl config dir, so pins survive across separate CLI calls, and inside the interactive `plexctl repl` the table is labelled with the actual in-session command. Use `plexctl unpin` to clear it.
+
 ### Ingest
 
 Read CSV files back into validated Pydantic models:
